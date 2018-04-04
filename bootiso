@@ -1,0 +1,403 @@
+#!/bin/bash
+
+# Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
+# License: MIT
+#
+# Usage: [<options>...] <file.iso>
+#
+# Create a bootable FAT32 USB device from a linux-GNU/unix ISO.
+#
+# Options
+#  -h, --help, help             Display this help message.
+#  -d, --device  <device>       Select <device> as USB device.
+#                               Device should be in the form /dev/sXX or /dev/hXX.
+#                               You will be prompted to select a device if you don't use this option.
+#  -y, --assume-yes             bootiso won't prompt the user for confirmation before erasing and partitioning USB device.
+#  --no-bootloader              bootiso won't add syslinux bootloader.
+#  --no-mime-check              bootiso won't assert that selected ISO file has the right mime-type.
+#  --no-usb-check               bootiso won't assert that selected device is a USB (connected through USB bus).
+#
+# How it works
+#
+# The script walks through the following steps:
+# 1. Request sudo.
+# 2. Check dependencies and prompt user to install any missing.
+# 3. If not given the --no-mime-check option, assert that provided ISO exists and has the expected application/x-iso9660-image mime-type via `file' utiltiy. If the assertion fails, exit with error status.
+# 4. If given with -d, --device option, check that the selected device exists and is not a partition. Otherwise, prompt the user to select a device and perform the above-mentioned controls.
+# 5. If not given the --no-usb-check option, assert that the given device is connected through USB via `udevadm' utility. If the assertion fails, exit with error status.
+# 6. If not given the -y, --assume-yes option, prompt the user for confirmation that data might be lost for selected device if he goes to next step.
+# 7. Unmount the USB if mounted, blank it and delete existing partitions.
+# 8. Create a FAT32 partition on the USB device.
+# 9. Create a temporary dir to mount the ISO file and mount it.
+# 10. Create a temporary dir to mount the USB device and mount it.
+# 11. Copy files from ISO to USB device.
+# 12. If option --no-bootloader is not selected, install a bootloader with syslinux in slow mode.
+# 13. Unmount devices and remove temporary folders.
+
+dependencies=('lsblk' 'grep' 'file' 'sfdisk' 'mkfs.vfat' 'syslinux' 'mtools' 'rsync')
+scriptName=$(basename "$0")
+
+typeset selectedDrive
+typeset selectedPartition
+typeset selectedIsoFile
+typeset isoMountPoint
+typeset usbMountPoint
+
+# options
+
+typeset addSyslinuxBootloader=true
+typeset disableMimeCheck=false
+typeset disableUSBCheck=false
+typeset disableConfirmation=false
+
+typeset help_message="\
+Usage: $scriptName [<options>...] <file.iso>
+Create a bootable FAT32 USB from a linux-GNU/unix ISO.
+
+Options
+  -h, --help, help             Display this help message.
+  -d, --device  <device>       Select <device> as USB device.
+                                 Device should be in the form /dev/sXX or /dev/hXX.
+                                 You will be prompted to select a device if you don't use this option.
+  -y, --assume-yes             $scriptName won't prompt the user for confirmation before erasing and partitioning USB device.
+                                 \\033[0;31mUse at your own risks.\\033[0m
+  --no-bootloader              $scriptName won't add syslinux bootloader.
+  --no-mime-check              $scriptName won't assert that selected ISO file has the right mime-type.
+  --no-usb-check               $scriptName won't assert that selected device is a USB (connected through USB bus).
+                                 \\033[0;31mUse at your own risks.\\033[0m
+"
+
+display_help() {
+  echo -e "$help_message"
+}
+
+echoerr() {
+  >&2 echo -e "\\033[0;31m$1\\033[0m"
+}
+
+echowarn() {
+  echo -e "\\033[1;33m$1\\033[0m"
+}
+
+echogood() {
+  echo -e "\\033[0;32m$1\\033[0m"
+}
+
+failAndExit() {
+  echoerr "$1\\nExiting $scriptName..."
+  exit 1
+}
+
+initPckgManager() {
+  if [ ! -z "$(which apt-get)" ]; then # Debian
+    pkgmgr="apt-get -y install"
+    return 0
+  fi
+  if [ ! -z "$(which yum)" ]; then # Fedora
+    pkgmgr="yum -y install"
+    return 0
+  fi
+  if [ ! -z "$(which dnf)" ]; then # Fedora
+    pkgmgr="dnf -y install"
+    return 0
+  fi
+  if [ ! -z "$(which pacman)" ]; then # Arch
+    pkgmgr="pacman -S"
+    return 0
+  fi
+  if [ ! -z "$(which zypper)" ]; then # OpenSuse
+    pkgmgr="zypper install"
+    return 0
+  fi
+  if [ ! -z "$(which emerge)" ]; then # Gentoo
+    pkgmgr="emerge"
+    return 0
+  fi
+}
+
+checkSudo() {
+  if ((EUID != 0)); then
+    echo "Granting root privileges for $scriptName."
+    if [[ -t 1 ]]; then
+      sudo "$0" "$@"
+    else
+      exec 1>output_file
+      gksu "$0" "$@"
+    fi
+    exit
+  fi
+}
+
+assertISOMimeType() {
+  typeset mimetype=$(file --mime-type  -b "$selectedIsoFile")
+  if [ "$disableMimeCheck" == 'true' ]; then
+    echowarn "Mime check has been disabled. Skipping."
+    return 0
+  fi
+  if [ ! "$mimetype" == "application/x-iso9660-image" ]; then
+    failAndExit "Provided file \`$selectedIsoFile' doesn't seem to be an iso file (wrong mime type: $mimetype)."
+  fi
+  echogood "The selected ISO file has the right mime type (asserted with \`file' utility)."
+}
+
+parseOptions() {
+  typeset key
+  while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+      --no-bootloader)
+      addSyslinuxBootloader=false
+      shift
+      ;;
+      -y|--assume-yes)
+      disableConfirmation=true
+      shift
+      ;;
+      -d|--device)
+      selectedDrive="$2"
+      shift
+      shift
+      ;;
+      --no-mime-check)
+      disableMimeCheck=true
+      shift
+      ;;
+      --no-usb-check)
+      disableUSBCheck=true
+      shift
+      ;;
+      -h|--help|help)
+      display_help
+      exit 0
+      ;;
+      -*)
+        if [ ! -f "$key" ]; then
+          failAndExit "Unknown option \`$key'."
+        fi
+        selectedIsoFile=$1
+      ;;
+      *)
+      selectedIsoFile=$1
+      shift
+      ;;
+  esac
+  done
+  if [ "$selectedIsoFile" == '' ]; then
+    failAndExit "Missing argument \`iso-file'."
+  fi
+  if [ ! -e "$selectedIsoFile" ]; then
+    failAndExit "Provided iso file \`$selectedIsoFile' does not exists."
+  fi
+}
+
+checkPackages() (
+  checkpkg() {
+  	if [[ $(which "$1") == "" ]]; then
+  		echo -n "Package '$1' not found!"
+      if [[ ! $pkgmgr == "" ]]; then
+        read -r -n1 -p "Attempt installation? (y/n)>" answer
+        echo
+        case $answer in
+          y) $pkgmgr "$1"
+          ;;
+          n)
+          read -r -n1 -p "Proceed anyway? (y/n)>" answer2
+          echo
+          if [[ "$answer2" == "n" ]] ; then exit
+          fi
+          ;;
+        esac
+      else
+        failAndExit "Missing dependency \`$1'."
+      fi
+  	fi
+  }
+  for pkg in "${dependencies[@]}"; do
+    checkpkg "$pkg"
+  done
+)
+
+# print the name of the new folder if operation succeeded, fails otherwise
+# arg1 : template name
+createTempFolder() {
+  typeset tmpFileTemplate="/tmp/$1.XXX"
+  mktemp -d "$tmpFileTemplate"
+  typeset status=$?
+  if [ ! $status -eq 0 ]; then
+     failAndExit "Failed to create temporary folder"
+  fi
+}
+
+mountIsoFile() {
+  isoMountPoint=$(createTempFolder iso) || exit 1
+  echo "Created iso mount point at \`$isoMountPoint'"
+  if ! mount -r -o loop "$selectedIsoFile" "$isoMountPoint" > /dev/null; then
+    failAndExit "Could not mount iso file."
+  fi
+}
+
+# Given a device like /dev/sdd
+# Return 0 if device is USB, 1 otherwise
+checkDeviceIsUSB() (
+  blockDeviceIsUSB() {
+    udevadm info --query=property --path="$1" | grep -q ^ID_BUS=usb
+    return $?
+  }
+  typeset deviceName=/sys/block/${1#/dev/}
+  [ -e "$deviceName" ] && blockDeviceIsUSB "$deviceName"
+  return $?
+)
+
+selectDrive() {
+  typeset drives=()
+  typeset _selectedDrive
+  containsElement () {
+    local e match="$1"
+    shift
+    for e; do [[ "$e" == "$match" ]] && return 0; done
+    return 1
+  }
+  listDrives() {
+    lsblk | grep --color=never -oe "^[sh][a-zA-Z]*"
+  }
+  chooseDrive() {
+    echo "Select the device corresponding to the USB device you want to make bootable (${drives[*]}). Type exit to quit."
+    read -r -p "Select device name>" _selectedDrive
+    if containsElement "$_selectedDrive" "${drives[@]}"; then
+      selectedDrive="/dev/$_selectedDrive"
+    else
+      if [ "$_selectedDrive" == 'exit' ]; then
+        echo "Exiting on user request."
+        exit 0
+      else
+        failAndExit "The drive $_selectedDrive does not exist."
+      fi
+    fi
+  }
+  if [ "$selectedDrive" == '' ]; then
+    mapfile -t drives < <(listDrives)
+    # List all hard disk drives
+    echo "Listing available drives in your system:"
+    lsblk | grep --color=never -e '^[sh]'
+    chooseDrive
+  else
+    if [[ "$selectedDrive" =~ "/dev" ]]; then
+      if [ -e "$selectedDrive" ]; then
+        if [[ "$selectedDrive" =~ /dev/[a-zA-Z]+[0-9]+ ]]; then
+          failAndExit "\`$selectedDrive' is a partition. Select a drive instead."
+        fi
+      else
+        failAndExit "The device $selectedDrive does not exists"
+      fi
+    else
+      failAndExit "The selected device is not a valid posix device file (should start with \`/dev')"
+    fi
+  fi
+}
+
+assertDeviceIsUSB() {
+  if [ "$disableUSBCheck" == 'true' ]; then
+    echowarn "USB check has been disabled. Skipping."
+    return 0
+  fi
+  if ! checkDeviceIsUSB "$selectedDrive"; then
+    failAndExit "The device you selected is not connected through USB. Use \`--no-usb-check' option to bypass this limitation at your own risks."
+  fi
+  echogood "The selected device \`$selectedDrive' is connected through USB (asserted with \`udevadm' utility)."
+}
+
+hasDeviceMountedPartitions() {
+  typeset result=$(mount | grep -e "^$selectedDrive")
+  if [ "$result" == "" ]; then
+    return 1
+  else
+    return 0
+  fi
+}
+
+partitionUSB() {
+  typeset answer='y'
+  echowarn "$scriptName is about to wipe out the content of device $selectedDrive."
+  selectedPartition="${selectedDrive}1"
+  if [ "$disableConfirmation" == 'false' ]; then
+    read -r -p "Are you sure you want to proceed? (y/n)>" answer
+  else
+    echowarn "Bypassing confirmation."
+  fi
+  if [ "$answer" == 'y' ]; then
+    echo "Erasing contents of $selectedDrive:"
+    # unmount
+    if hasDeviceMountedPartitions; then
+      if ! umount "$selectedDrive"?*; then
+        failAndExit "$scriptName failed to unmount paritions from drive $selectedDrive"
+      fi
+    fi
+    # erase drive
+    dd if=/dev/zero of="$selectedDrive" bs=512 count=1 conv=notrunc || failAndExit "Failed to erase USB device."
+    # set partition
+    echo "$selectedPartition : start=2048, type=b, bootable" | sfdisk "$selectedDrive"  || failAndExit "Failed to write USB device partition table."
+    # format
+    echo "Creating fat32 partition..."
+    mkfs.vfat "$selectedPartition" > /dev/null || failAndExit "Failed to create fat32 partition on USB device."
+  else
+    failAndExit "Discarding operation."
+  fi
+}
+
+mountUSB() {
+  usbMountPoint=$(createTempFolder usb) || exit 1
+  echo "Created USB device mount point at \`$usbMountPoint'"
+  if ! mount -t vfat "$selectedPartition" "$usbMountPoint" > /dev/null; then
+    failAndExit "Could not mount USB device."
+  fi
+}
+
+createBootableUSB() {
+  echo "Copying files from iso to USB..."
+  rsync --info=progress2 --recursive --executability "$isoMountPoint"/. "$usbMountPoint"
+  if [ "$addSyslinuxBootloader" == 'true' ]; then
+    echo "Installing syslinux bootloader..."
+    syslinux --stupid "$selectedPartition"
+    if [ -d "$usbMountPoint/isolinux" ]; then
+      mv "$usbMountPoint/isolinux" "$usbMountPoint"/syslinux
+    fi
+    if [ -e "$usbMountPoint/syslinux/isolinux.cfg" ]; then
+      mv "$usbMountPoint/syslinux/isolinux.cfg" "$usbMountPoint"/syslinux/syslinux.cfg
+    fi
+  fi
+}
+
+main() {
+  initPckgManager "$@"
+  parseOptions "$@"
+  checkSudo "$@"
+  checkPackages
+  assertISOMimeType
+  selectDrive
+  assertDeviceIsUSB
+  mountIsoFile
+  partitionUSB
+  mountUSB
+  createBootableUSB
+}
+
+cleanup() {
+  if [ -d "$isoMountPoint" ]; then
+    echo "Unmounting ISO..."
+    if umount "$isoMountPoint"; then
+      rmdir "$isoMountPoint"
+      echogood "ISO succesfully unmounted."
+    fi
+  fi
+  if [ -d "$usbMountPoint" ]; then
+    echo "Unmounting USB device..."
+    if umount "$usbMountPoint"; then
+      rmdir "$usbMountPoint"
+      echogood "USB device succesfully unmounted."
+    fi
+  fi
+}
+
+trap cleanup EXIT INT TERM
+
+main "$@"
