@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 1.1
+# Version 1.2
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -58,14 +58,14 @@ Create a bootable FAT32 USB from a linux-GNU/unix ISO.
 Options
   -h, --help, help             Display this help message.
   -d, --device  <device>       Select <device> as USB device.
-                                 Device should be in the form /dev/sXX or /dev/hXX.
-                                 You will be prompted to select a device if you don't use this option.
+                               Device should be in the form /dev/sXX or /dev/hXX.
+                               You will be prompted to select a device if you don't use this option.
   -y, --assume-yes             $scriptName won't prompt the user for confirmation before erasing and partitioning USB device.
-                                 \\033[0;31mUse at your own risks.\\033[0m
+                               \\033[0;31mUse at your own risks.\\033[0m
   --no-bootloader              $scriptName won't add syslinux bootloader.
   --no-mime-check              $scriptName won't assert that selected ISO file has the right mime-type.
   --no-usb-check               $scriptName won't assert that selected device is a USB (connected through USB bus).
-                                 \\033[0;31mUse at your own risks.\\033[0m
+                               \\033[0;31mUse at your own risks.\\033[0m
 "
 
 display_help() {
