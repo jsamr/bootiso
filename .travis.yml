@@ -1,0 +1,20 @@
+language: bash
+
+# Use container-based infrastructure for quicker build start-up
+sudo: false
+
+addons:
+  apt:
+    sources:
+    - debian-sid    # Grab shellcheck from the Debian repo (o_O)
+    packages:
+    - shellcheck
+
+script:
+ - bash -c 'shopt -s globstar; shellcheck bootiso'
+
+matrix:
+  fast_finish: true
+
+git:
+  depth: false

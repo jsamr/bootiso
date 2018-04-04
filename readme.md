@@ -13,10 +13,13 @@ This script was made after [this askubuntu post answer from Avinash Raj](https:/
 
 - [x] Selected ISO has the correct mime-type.
 - [x] Selected device is connected through USB preventing system damages.
+- [x] Selected item is not a partition.
 - [x] Prompt the user for confirmation before erasing and paritioning USB device.
-- [x] Check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
-- [x] Any failure from a subcommand triggers termination of the script.
+- [x] Any failure from a used command is handled properly with program exit.
 - [x] Cleanup routine with `trap`.
+- [x] Script linting and validation with [shellcheck](https://www.shellcheck.net/).
+
+This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 
 ### Synopsis
 
