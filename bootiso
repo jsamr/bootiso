@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 1.2
+# Version v1.2.1
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -188,15 +188,18 @@ parseOptions() {
     display_help
     exit 1
   fi
+  if [ -d "$selectedIsoFile" ]; then
+    failAndExit "Provided file \`$selectedIsoFile' is a directory."
+  fi
   if [ ! -f "$selectedIsoFile" ]; then
-    failAndExit "Provided iso file \`$selectedIsoFile' does not exists or is a directory."
+    failAndExit "Provided iso file \`$selectedIsoFile' does not exists."
   fi
 }
 
 checkPackages() (
   checkpkg() {
   	if [[ $(which "$1") == "" ]]; then
-  		echo -n "Package '$1' not found!"
+  		echowarn -n "Package '$1' not found!"
       if [[ ! $pkgmgr == "" ]]; then
         read -r -n1 -p "Attempt installation? (y/n)>" answer
         echo
@@ -206,7 +209,7 @@ checkPackages() (
           n)
           read -r -n1 -p "Proceed anyway? (y/n)>" answer2
           echo
-          if [[ "$answer2" == "n" ]] ; then exit
+          if [[ "$answer2" == "n" ]] ; then exit 1
           fi
           ;;
         esac
@@ -265,7 +268,7 @@ selectDrive() {
   }
   chooseDrive() {
     echo "Select the device corresponding to the USB device you want to make bootable (${drives[*]}). Type exit to quit."
-    read -r -p "Select device name>" _selectedDrive
+    read -r -p "Select device id>" _selectedDrive
     if containsElement "$_selectedDrive" "${drives[@]}"; then
       selectedDrive="/dev/$_selectedDrive"
     else
@@ -284,16 +287,14 @@ selectDrive() {
     lsblk | grep --color=never -e '^[sh]'
     chooseDrive
   else
-    if [[ "$selectedDrive" =~ "/dev" ]]; then
-      if [ -e "$selectedDrive" ]; then
-        if [[ "$selectedDrive" =~ /dev/[a-zA-Z]+[0-9]+ ]]; then
-          failAndExit "\`$selectedDrive' is a partition. Select a drive instead."
-        fi
-      else
-        failAndExit "The device $selectedDrive does not exists"
-      fi
-    else
-      failAndExit "The selected device is not a valid posix device file (should start with \`/dev')"
+    if [ ! -e "$selectedDrive" ]; then
+      failAndExit "The device $selectedDrive does not exists"
+    fi
+    if [ ! -b "$selectedDrive" ]; then
+      failAndExit "The selected device \`$selectedDrive' is not a valid block file."
+    fi
+    if [[ "$selectedDrive" =~ [a-zA-Z]+[0-9]+$ ]]; then
+      failAndExit "\`$selectedDrive' is a partition. Select a drive instead."
     fi
   fi
 }
