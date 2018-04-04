@@ -184,10 +184,12 @@ parseOptions() {
   esac
   done
   if [ "$selectedIsoFile" == '' ]; then
-    failAndExit "Missing argument \`iso-file'."
+    echoerr "Missing argument \`iso-file'."
+    display_help
+    exit 1
   fi
-  if [ ! -e "$selectedIsoFile" ]; then
-    failAndExit "Provided iso file \`$selectedIsoFile' does not exists."
+  if [ ! -f "$selectedIsoFile" ]; then
+    failAndExit "Provided iso file \`$selectedIsoFile' does not exists or is a directory."
   fi
 }
 
