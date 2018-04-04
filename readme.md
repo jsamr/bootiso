@@ -44,7 +44,7 @@ This script was made after [this askubuntu post answer from Avinash Raj](https:/
 
 ### Quick install
 
-    curl https://git.io/vxMcB
+    curl https://raw.githubusercontent.com/jsamr/bootiso/v1.0/bootiso -O
     chmod +x bootiso
 
 Optionally, move the script to a bin path
