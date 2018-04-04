@@ -12,13 +12,13 @@ This script was made after [this askubuntu post answer from Avinash Raj](https:/
 
 **Security checks and robustness**:
 
-- [x] Selected ISO has the correct mime-type.
-- [x] Selected device is connected through USB preventing system damages.
-- [x] Selected item is not a partition.
-- [x] Prompt the user for confirmation before erasing and paritioning USB device.
-- [x] Any failure from a used command is handled properly with program exit.
-- [x] Cleanup routine with `trap`.
-- [x] Script linting and validation with [shellcheck](https://www.shellcheck.net/).
+- [x] bootiso asserts that selected ISO has the correct mime-type and exit if it doesn't.
+- [x] bootiso asserts that selected device is connected through USB preventing system damages and exit if it doesn't.
+- [x] bootiso asserts that selected item is not a partition and exit if it doesn't.
+- [x] bootiso prompts the user for confirmation before erasing and paritioning USB device.
+- [x] bootiso will handle any failure from a command properly and exit.
+- [x] bootiso will call a cleanup routine on exit with `trap`.
+- [x] bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see travis build status).
 
 This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 
