@@ -1,26 +1,17 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-v1.0-green.svg)](#)
+[![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=2592000)](https://github.com/jsamr/bootiso/issues)
+
 **Create a USB bootable device from an ISO image easily and securely.**
 
 This script was made after [this askubuntu post answer from Avinash Raj](https://askubuntu.com/a/376430/276357) to automate the described steps in a robust, secured way.
 
-### How to use it
-First option, just provide the ISO as first argument and you'll be prompted to select a drive amongst a list extracted from `lsblk`:
+**Security checks**:
 
-    bootiso myfile.iso
-
-Or provide explicitly the USB device:
-
-    bootiso -d /dev/sde myfile.iso
-
-### Quick install
-
-    curl https://git.io/vxMcB
-    chmod +x bootiso
-
-Optionally, move the script to a bin path
-
-    mv bootiso <bin-path>
-
-Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
+- [x] Selected ISO has the correct mime-type.
+- [x] Selected device is connected through USB preventing system damages.
+- [x] Prompt the user for confirmation before erasing and paritioning USB device.
+- [x] Any failure from a subcommand triggers termination of the script.
 
 ### Synopsis
 
@@ -44,6 +35,28 @@ Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
                                  file has the right mime-type.
     --no-usb-check               bootiso won't assert that selected
                                  device is a USB (connected through USB bus).
+
+
+### Quick install
+
+    curl https://git.io/vxMcB
+    chmod +x bootiso
+
+Optionally, move the script to a bin path
+
+    mv bootiso <bin-path>
+
+Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
+
+### Examples
+
+First option, just provide the ISO as first argument and you'll be prompted to select a drive amongst a list extracted from `lsblk`:
+
+    bootiso myfile.iso
+
+Or provide explicitly the USB device:
+
+    bootiso -d /dev/sde myfile.iso
 
 ### What it does
 
