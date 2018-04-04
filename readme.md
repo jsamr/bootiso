@@ -8,19 +8,7 @@
 There are some times where `dd` utility is not enough to make a USB device bootable from ISO.  
 Use `bootiso` to make sure your USB device will be bootable!
 
-This script was made after [this askubuntu post answer from Avinash Raj](https://askubuntu.com/a/376430/276357) to automate the described steps in a robust, secured way.
-
-### Security checks and robustness
-
-✔ bootiso asserts that selected ISO has the correct mime-type and exit if it doesn't (with [file](https://askubuntu.com/a/3397/276357) utility).  
-✔ bootiso asserts that selected device is connected through USB preventing system damages and exit if it doesn't (with [udevadm](https://askubuntu.com/a/168654/276357) utility).  
-✔ bootiso asserts that selected item is not a partition and exit if it doesn't (with device name matching).  
-✔ bootiso prompts the user for confirmation before erasing and paritioning USB device.  
-✔ bootiso will handle any failure from a command properly and exit.  
-✔ bootiso will call a cleanup routine on exit with `trap`.  
-✔ bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see travis build status).
-
-This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
+This script was made after [this askubuntu post answer from Avinash Raj](https://askubuntu.com/a/376430/276357) to automate the described steps in a robust, secured way ([see the security section for more details](#security)).
 
 ### Synopsis
 
@@ -66,6 +54,21 @@ First option, just provide the ISO as first argument and you'll be prompted to s
 Or provide explicitly the USB device:
 
     bootiso -d /dev/sde myfile.iso
+
+
+<a name="security" />
+
+### Security checks and robustness
+
+✔ bootiso asserts that selected ISO has the correct mime-type and exit if it doesn't (with [file](https://askubuntu.com/a/3397/276357) utility).  
+✔ bootiso asserts that selected device is connected through USB preventing system damages and exit if it doesn't (with [udevadm](https://askubuntu.com/a/168654/276357) utility).  
+✔ bootiso asserts that selected item is not a partition and exit if it doesn't (with device name matching).  
+✔ bootiso prompts the user for confirmation before erasing and paritioning USB device.  
+✔ bootiso will handle any failure from a command properly and exit.  
+✔ bootiso will call a cleanup routine on exit with `trap`.  
+✔ bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see travis build status).
+
+This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 
 ### What it does
 
