@@ -3,7 +3,7 @@
 [![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=2592000)](https://github.com/jsamr/bootiso/issues)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
-**Create a USB bootable device from an ISO image easily and securely.**
+**Create a USB bootable device from an ISO image easily and [securely](#security).**
 
 There are some times where `dd` utility is not enough to make a USB device bootable from ISO.  
 Use `bootiso` to make sure your USB device will be bootable!
