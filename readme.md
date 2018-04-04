@@ -4,14 +4,19 @@
 
 **Create a USB bootable device from an ISO image easily and securely.**
 
+There are some times where `dd` utility is not enough to make a USB device bootable from ISO.  
+Use `bootiso` to make sure your USB device will be bootable!
+
 This script was made after [this askubuntu post answer from Avinash Raj](https://askubuntu.com/a/376430/276357) to automate the described steps in a robust, secured way.
 
-**Security checks**:
+**Security checks and robustness**:
 
 - [x] Selected ISO has the correct mime-type.
 - [x] Selected device is connected through USB preventing system damages.
 - [x] Prompt the user for confirmation before erasing and paritioning USB device.
+- [x] Check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 - [x] Any failure from a subcommand triggers termination of the script.
+- [x] Cleanup routine with `trap`.
 
 ### Synopsis
 
