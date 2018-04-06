@@ -1,38 +1,27 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-v1.2.1-green.svg)](#)
+[![Version](https://img.shields.io/badge/version-v2.0.0-green.svg)](#)
 [![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=2592000)](https://github.com/jsamr/bootiso/issues)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
 
-There are some times where `dd` utility is not enough to make a USB device bootable from ISO.  
-Use `bootiso` to make sure your USB device will be bootable!
-
-This script was made after [this askubuntu post answer from Avinash Raj](https://askubuntu.com/a/376430/276357) to automate the described steps in a robust, secured way ([see the security section for more details](#security)).
+Don't want to messup with the system with `dd` command? Create a bootable USB from an ISO [securely](#security).
 
 ### Synopsis
 
-    Usage: bootiso [<options>...] <file.iso>
+    bootiso [<options>...] <file.iso>
 
-    Create a bootable FAT32 USB device from a linux-GNU/unix ISO.
+### Options
 
-    Options
-
-    -h, --help, help             Display this help message.
-    -d, --device  <device>       Select <device> as USB device.
-                                 Device should be in the form /dev/sXX
-                                 or /dev/hXX.
-                                 You will be prompted to select a device
-                                 if you don't use this option.
-    -y, --assume-yes             bootiso won't prompt the user
-                                 for confirmation before erasing and
-                                 partitioning USB device.
-    --no-bootloader              bootiso won't add syslinux bootloader.
-    --no-mime-check              bootiso won't assert that selected ISO
-                                 file has the right mime-type.
-    --no-usb-check               bootiso won't assert that selected
-                                 device is a USB (connected through USB bus).
-
+| Option                 | Description                                                                                                                                                                                                                              |
+| ---------------------- |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -h, --help, help       | Display a help message.                                                                                                                                                                                                                  |
+| -d, --device  <device> | Select <device> as USB device. If <device> is not connected through a USB bus, bootiso will fail and exit. Device name should be in the form /dev/sXX or /dev/hXX. You will be prompted to select a device if you don't use this option. |
+| -b, --bootloader       | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Should only be used for Linux-based live-USB. Does not work with --dd option.                                                                                                                                                          |
+| -y, --assume-yes       | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                        |
+| --dd                   | Use dd utility instead of mounting + cp. Does not allow bootloader installation with syslinux.                                                                                                                                        |
+| --no-mime-check        | bootiso won't assert that selected ISO file has the right mime-type.                                                                                                                                                                     |
+| --no-usb-check         | bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.                                                                                                                                   |
 
 ### Quick install
 
@@ -47,13 +36,21 @@ Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
 
 ### Examples
 
-First option, just provide the ISO as first argument and you'll be prompted to select a drive amongst a list extracted from `lsblk`:
+Provide the ISO as first argument and you'll be prompted to select a drive amongst a list extracted from `lsblk`:
 
     bootiso myfile.iso
 
-Or provide explicitly the USB device:
+Or provide explicitly the USB device. Command fails and exit if the provided device is not USB, such as sata:
 
     bootiso -d /dev/sde myfile.iso
+
+Add a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) to increase the odds your device will be bootable:
+
+    bootiso --bootloader /dev/sde myfile.iso
+
+Use `dd` instead of mount + `cp`:
+
+    bootiso --dd -d /dev/sde myfile.iso  
 
 
 <a name="security" />
@@ -87,3 +84,7 @@ This script walks through the following steps:
 11. Copy files from ISO to USB device.
 12. If option `--no-bootloader` is not selected, install a bootloader with syslinux in slow mode.
 13. Unmount devices and remove temporary folders.
+
+### Credits
+
+This script was made after [this askubuntu post answer from Avinash Raj](https://askubuntu.com/a/376430/276357) to automate the described steps in a robust, secured way ([see the security section for more details](#security)).
