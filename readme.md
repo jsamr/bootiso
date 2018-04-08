@@ -13,15 +13,15 @@ Don't want to messup with the system with `dd` command? Create a bootable USB fr
 
 ### Options
 
-| Option                 | Description                                                                                                                                                                                                                              |
-| ---------------------- |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| -h, --help, help       | Display a help message.                                                                                                                                                                                                                  |
-| -d, --device  <device> | Select <device> as USB device. If <device> is not connected through a USB bus, bootiso will fail and exit. Device name should be in the form /dev/sXX or /dev/hXX. You will be prompted to select a device if you don't use this option. |
-| -b, --bootloader       | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Should only be used for Linux-based live-USB. Does not work with --dd option.                                                                                                                                                          |
-| -y, --assume-yes       | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                        |
-| --dd                   | Use dd utility instead of mounting + cp. Does not allow bootloader installation with syslinux.                                                                                                                                        |
-| --no-mime-check        | bootiso won't assert that selected ISO file has the right mime-type.                                                                                                                                                                     |
-| --no-usb-check         | bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.                                                                                                                                   |
+| Option&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description                                                                                                                                                                                                                              |
+| ------------------------------------------------------------ |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-h`,<br> `--help`                                           | Display a help message.                                                                                                                                                                                                                  |
+| `-d <device>`,<br> `--device  <device>`                      | Select <device> as USB device. If <device> is not connected through a USB bus, bootiso will fail and exit. Device name should be in the form /dev/sXX or /dev/hXX. You will be prompted to select a device if you don't use this option. |
+| `-b`, <br> `--bootloader`                                    | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Should only be used for Linux-based live-USB. Does not work with --dd option.                                                                       |
+| `-y`, <br>`--assume-yes`                                     | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                        |
+| `--dd`                                                       | Use dd utility instead of mounting + cp. Does not allow bootloader installation with syslinux.                                                                                                                                           |
+| `--no-mime-check`                                            | bootiso won't assert that selected ISO file has the right mime-type.                                                                                                                                                                     |
+| `--no-usb-check`                                             | bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.                                                                                                                                   |
 
 ### Quick install
 
@@ -46,7 +46,7 @@ Or provide explicitly the USB device. Command fails and exit if the provided dev
 
 Add a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) to increase the odds your device will be bootable:
 
-    bootiso --bootloader /dev/sde myfile.iso
+    bootiso -b /dev/sde myfile.iso
 
 Use `dd` instead of mount + `cp`:
 
@@ -82,7 +82,7 @@ This script walks through the following steps:
 9. Create a temporary dir to mount the ISO file and mount it.
 10. Create a temporary dir to mount the USB device and mount it.
 11. Copy files from ISO to USB device.
-12. If option `--no-bootloader` is not selected, install a bootloader with syslinux in slow mode.
+12. If option `--bootloader` is selected, install a bootloader with syslinux in slow mode.
 13. Unmount devices and remove temporary folders.
 
 ### Credits
