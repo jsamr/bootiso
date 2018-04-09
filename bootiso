@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.2.3
+# Version 2.3.0
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -21,6 +21,7 @@
 #                               Autoselect will automatically select a USB drive device if there is exactly one connected to the system.
 #                               Enabled by default when neither -d nor --no-usb-check options are given.
 #  -J, --no-eject               Do not eject device after unmounting.
+#  -l, --list-usb-drives        List available USB drives and exit.
 #  --dd                         Use dd utility and create an iso9660 fs instead of mounting + rsync.
 #                               Does not allow bootloader installation with syslinux.
 #  --no-mime-check              bootiso won't assert that selected ISO file has the right mime-type.
@@ -62,6 +63,7 @@ typeset isoMountPoint
 typeset usbMountPoint
 typeset startTime
 typeset endTime
+typeset -a devicesList
 
 # options
 
@@ -74,7 +76,7 @@ typeset shouldMakeFAT32Partition=true
 typeset ejectDevice=true
 typeset autoselect=false
 
-typeset version="2.2.3"
+typeset version="2.3.0"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -99,6 +101,7 @@ Options
                              Autoselect will automatically select a USB drive device if there is exactly one connected to the system.
                              Enabled by default when neither -d nor --no-usb-check options are given.
 -J, --no-eject               Do not eject device after unmounting.
+-l, --list-usb-drives        List available USB drives.
 --dd                         Use \`dd' utility instead of mounting + \`rsync'.
                              Does not allow bootloader installation with syslinux.
 --no-mime-check              \`$scriptName' won't assert that selected ISO file has the right mime-type.
@@ -204,6 +207,30 @@ checkpkg() {
 fi
 }
 
+joinBy() { local IFS="$1"; shift; echo "$*"; }
+
+initDevicesList() {
+  typeset -a devices
+  mapfile -t devices < <(lsblk -o NAME,TYPE | grep --color=never -oP '^\K\w+(?=\s+disk$)')
+  for device in "${devices[@]}" ; do
+    if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
+      devicesList+=("$device")
+    fi
+  done
+}
+
+listDevicesTable() {
+  typeset lsblkCmd='lsblk -o NAME,HOTPLUG,SIZE,STATE,TYPE'
+  initDevicesList
+  if [ "$disableUSBCheck" == 'false' ]; then
+    echo "Listing USB drives available in your system:"
+  else
+    echo "Listing devices available in your system:"
+  fi
+  $lsblkCmd | sed -n 1p
+  $lsblkCmd | grep --color=never -P "^($(joinBy '|' "${devicesList[@]}"))"
+}
+
 parseOptions() {
   typeset key
   while [[ $# -gt 0 ]]; do
@@ -247,6 +274,11 @@ parseOptions() {
       -h|--help|help)
       display_help
       exit 0
+      ;;
+      -l|--list-usb-drives)
+      listDevicesTable
+      exit 0
+      shift
       ;;
       -v|--version)
       echo "$version"
@@ -311,28 +343,6 @@ deviceIsDisk() {
 
 selectDevice() {
   typeset _selectedDevice
-  typeset -a devicesList
-  joinBy() { local IFS="$1"; shift; echo "$*"; }
-  initDevicesList() {
-    typeset -a devices
-    mapfile -t devices < <(lsblk -o NAME,TYPE | grep --color=never -oP '^\K\w+(?=\s+disk$)')
-    for device in "${devices[@]}" ; do
-      if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
-        devicesList+=("$device")
-      fi
-    done
-  }
-  listDevicesTable() {
-    typeset lsblkCmd='lsblk -o NAME,HOTPLUG,SIZE,STATE,TYPE'
-    initDevicesList
-    if [ "$disableUSBCheck" == 'false' ]; then
-      echo "Listing available USB drives in your system:"
-    else
-      echo "Listing available devices in your system:"
-    fi
-    $lsblkCmd | sed -n 1p
-    $lsblkCmd | grep --color=never -P "^($(joinBy '|' "${devicesList[@]}"))"
-  }
   containsElement () {
     local e match="$1"
     shift
@@ -358,7 +368,7 @@ selectDevice() {
       # autoselect
       if [ "$disableConfirmation" == 'false' ] || ([ "$disableConfirmation" == 'true' ] && [ "$autoselect" == 'true' ]); then
         typeset selected="${devicesList[0]}"
-        echogood "Autoselecting $selected (only USB device candidate)"
+        echogood "Autoselecting \`$selected' (only USB device candidate)"
         selectedDevice="/dev/$selected"
       else
         chooseDevice

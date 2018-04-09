@@ -1,3 +1,7 @@
+# v2.3.0
+
+- add `-l`, `--list-usb-drives` option
+
 # v2.2.3
 
 - when prompting user to select device, list drives which are of type disk according to `lsblk` instead of using name matching to discard partition and loop devices
