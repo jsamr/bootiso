@@ -29,6 +29,10 @@ Use `dd` instead of mount + `rsync`:
 
     bootiso --dd -d /dev/sde myfile.iso  
 
+List available USB drives and exit:
+
+    bootiso -l  
+
 
 ### Quick install
 
