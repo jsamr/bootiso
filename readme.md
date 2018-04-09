@@ -68,7 +68,14 @@ Use `dd` instead of mount + `cp`:
 
 This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 
-### What it does
+### See it in action
+
+#### The selected device is not connected through USB
+[![](images/bootiso-wrong-device.png)](https://webmshare.com/LPNK0)
+#### The selected device does not exists
+[![](images/bootiso-does-not-exists.png)](https://webmshare.com/g04jy)
+
+### What it does 
 
 This script walks through the following steps:
 
