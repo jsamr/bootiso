@@ -1,3 +1,8 @@
+# v2.2.2
+
+- reintroduce `rsync` which handles symlinks better
+- more robust test to check device is not a partition
+
 # v2.2.1
 
 - fix unused variable (shellcheck)

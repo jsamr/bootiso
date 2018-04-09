@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![v2.2.1](https://img.shields.io/badge/version-v2.2.1-green.svg)](#)
+[![v2.2.2](https://img.shields.io/badge/version-v2.2.2-green.svg)](#)
 [![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=2592000)](https://github.com/jsamr/bootiso/issues)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
@@ -18,11 +18,11 @@ Don't want to messup with the system with `dd` command? Create a bootable USB fr
 | `-h`                            | `--help`                                                   | Display a help message and exit.                                                                                                                                                                                                                        |
 | `-v`                            | `--version`                                                | Display version and exit.                                                                                                                                                                                                                               |
 | `-d <device>`                   | `--device <device>`                                        | Select `<device>` as USB device. If `<device>` is not connected through a USB bus, bootiso will fail and exit. Device name should be in the form `/dev/sXX` or `/dev/hXX`. You will be prompted to select a device if you don't use this option.        |
-| `-b`                            | `--bootloader`                                             | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Does not work with `--dd` option.                                                                                                                                    |
+| `-b`                            | `--bootloader`                                             | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Does not work with `--dd` option.                                                                                                                                  |
 | `-y`                            | `--assume-yes`                                             | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                                       |
 | `-a`                            | `--autoselect`                                             | Enable autoselecting USB devices in conjunction with `-y` option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither `-d` nor `--no-usb-check` options are given. |
 | `-J`                            | `--no-eject`                                               | Do not eject device after unmounting.                                                                                                                                                                                                                   |
-|                                 | `--dd`                                                     | Use dd utility instead of mounting + cp. Does not allow bootloader installation with syslinux.                                                                                                                                                          |
+|                                 | `--dd`                                                     | Use dd utility instead of mounting + rsync. Does not allow bootloader installation with syslinux.                                                                                                                                                       |
 |                                 | `--no-mime-check`                                          | bootiso won't assert that selected ISO file has the right mime-type.                                                                                                                                                                                    |
 |                                 | `--no-usb-check`                                           | bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.                                                                                                                                                  |
 
@@ -51,7 +51,7 @@ Add a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) to increase 
 
     bootiso -b /dev/sde myfile.iso
 
-Use `dd` instead of mount + `cp`:
+Use `dd` instead of mount + `rsync`:
 
     bootiso --dd -d /dev/sde myfile.iso  
 

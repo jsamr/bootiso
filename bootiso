@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.2.1
+# Version 2.2.2
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -21,7 +21,7 @@
 #                               Autoselect will automatically select a USB drive device if there is exactly one connected to the system.
 #                               Enabled by default when neither -d nor --no-usb-check options are given.
 #  -J, --no-eject               Do not eject device after unmounting.
-#  --dd                         Use dd utility and create an iso9660 fs instead of mounting + cp.
+#  --dd                         Use dd utility and create an iso9660 fs instead of mounting + rsync.
 #                               Does not allow bootloader installation with syslinux.
 #  --no-mime-check              bootiso won't assert that selected ISO file has the right mime-type.
 #  --no-usb-check               bootiso won't assert that selected device is a USB (connected through USB bus).
@@ -52,7 +52,7 @@ if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
 fi
 
 typeset commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel')
-typeset -A commandPackages=([lsblk]='util-linux' [sfdisk]='util-linux' [mkfs]='util-linux' [blkid]='util-linux' [wipefs]='util-linux' [grep]='grep' [file]='file' [awk]='gawk' [mlabel]='mtools' [syslinux]='syslinux')
+typeset -A commandPackages=([lsblk]='util-linux' [sfdisk]='util-linux' [mkfs]='util-linux' [blkid]='util-linux' [wipefs]='util-linux' [grep]='grep' [file]='file' [awk]='gawk' [mlabel]='mtools' [syslinux]='syslinux' [rsync]='rsync')
 
 typeset selectedDevice
 typeset selectedPartition
@@ -74,14 +74,14 @@ typeset shouldMakeFAT32Partition=true
 typeset ejectDevice=true
 typeset autoselect=false
 
-typeset version="2.2.1"
+typeset version="2.2.2"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
 Bootiso v$version.
 Create a bootable USB from a linux-GNU/unix ISO securely.
 \`$scriptName' prevent any system-wide damages by enforcing the targeted device is on a USB bus.
-By default, create a FAT32 partition, mount and copy with \`cp'.
+By default, create a FAT32 partition, mount and copy with \`rsync'.
 You should use \`--bootloader' option if you want to increase the odds your USB will be bootable at the expense of speed.
 
 Options
@@ -99,7 +99,7 @@ Options
                              Autoselect will automatically select a USB drive device if there is exactly one connected to the system.
                              Enabled by default when neither -d nor --no-usb-check options are given.
 -J, --no-eject               Do not eject device after unmounting.
---dd                         Use \`dd' utility instead of mounting + \`cp'.
+--dd                         Use \`dd' utility instead of mounting + \`rsync'.
                              Does not allow bootloader installation with syslinux.
 --no-mime-check              \`$scriptName' won't assert that selected ISO file has the right mime-type.
 --no-usb-check               \`$scriptName' won't assert that selected device is a USB (connected through USB bus).
@@ -293,11 +293,16 @@ mountIsoFile() {
 
 # Given a device like /dev/sdd
 # Return 0 if device is USB, 1 otherwise
-getDeviceType() (
-typeset deviceName=/sys/block/${1#/dev/}
-typeset deviceType=$(udevadm info --query=property --path="$deviceName" | grep -Po 'ID_BUS=\K\w+')
-echo "$deviceType"
-)
+getDeviceType() {
+  typeset deviceName=/sys/block/${1#/dev/}
+  typeset deviceType=$(udevadm info --query=property --path="$deviceName" | grep -Po 'ID_BUS=\K\w+')
+  echo "$deviceType"
+}
+
+deviceIsDisk() {
+  lsblk --nodeps -o NAME,TYPE "$1" | grep -q disk
+  return $?
+}
 
 selectDevice() {
   typeset _selectedDevice
@@ -367,13 +372,13 @@ selectDevice() {
 
 assertDeviceIsOK() {
   if [ ! -e "$selectedDevice" ]; then
-    failAndExit "The device \`$selectedDevice' does not exists"
+    failAndExit "The selected device \`$selectedDevice' does not exists"
   fi
   if [ ! -b "$selectedDevice" ]; then
     failAndExit "The selected device \`$selectedDevice' is not a valid block file."
   fi
-  if [[ "$selectedDevice" =~ [a-zA-Z]+[0-9]+$ ]]; then
-    failAndExit "\`$selectedDevice' is a partition. Select a drive instead."
+  if ! deviceIsDisk "$selectedDevice"; then
+    failAndExit "The selected device \`$selectedDevice' is not a disk (might be a partition or loop). Select a disk instead."
   fi
 }
 
@@ -466,20 +471,21 @@ syncWithProgress() {
   sync & printProgress
 }
 
-cpWithProgress() {
+rsyncWithProgress() {
   typeset -i i=1
   typeset statusFile=$(mktemp)
-  (cp -r --no-preserve=mode,ownership "$isoMountPoint"/. "$usbMountPoint"; echo "$?" > "$statusFile") &
+  (rsync -r -q -I --no-links --no-perms --no-owner --no-group "$isoMountPoint"/. "$usbMountPoint"; echo "$?" > "$statusFile") & 2&>/dev/null
   pid=$!
-  echo -n "Copying files from ISO to USB device with \`cp'    "
+  echo -n "Copying files from ISO to USB device with \`rsync'    "
   while [ -e "/proc/$pid" ]; do
     updateProgress
   done
   cleanProgress
   typeset status=$(cat "$statusFile")
   rm "$statusFile"
+  echo "FOUND STATUS $status"
   if [ ! "$status" -eq 0 ]; then
-    failAndExit "Copy command with \`cp' failed."
+    failAndExit "Copy command with \`rsync' failed."
   fi
 }
 
@@ -500,8 +506,9 @@ ddWithProgress() {
   fi
 }
 
-copyWithCp() {
-  cpWithProgress
+copyWithRsync() {
+  checkpkg 'rsync'
+  rsyncWithProgress
   syncWithProgress
 }
 
@@ -530,7 +537,7 @@ execWithCp() {
   mountIsoFile
   partitionUSB
   mountUSB
-  copyWithCp
+  copyWithRsync
   installSyslinux "$selectedPartition"
 }
 
@@ -581,7 +588,7 @@ main() {
     method='dd'
     execWithDD
   else
-    method='cp'
+    method='rsync'
     execWithCp
   fi
   endTime=$(date +%s)
