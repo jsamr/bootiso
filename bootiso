@@ -488,7 +488,6 @@ rsyncWithProgress() {
   cleanProgress
   typeset status=$(cat "$statusFile")
   rm "$statusFile"
-  echo "FOUND STATUS $status"
   if [ ! "$status" -eq 0 ]; then
     failAndExit "Copy command with \`rsync' failed."
   fi

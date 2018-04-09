@@ -11,32 +11,6 @@ Don't want to messup with the system with `dd` command? Create a bootable USB fr
 
     bootiso [<options>...] <file.iso>
 
-### Options
-
-| Option&nbsp;(POSIX,&nbsp;short) | Option&nbsp;(GNU,&nbsp;long)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description                                                                                                                                                                                                                                             |
-| ------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-h`                            | `--help`                                                   | Display a help message and exit.                                                                                                                                                                                                                        |
-| `-v`                            | `--version`                                                | Display version and exit.                                                                                                                                                                                                                               |
-| `-d <device>`                   | `--device <device>`                                        | Select `<device>` as USB device. If `<device>` is not connected through a USB bus, bootiso will fail and exit. Device name should be in the form `/dev/sXX` or `/dev/hXX`. You will be prompted to select a device if you don't use this option.        |
-| `-b`                            | `--bootloader`                                             | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Does not work with `--dd` option.                                                                                                                                  |
-| `-y`                            | `--assume-yes`                                             | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                                       |
-| `-a`                            | `--autoselect`                                             | Enable autoselecting USB devices in conjunction with `-y` option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither `-d` nor `--no-usb-check` options are given. |
-| `-J`                            | `--no-eject`                                               | Do not eject device after unmounting.                                                                                                                                                                                                                   |
-|                                 | `--dd`                                                     | Use dd utility instead of mounting + rsync. Does not allow bootloader installation with syslinux.                                                                                                                                                       |
-|                                 | `--no-mime-check`                                          | bootiso won't assert that selected ISO file has the right mime-type.                                                                                                                                                                                    |
-|                                 | `--no-usb-check`                                           | bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.                                                                                                                                                  |
-
-### Quick install
-
-    curl -L https://rawgit.com/jsamr/bootiso/latest/bootiso -O
-    chmod +x bootiso
-
-Optionally, move the script to a bin path
-
-    mv bootiso <bin-path>
-
-Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
-
 ### Examples
 
 Provide the ISO as first argument and you'll be prompted to select from available USB drives amongst a list extracted from `lsblk`. If there is only one USB device connected, `bootiso` will automatically select it:
@@ -56,6 +30,42 @@ Use `dd` instead of mount + `rsync`:
     bootiso --dd -d /dev/sde myfile.iso  
 
 
+### Quick install
+
+    curl -L https://rawgit.com/jsamr/bootiso/latest/bootiso -O
+    chmod +x bootiso
+
+Optionally, move the script to a bin path
+
+    mv bootiso <bin-path>
+
+Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
+
+### See it in action
+
+#### The selected device is not connected through USB
+
+[![](images/bootiso-wrong-device.png)](https://webmshare.com/LPNK0)
+
+#### The selected device does not exists
+
+[![](images/bootiso-does-not-exists.png)](https://webmshare.com/g04jy)
+
+### Options
+
+| Option&nbsp;(POSIX,&nbsp;short) | Option&nbsp;(GNU,&nbsp;long)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description                                                                                                                                                                                                                                             |
+| ------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-h`                            | `--help`                                                   | Display a help message and exit.                                                                                                                                                                                                                        |
+| `-v`                            | `--version`                                                | Display version and exit.                                                                                                                                                                                                                               |
+| `-d <device>`                   | `--device <device>`                                        | Select `<device>` as USB device. If `<device>` is not connected through a USB bus, bootiso will fail and exit. Device name should be in the form `/dev/sXX` or `/dev/hXX`. You will be prompted to select a device if you don't use this option.        |
+| `-b`                            | `--bootloader`                                             | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Does not work with `--dd` option.                                                                                                                                  |
+| `-y`                            | `--assume-yes`                                             | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                                       |
+| `-a`                            | `--autoselect`                                             | Enable autoselecting USB devices in conjunction with `-y` option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither `-d` nor `--no-usb-check` options are given. |
+| `-J`                            | `--no-eject`                                               | Do not eject device after unmounting.                                                                                                                                                                                                                   |
+|                                 | `--dd`                                                     | Use dd utility instead of mounting + rsync. Does not allow bootloader installation with syslinux.                                                                                                                                                       |
+|                                 | `--no-mime-check`                                          | bootiso won't assert that selected ISO file has the right mime-type.                                                                                                                                                                                    |
+|                                 | `--no-usb-check`                                           | bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.                                                                                                                                                  |
+
 <a name="security" />
 
 ### Security checks and robustness
@@ -69,16 +79,6 @@ Use `dd` instead of mount + `rsync`:
 ✔ bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see travis build status).
 
 This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
-
-### See it in action
-
-#### The selected device is not connected through USB
-
-[![](images/bootiso-wrong-device.png)](https://webmshare.com/LPNK0)
-
-#### The selected device does not exists
-
-[![](images/bootiso-does-not-exists.png)](https://webmshare.com/g04jy)
 
 ### What it does
 
