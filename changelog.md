@@ -1,3 +1,11 @@
+# v2.2.0
+
+- change `cp` options to prevent ownership errors (`--no-preserve`)
+- when selecting device interactively, only list USB devices with option `--no-usb-check` off
+- autoselecting USB device when there is exactly one connected drive through USB and `--no-usb-check` off
+- adding `--autoselect`, `-a` option to autoselect in conjunction with `-y` option
+- better feedback (spinning) during copying
+
 # v2.1.0
 
 - add a version option
