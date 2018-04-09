@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version v2.0.0
+# Version v2.1.0
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -10,6 +10,7 @@
 #
 # Options
 #  -h, --help, help             Display this help message.
+#  -v, --version                Display version and exit.
 #  -d, --device  <device>       Select <device> as USB device.
 #                               If <device> is not connected through USB, bootiso will fail and exit.
 #                               Device should be in the form /dev/sXX or /dev/hXX.
@@ -70,9 +71,11 @@ typeset useDD=false
 typeset shouldMakeFAT32Partition=true
 typeset ejectDevice=true
 
+typeset version="2.1.0"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
+Bootiso v$version.
 Create a bootable USB from a linux-GNU/unix ISO securely.
 \`$scriptName' prevent any system-wide damages by enforcing the targeted device is on a USB bus.
 By default, create a FAT32 partition, mount and copy with \`cp'.
@@ -80,7 +83,8 @@ You should use \`--bootloader' option if you want to increase the odds your USB 
 
 Options
 
-  -h, --help, help             Display this help message.
+  -h, --help, help             Display this help message and exit.
+  -v, --version                Display version and exit.
   -d, --device  <device>       Select <device> as USB device.
                                If <device> is not connected through a USB bus, \`$scriptName' will fail and exit.
                                Device name should be in the form /dev/sXX or /dev/hXX.
@@ -232,6 +236,10 @@ parseOptions() {
       ;;
       -h|--help|help)
       display_help
+      exit 0
+      ;;
+      -v|--version)
+      echo "$version"
       exit 0
       ;;
       -*)

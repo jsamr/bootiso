@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-v2.0.0-green.svg)](#)
+[![Version](https://img.shields.io/badge/version-v2.1.0-green.svg)](#)
 [![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=2592000)](https://github.com/jsamr/bootiso/issues)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
@@ -15,7 +15,8 @@ Don't want to messup with the system with `dd` command? Create a bootable USB fr
 
 | Option&nbsp;(POSIX,&nbsp;short) | Option&nbsp;(GNU,&nbsp;long)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description                                                                                                                                                                                                                              |
 | ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-h`                            | `--help`                                                   | Display a help message.                                                                                                                                                                                                                  |
+| `-h`                            | `--help`                                                   | Display a help message and exit.                                                                                                                                                                                                         |
+| `-v`                            | `--version`                                                | Display version and exit.                                                                                                                                                                                                                |
 | `-d <device>`                   | `--device <device>`                                        | Select <device> as USB device. If <device> is not connected through a USB bus, bootiso will fail and exit. Device name should be in the form /dev/sXX or /dev/hXX. You will be prompted to select a device if you don't use this option. |
 | `-b`                            | `--bootloader`                                             | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Should only be used for Linux-based live-USB. Does not work with --dd option.                                                                       |
 | `-y`                            | `--assume-yes`                                             | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                        |
@@ -75,7 +76,7 @@ This script will also check for dependencies and prompt user for installation (w
 #### The selected device does not exists
 [![](images/bootiso-does-not-exists.png)](https://webmshare.com/g04jy)
 
-### What it does 
+### What it does
 
 This script walks through the following steps:
 
