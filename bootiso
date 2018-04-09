@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.2.2
+# Version 2.2.3
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -74,7 +74,7 @@ typeset shouldMakeFAT32Partition=true
 typeset ejectDevice=true
 typeset autoselect=false
 
-typeset version="2.2.2"
+typeset version="2.2.3"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -270,6 +270,11 @@ checkPackages() {
   for pkg in "${commandDependencies[@]}"; do
     checkpkg "$pkg"
   done
+  # test grep supports -P option
+  if ! echo 1 | grep -P '1' > /dev/null; then
+    failAndExit "You're using an old version of grep which does not support perl regular expression (-P option)."
+  fi
+
 }
 
 # print the name of the new folder if operation succeeded, fails otherwise
@@ -310,7 +315,7 @@ selectDevice() {
   joinBy() { local IFS="$1"; shift; echo "$*"; }
   initDevicesList() {
     typeset -a devices
-    mapfile -t devices < <(lsblk | grep --color=never -oe "^[sh][a-zA-Z]*")
+    mapfile -t devices < <(lsblk -o NAME,TYPE | grep --color=never -oP '^\K\w+(?=\s+disk$)')
     for device in "${devices[@]}" ; do
       if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
         devicesList+=("$device")

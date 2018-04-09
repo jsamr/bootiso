@@ -1,3 +1,8 @@
+# v2.2.3
+
+- when prompting user to select device, list drives which are of type disk according to `lsblk` instead of using name matching to discard partition and loop devices
+- add a test to assert installed grep version supports perl regular expressions (`-P` option)
+
 # v2.2.2
 
 - reintroduce `rsync` which handles symlinks better
