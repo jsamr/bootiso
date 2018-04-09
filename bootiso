@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.2.0
+# Version 2.2.1
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -74,7 +74,7 @@ typeset shouldMakeFAT32Partition=true
 typeset ejectDevice=true
 typeset autoselect=false
 
-typeset version="2.2.0"
+typeset version="2.2.1"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -300,7 +300,6 @@ echo "$deviceType"
 )
 
 selectDevice() {
-  typeset drives=()
   typeset _selectedDevice
   typeset -a devicesList
   joinBy() { local IFS="$1"; shift; echo "$*"; }

@@ -1,3 +1,7 @@
+# v2.2.1
+
+- fix unused variable (shellcheck)
+
 # v2.2.0
 
 - change `cp` options to prevent ownership errors (`--no-preserve`)
