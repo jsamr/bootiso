@@ -43,13 +43,13 @@ Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
 
 ### See it in action
 
+#### Using `--assume-yes` + `--autoselect`
+
+[![](images/bootiso.png)](https://webmshare.com/RRnY6)
+
 #### The selected device is not connected through USB
 
-[![](images/bootiso-wrong-device.png)](https://webmshare.com/LPNK0)
-
-#### The selected device does not exists
-
-[![](images/bootiso-does-not-exists.png)](https://webmshare.com/g04jy)
+[![](images/bootiso.png)](https://webmshare.com/ra8Ge)
 
 ### Options
 
