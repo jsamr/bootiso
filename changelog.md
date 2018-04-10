@@ -1,3 +1,7 @@
+# v2.3.1
+
+- fix wrong file redirections
+
 # v2.3.0
 
 - add `-l`, `--list-usb-drives` option

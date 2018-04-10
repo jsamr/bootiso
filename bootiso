@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.3.0
+# Version 2.3.1
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -76,7 +76,7 @@ typeset shouldMakeFAT32Partition=true
 typeset ejectDevice=true
 typeset autoselect=false
 
-typeset version="2.3.0"
+typeset version="2.3.1"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -134,28 +134,28 @@ initPckgManager() {
   if [ ! -z "$(which apt-get)" ]; then # Debian
   pkgmgr="apt-get -y install"
   return 0
-fi
-if [ ! -z "$(which dnf)" ]; then # Fedora
-pkgmgr="dnf -y install"
-return 0
-fi
-if [ ! -z "$(which yum)" ]; then # Fedora
-pkgmgr="yum -y install"
-return 0
-fi
-if [ ! -z "$(which pacman)" ]; then # Arch
-pkgmgr="pacman -S"
-return 0
-fi
-if [ ! -z "$(which zypper)" ]; then # OpenSuse
-pkgmgr="zypper install"
-return 0
-fi
-if [ ! -z "$(which emerge)" ]; then # Gentoo
-pkgmgr="emerge"
-return 0
-fi
-return 1
+  fi
+  if [ ! -z "$(which dnf)" ]; then # Fedora
+    pkgmgr="dnf -y install"
+    return 0
+  fi
+  if [ ! -z "$(which yum)" ]; then # Fedora
+    pkgmgr="yum -y install"
+    return 0
+  fi
+  if [ ! -z "$(which pacman)" ]; then # Arch
+    pkgmgr="pacman -S"
+    return 0
+  fi
+  if [ ! -z "$(which zypper)" ]; then # OpenSuse
+    pkgmgr="zypper install"
+    return 0
+  fi
+  if [ ! -z "$(which emerge)" ]; then # Gentoo
+    pkgmgr="emerge"
+    return 0
+  fi
+  return 1
 }
 
 checkSudo() {
@@ -429,10 +429,10 @@ partitionUSB() {
   if shouldWipeUSBKey; then
     echo "Erasing contents of $selectedDevice..."
     # unmount any partition
-    umount "$selectedDevice" 2&> /dev/null || true;
-    umount "$selectedDevice"? 2&> /dev/null || true;
+    umount "$selectedDevice" &> /dev/null || true;
+    umount "$selectedDevice"? &> /dev/null || true;
     # clean signature from selected device
-    wipefs --all --force "$selectedDevice" 2&> /dev/null
+    wipefs --all --force "$selectedDevice" &> /dev/null
     # erase drive
     dd if=/dev/zero of="$selectedDevice" bs=512 count=1 conv=notrunc status=none || failAndExit "Failed to erase USB device.\\nIt's likely that the device has been ejected and needs to be plugged-in again manually."
     sync
@@ -489,7 +489,7 @@ syncWithProgress() {
 rsyncWithProgress() {
   typeset -i i=1
   typeset statusFile=$(mktemp)
-  (rsync -r -q -I --no-links --no-perms --no-owner --no-group "$isoMountPoint"/. "$usbMountPoint"; echo "$?" > "$statusFile") & 2&>/dev/null
+  (rsync -r -q -I --no-links --no-perms --no-owner --no-group "$isoMountPoint"/. "$usbMountPoint"; echo "$?" > "$statusFile") &
   pid=$!
   echo -n "Copying files from ISO to USB device with \`rsync'    "
   while [ -e "/proc/$pid" ]; do
@@ -628,7 +628,7 @@ cleanup() {
       fi
     fi
     if [ "$ejectDevice" == 'true' ]; then
-      if eject "$selectedDevice" 2&> /dev/null; then
+      if eject "$selectedDevice" &> /dev/null; then
         echogood "USB device succesfully ejected."
         echogood "You can safely remove it !"
       fi
