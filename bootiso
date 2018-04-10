@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.3.1
+# Version 2.4.0
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -22,6 +22,7 @@
 #                               Enabled by default when neither -d nor --no-usb-check options are given.
 #  -J, --no-eject               Do not eject device after unmounting.
 #  -l, --list-usb-drives        List available USB drives and exit.
+#  --                           POSIX end of options.
 #  --dd                         Use dd utility and create an iso9660 fs instead of mounting + rsync.
 #                               Does not allow bootloader installation with syslinux.
 #  --no-mime-check              bootiso won't assert that selected ISO file has the right mime-type.
@@ -64,6 +65,7 @@ typeset usbMountPoint
 typeset startTime
 typeset endTime
 typeset -a devicesList
+typeset operationSuccess=false
 
 # options
 
@@ -75,8 +77,9 @@ typeset useDD=false
 typeset shouldMakeFAT32Partition=true
 typeset ejectDevice=true
 typeset autoselect=false
+typeset isEndOfOptions=false
 
-typeset version="2.3.1"
+typeset version="2.4.0"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -102,6 +105,7 @@ Options
                              Enabled by default when neither -d nor --no-usb-check options are given.
 -J, --no-eject               Do not eject device after unmounting.
 -l, --list-usb-drives        List available USB drives.
+--                           POSIX end of options.
 --dd                         Use \`dd' utility instead of mounting + \`rsync'.
                              Does not allow bootloader installation with syslinux.
 --no-mime-check              \`$scriptName' won't assert that selected ISO file has the right mime-type.
@@ -172,7 +176,7 @@ checkSudo() {
 }
 
 assertISOMimeType() {
-  typeset mimetype=$(file --mime-type  -b "$selectedIsoFile")
+  typeset mimetype=$(file --mime-type  -b -- "$selectedIsoFile")
   if [ "$disableMimeCheck" == 'true' ]; then
     echowarn "Mime check has been disabled. Skipping."
     return 0
@@ -182,7 +186,7 @@ assertISOMimeType() {
   fi
   echogood "The selected ISO file has the right mime type."
   # Label is set to uppercase because FAT32 labels should be
-  isoLabel=$(blkid -o value -s LABEL "$selectedIsoFile" | awk '{print toupper($0)}')
+  isoLabel=$(blkid -o value -s LABEL -- "$selectedIsoFile" | awk '{print toupper($0)}')
 }
 
 checkpkg() {
@@ -227,74 +231,96 @@ listDevicesTable() {
   else
     echo "Listing devices available in your system:"
   fi
-  $lsblkCmd | sed -n 1p
-  $lsblkCmd | grep --color=never -P "^($(joinBy '|' "${devicesList[@]}"))"
+  if [ "${#devicesList[@]}" -gt 0 ]; then
+    $lsblkCmd | sed -n 1p
+    $lsblkCmd | grep --color=never -P "^($(joinBy '|' "${devicesList[@]}"))"
+    return 0
+  else
+    echowarn "Couldn't find any USB drive in your system."
+    return 1
+  fi
 }
 
 parseOptions() {
   typeset key
   while [[ $# -gt 0 ]]; do
     key="$1"
-    case $key in
-      -b|--bootloader)
-      addSyslinuxBootloader=true
-      checkpkg 'syslinux'
-      shift
-      ;;
-      -y|--assume-yes)
-      disableConfirmation=true
-      shift
-      ;;
-      -d|--device)
-      selectedDevice="$2"
-      shift
-      shift
-      ;;
-      -J|--no-eject)
-      ejectDevice=false
-      shift
-      ;;
-      -a|--autoselect)
-      autoselect=true
-      shift
-      ;;
-      --dd)
-      useDD=true
-      shouldMakeFAT32Partition=false
-      shift
-      ;;
-      --no-mime-check)
-      disableMimeCheck=true
-      shift
-      ;;
-      --no-usb-check)
-      disableUSBCheck=true
-      shift
-      ;;
-      -h|--help|help)
-      display_help
-      exit 0
-      ;;
-      -l|--list-usb-drives)
-      listDevicesTable
-      exit 0
-      shift
-      ;;
-      -v|--version)
-      echo "$version"
-      exit 0
-      ;;
-      -*)
-      if [ ! -f "$key" ]; then
-        failAndExit "Unknown option \`$key'."
-      fi
-      selectedIsoFile=$1
-      ;;
-      *)
-      selectedIsoFile=$1
-      shift
-      ;;
-    esac
+    if [ "$isEndOfOptions" == 'false' ]; then
+      case $key in
+        -b|--bootloader)
+        addSyslinuxBootloader=true
+        checkpkg 'syslinux'
+        shift
+        ;;
+        -y|--assume-yes)
+        disableConfirmation=true
+        shift
+        ;;
+        -d|--device)
+        selectedDevice="$2"
+        shift
+        shift
+        ;;
+        -J|--no-eject)
+        ejectDevice=false
+        shift
+        ;;
+        -a|--autoselect)
+        autoselect=true
+        shift
+        ;;
+        --dd)
+        useDD=true
+        shouldMakeFAT32Partition=false
+        shift
+        ;;
+        --no-mime-check)
+        disableMimeCheck=true
+        shift
+        ;;
+        --no-usb-check)
+        disableUSBCheck=true
+        shift
+        ;;
+        -h|--help|help)
+        display_help
+        exit 0
+        ;;
+        -l|--list-usb-drives)
+        listDevicesTable
+        exit 0
+        ;;
+        -v|--version)
+        echo "$version"
+        exit 0
+        ;;
+        --)
+        isEndOfOptions=true
+        shift
+        ;;
+        -*)
+        if [ ! -f "$key" ]; then
+          if [[ "$key" =~ ^-[A-Za-z0-9]{2,}$ ]]; then
+            shift
+            typeset options=${key#*-}
+            typeset -a extractedOptions
+            mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
+            set -- "${extractedOptions[@]}" "$@"
+          else
+            failAndExit "Unknown option \`$key'."
+          fi
+        fi
+        selectedIsoFile=$1
+        ;;
+        *)
+        selectedIsoFile=$1
+        shift
+        ;;
+      esac
+  else
+    selectedIsoFile=$1
+    break
+  fi
   done
 }
 
@@ -323,7 +349,7 @@ createTempFolder() {
 mountIsoFile() {
   isoMountPoint=$(createTempFolder iso) || exit 1
   echogood "Created ISO mount point at \`$isoMountPoint'"
-  if ! mount -r -o loop "$selectedIsoFile" "$isoMountPoint" > /dev/null; then
+  if ! mount -r -o loop -- "$selectedIsoFile" "$isoMountPoint" > /dev/null; then
     failAndExit "Could not mount ISO file."
   fi
 }
@@ -379,8 +405,11 @@ selectDevice() {
   }
   if [ "$selectedDevice" == '' ]; then
     # List all hard disk drives
-    listDevicesTable
-    handleDeviceSelection
+    if listDevicesTable; then
+      handleDeviceSelection
+    else
+      failAndExit "There is no USB drive connected to your system.\\nUse --no-usb-check to bypass this detection at your own risk, or replug an plugged device which is likely ejected."
+    fi
   fi
   selectedPartition="${selectedDevice}1"
 }
@@ -607,6 +636,7 @@ main() {
   fi
   endTime=$(date +%s)
   echogood "\`$scriptName' took $((endTime - startTime)) seconds to write ISO to USB device with \`$method' method."
+  operationSuccess=true
 }
 
 cleanup() {
@@ -627,13 +657,15 @@ cleanup() {
         echowarn "Could not unmount USB mount point."
       fi
     fi
-    if [ "$ejectDevice" == 'true' ]; then
-      if eject "$selectedDevice" &> /dev/null; then
-        echogood "USB device succesfully ejected."
-        echogood "You can safely remove it !"
+    if [ "$operationSuccess" == 'true' ]; then
+      if [ "$ejectDevice" == 'true' ]; then
+        if eject "$selectedDevice" &> /dev/null; then
+          echogood "USB device succesfully ejected."
+          echogood "You can safely remove it !"
+        fi
+      else
+        echowarn "USB device ejection skipped with \`-J' option."
       fi
-    else
-      echowarn "USB device ejection skipped with \`-J' option."
     fi
   fi
 }

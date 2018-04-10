@@ -1,3 +1,10 @@
+# v2.4.0
+
+- support for `--` POSIX end of options flag
+- fix bug where no USB device has been found
+- auto eject device on success only
+- support for stacked options such as `-Jbya`
+
 # v2.3.1
 
 - fix wrong file redirections
