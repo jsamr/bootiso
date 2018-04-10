@@ -1,3 +1,10 @@
+# v2.5.0
+
+- allow loose `application/octet-stream` mime type by default in ISO files
+- add `-s`, `--strict-mime-check` option to disallow loose `application/octet-stream` mime type in ISO files
+- fix bug #3: Provided file argument starting with -- cause bootiso to hang
+- better handling of erroneous stacked short options
+
 # v2.4.2
 
 - better feedback when mime type check fails

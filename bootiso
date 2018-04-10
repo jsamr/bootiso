@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.4.2
+# Version 2.5.0
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -22,6 +22,7 @@
 #                               Enabled by default when neither -d nor --no-usb-check options are given.
 #  -J, --no-eject               Do not eject device after unmounting.
 #  -l, --list-usb-drives        List available USB drives and exit.
+#  -s, --strict-mime-check      Disallow loose application/octet-stream mime type in ISO file.
 #  --                           POSIX end of options.
 #  --dd                         Use dd utility and create an iso9660 fs instead of mounting + rsync.
 #                               Does not allow bootloader installation with syslinux.
@@ -53,8 +54,9 @@ if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
   exit 1
 fi
 
-typeset commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel')
+typeset -a commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel')
 typeset -A commandPackages=([lsblk]='util-linux' [sfdisk]='util-linux' [mkfs]='util-linux' [blkid]='util-linux' [wipefs]='util-linux' [grep]='grep' [file]='file' [awk]='gawk' [mlabel]='mtools' [syslinux]='syslinux' [rsync]='rsync')
+typeset shortOptions='bydJahls'
 
 typeset selectedDevice
 typeset selectedPartition
@@ -78,8 +80,9 @@ typeset shouldMakeFAT32Partition=true
 typeset ejectDevice=true
 typeset autoselect=false
 typeset isEndOfOptions=false
+typeset strictMimeCheck=false
 
-typeset version="2.4.2"
+typeset version="2.5.0"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -105,6 +108,7 @@ Options
                              Enabled by default when neither -d nor --no-usb-check options are given.
 -J, --no-eject               Do not eject device after unmounting.
 -l, --list-usb-drives        List available USB drives.
+-s, --strict-mime-check      Disallow loose application/octet-stream mime type in ISO file.
 --                           POSIX end of options.
 --dd                         Use \`dd' utility instead of mounting + \`rsync'.
                              Does not allow bootloader installation with syslinux.
@@ -180,16 +184,34 @@ checkSudo() {
   fi
 }
 
+failISOCheck() {
+  echoerr "Provided file \`$selectedIsoFile' doesn't seem to be an ISO file (wrong mime type: \`$mimetype')."
+  echowarn "Try it with \`--no-mime-check' option."
+  echoerr "Exiting $scriptName..."
+  exit 1
+}
+
 assertISOMimeType() {
   typeset mimetype=$(file --mime-type  -b -- "$selectedIsoFile")
+  typeset -i isOctetStream
   if [ "$disableMimeCheck" == 'true' ]; then
-    echowarn "Mime check has been disabled. Skipping."
+    echowarn "Mime check has been disabled with \`--no-mime-check'. Skipping."
     return 0
   fi
-  if [ ! "$mimetype" == "application/x-iso9660-image" ]; then
-    failAndExit "Provided file \`$selectedIsoFile' doesn't seem to be an ISO file (wrong mime type: \`$mimetype').\\nTry it with \`--no-mime-check' option."
+  [ "$mimetype" == "application/octet-stream"  ]
+  isOctetStream=$?
+  if [ "$strictMimeCheck" == 'true' ] && ((isOctetStream == 0)); then
+    failISOCheck
   fi
-  echogood "The selected ISO file has the right mime type."
+  if ((isOctetStream != 0)) &&  [ ! "$mimetype" == "application/x-iso9660-image" ]; then
+    failISOCheck
+  fi
+  if ((isOctetStream == 0)); then
+    echowarn "Provided file \`$selectedIsoFile' seems to have a loose mime-type \`application/octet-stream'."
+    echowarn "It's possible that it is corrupted and you should control its integrity with a checksum tool."
+  else
+    echogood "The selected ISO file has the right \`application/x-iso9660-image' mime type."
+  fi
   # Label is set to uppercase because FAT32 labels should be
   isoLabel=$(blkid -o value -s LABEL -- "$selectedIsoFile" | awk '{print toupper($0)}')
 }
@@ -274,6 +296,22 @@ parseOptions() {
         autoselect=true
         shift
         ;;
+        -h|--help|help)
+        display_help
+        exit 0
+        ;;
+        -l|--list-usb-drives)
+        listDevicesTable
+        exit 0
+        ;;
+        -v|--version)
+        echo "$version"
+        exit 0
+        ;;
+        -s|--strict-mime-check)
+        strictMimeCheck=true
+        shift
+        ;;
         --dd)
         useDD=true
         shouldMakeFAT32Partition=false
@@ -287,36 +325,32 @@ parseOptions() {
         disableUSBCheck=true
         shift
         ;;
-        -h|--help|help)
-        display_help
-        exit 0
-        ;;
-        -l|--list-usb-drives)
-        listDevicesTable
-        exit 0
-        ;;
-        -v|--version)
-        echo "$version"
-        exit 0
-        ;;
         --)
         isEndOfOptions=true
         shift
         ;;
         -*)
         if [ ! -f "$key" ]; then
-          if [[ "$key" =~ ^-[A-Za-z0-9]{2,}$ ]]; then
+          if [[ "$key" =~ ^-["$shortOptions"]{2,}$ ]]; then
             shift
             typeset options=${key#*-}
             typeset -a extractedOptions
             mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
             set -- "${extractedOptions[@]}" "$@"
           else
-            echoerr "Unknown option \`$key'."
+            printf '\e[0;31m%s\e[m' "Unknown option: "
+            printf '%s' "$key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
+            if [[ "$key" =~ ^-[a-zA-Z0-9]+$ ]]; then
+              typeset wrongOptions=$(printf '%s' "${key#*-}" | grep -Po "[^$shortOptions]" | tr -d '\n')
+              echowarn "Unknown stacked flag(s): \\033[0;31m\`$wrongOptions'\\033[0m."
+            fi
+            echoerr "Exiting $scriptName..."
             exit 2
           fi
+        else
+          selectedIsoFile=$1
+          shift
         fi
-        selectedIsoFile=$1
         ;;
         *)
         selectedIsoFile=$1
@@ -414,7 +448,10 @@ selectDevice() {
     if listDevicesTable; then
       handleDeviceSelection
     else
-      failAndExit "There is no USB drive connected to your system.\\nUse --no-usb-check to bypass this detection at your own risk, or replug an plugged device which is likely ejected."
+      echoerr "There is no USB drive connected to your system."
+      echowarn "Use \`--no-usb-check' to bypass this detection at your own risk, or replug an plugged device which is likely ejected."
+      echoerr "Exiting $scriptName..."
+      exit 1
     fi
   fi
   selectedPartition="${selectedDevice}1"
@@ -440,7 +477,10 @@ assertDeviceIsUSB() {
   fi
   deviceType=$(getDeviceType "$selectedDevice")
   if [ "$deviceType" != "usb" ]  ; then
-    failAndExit "The device you selected is not connected through USB (found BUS: \`$deviceType').\\nUse \`--no-usb-check' option to bypass this limitation at your own risks."
+    echoerr "The device you selected is not connected through USB (found BUS: \`$deviceType')."
+    echowarn "Use \`--no-usb-check' option to bypass this limitation at your own risks."
+    echoerr "Exiting $scriptName..."
+    exit 1
   fi
   echogood "The selected device \`$selectedDevice' is connected through USB."
 }
