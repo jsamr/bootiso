@@ -11,7 +11,7 @@ Don't want to messup with the system with `dd` command? Create a bootable USB fr
 
     bootiso [<options>...] <file.iso>
 
-Note that **short POSIX options can be stacked** since v2.4.0 like so: `-Jaybd /dev/sde`
+Note that **short POSIX options can be stacked** as of **v2.4.0**, like so: `-Jaybd /dev/sde`
 
 ### Examples
 
