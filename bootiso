@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.4.0
+# Version 2.4.1
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -79,7 +79,7 @@ typeset ejectDevice=true
 typeset autoselect=false
 typeset isEndOfOptions=false
 
-typeset version="2.4.0"
+typeset version="2.4.1"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -134,28 +134,33 @@ failAndExit() {
   exit 1
 }
 
+hasPackage() {
+  which "$1" &> /dev/null
+  return $?
+}
+
 initPckgManager() {
-  if [ ! -z "$(which apt-get)" ]; then # Debian
-  pkgmgr="apt-get -y install"
-  return 0
+  if hasPackage apt-get; then # Debian
+    pkgmgr="apt-get -y install"
+    return 0
   fi
-  if [ ! -z "$(which dnf)" ]; then # Fedora
+  if hasPackage dnf; then # Fedora
     pkgmgr="dnf -y install"
     return 0
   fi
-  if [ ! -z "$(which yum)" ]; then # Fedora
+  if hasPackage yum; then # Fedora
     pkgmgr="yum -y install"
     return 0
   fi
-  if [ ! -z "$(which pacman)" ]; then # Arch
+  if hasPackage pacman; then # Arch
     pkgmgr="pacman -S"
     return 0
   fi
-  if [ ! -z "$(which zypper)" ]; then # OpenSuse
+  if hasPackage zypper; then # OpenSuse
     pkgmgr="zypper install"
     return 0
   fi
-  if [ ! -z "$(which emerge)" ]; then # Gentoo
+  if hasPackage emerge; then # Gentoo
     pkgmgr="emerge"
     return 0
   fi
@@ -190,9 +195,9 @@ assertISOMimeType() {
 }
 
 checkpkg() {
-  if [[ $(which "$1") == "" ]]; then
-    echowarn -n "Package '$1' not found!"
-    if [[ ! $pkgmgr == "" ]]; then
+  if ! hasPackage "$1"; then
+    echowarn "Package '$1' not found!"
+    if [ ! -z "$pkgmgr" ]; then
       read -r -n1 -p "Attempt installation? (y/n)>" answer
       echo
       case $answer in
@@ -307,7 +312,8 @@ parseOptions() {
             mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
             set -- "${extractedOptions[@]}" "$@"
           else
-            failAndExit "Unknown option \`$key'."
+            echoerr "Unknown option \`$key'."
+            exit 2
           fi
         fi
         selectedIsoFile=$1
@@ -329,7 +335,7 @@ checkPackages() {
     checkpkg "$pkg"
   done
   # test grep supports -P option
-  if ! echo 1 | grep -P '1' > /dev/null; then
+  if ! echo 1 | grep -P '1' &> /dev/null; then
     failAndExit "You're using an old version of grep which does not support perl regular expression (-P option)."
   fi
 
@@ -403,7 +409,7 @@ selectDevice() {
       chooseDevice
     fi
   }
-  if [ "$selectedDevice" == '' ]; then
+  if [ -z "$selectedDevice" ]; then
     # List all hard disk drives
     if listDevicesTable; then
       handleDeviceSelection
@@ -488,15 +494,16 @@ mountUSB() {
 
 updateProgress() {
   typeset sp="/-\\|"
-  # print in interactive mode
-  if [ -z "$PS1" ]; then
+  # print when launched from terminal
+  if tty -s; then
     printf "\\b%s" "${sp:i++%${#sp}:1}"
   fi
   sleep 0.25
 }
 
 cleanProgress() {
-  if [ -z "$PS1" ]; then
+  # print when launched from terminal
+  if tty -s; then
     printf "\\b%s\\n" " "
   fi
 }
@@ -528,7 +535,7 @@ rsyncWithProgress() {
   typeset status=$(cat "$statusFile")
   rm "$statusFile"
   if [ ! "$status" -eq 0 ]; then
-    failAndExit "Copy command with \`rsync' failed."
+    failAndExit "Copy command with \`rsync' failed. It's likely that your device has not enough space to contain the ISO image."
   fi
 }
 
@@ -545,7 +552,7 @@ ddWithProgress() {
   typeset status=$(cat "$statusFile")
   rm "$statusFile"
   if [ ! "$status" -eq 0 ]; then
-    failAndExit "Copy command with \`dd' failed."
+    failAndExit "Copy command with \`dd' failed. It's likely that your device has not enough space to contain the ISO image."
   fi
 }
 
@@ -576,7 +583,7 @@ installSyslinux() {
   fi
 }
 
-execWithCp() {
+execWithRsync() {
   mountIsoFile
   partitionUSB
   mountUSB
@@ -593,7 +600,7 @@ checkOptions() {
   if [ -z "$selectedIsoFile" ]; then
     echoerr "Missing argument \`iso-file'."
     display_help
-    exit 1
+    exit 2
   fi
   if [ -d "$selectedIsoFile" ]; then
     failAndExit "Provided file \`$selectedIsoFile' is a directory."
@@ -632,7 +639,7 @@ main() {
     execWithDD
   else
     method='rsync'
-    execWithCp
+    execWithRsync
   fi
   endTime=$(date +%s)
   echogood "\`$scriptName' took $((endTime - startTime)) seconds to write ISO to USB device with \`$method' method."

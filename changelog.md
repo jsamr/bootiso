@@ -1,3 +1,10 @@
+# v2.4.1
+
+- fix test to print spinner if and only if launched from terminal
+- light refactoring
+- return exit code 2 when appropriate (wrong argument)
+- fix a little bug when printing a message during dependency checking
+
 # v2.4.0
 
 - support for `--` POSIX end of options flag
