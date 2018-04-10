@@ -5,7 +5,7 @@
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
 
-Don't want to messup with the system with `dd` command? Create a bootable USB from an ISO [securely](#security) and easily.
+Don't want to messup with the system with `dd` command? Create a bootable USB from an ISO in one line.
 
 ### Synopsis
 
