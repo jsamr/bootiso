@@ -1,3 +1,7 @@
+# v2.4.2
+
+- better feedback when mime type check fails
+
 # v2.4.1
 
 - fix test to print spinner if and only if launched from terminal

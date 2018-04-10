@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.4.1
+# Version 2.4.2
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -79,7 +79,7 @@ typeset ejectDevice=true
 typeset autoselect=false
 typeset isEndOfOptions=false
 
-typeset version="2.4.1"
+typeset version="2.4.2"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -187,7 +187,7 @@ assertISOMimeType() {
     return 0
   fi
   if [ ! "$mimetype" == "application/x-iso9660-image" ]; then
-    failAndExit "Provided file \`$selectedIsoFile' doesn't seem to be an iso file (wrong mime type: \`$mimetype')."
+    failAndExit "Provided file \`$selectedIsoFile' doesn't seem to be an ISO file (wrong mime type: \`$mimetype').\\nTry it with \`--no-mime-check' option."
   fi
   echogood "The selected ISO file has the right mime type."
   # Label is set to uppercase because FAT32 labels should be
