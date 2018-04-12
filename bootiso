@@ -264,6 +264,7 @@ listDevicesTable() {
     return 0
   else
     echowarn "Couldn't find any USB drive in your system."
+    echowarn "If any is physically plugged in, it's likely that it has been ejected and should be plugged out/in to be discoverable."
     return 1
   fi
 }
