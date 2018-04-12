@@ -1,7 +1,7 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?longCache=true)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?longCache=true)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/github/tag/jsamr/bootiso.svg?label=version)]()
-[![GitHub bug issues](https://img.shields.io/github/issues/jsamr/bootiso/bug.svg)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
-[![GitHub enhancement issues](https://img.shields.io/github/issues/jsamr/bootiso/enhancement.svg)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
+[![GitHub bug issues](https://img.shields.io/github/issues/jsamr/bootiso/bug.svg?label=bugs)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+[![GitHub enhancement issues](https://img.shields.io/github/issues/jsamr/bootiso/enhancement.svg?label=enhancements&colorB=41bb13)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
