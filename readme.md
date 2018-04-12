@@ -1,6 +1,7 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![v2.5.2](https://img.shields.io/badge/version-v2.5.2-green.svg)](#)
-[![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=3600)](https://github.com/jsamr/bootiso/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?longCache=true)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/github/tag/jsamr/bootiso.svg?label=version)]()
+[![GitHub bug issues](https://img.shields.io/github/issues/jsamr/bootiso/bug.svg)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+[![GitHub enhancement issues](https://img.shields.io/github/issues/jsamr/bootiso/enhancement.svg)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
