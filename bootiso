@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.5.1
+# Version 2.5.2
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -34,8 +34,8 @@
 # The script walks through the following steps:
 # 1. Request sudo.
 # 2. Check commandDependencies and prompt user to install any missing.
-# 3. If not given the --no-mime-check option, assert that provided ISO exists and has the expected application/x-iso9660-image mime-type via `file' utiltiy. If the assertion fails, exit with error status.
-# 4. If given with -d, --device option, check that the selected device exists and is not a partition. Otherwise, prompt the user to select a device and perform the above-mentioned controls.
+# 3. If not given the -M, --no-mime-check option, assert that provided ISO exists and has the expected application/x-iso9660-image mime-type via `file' utiltiy. If the assertion fails, exit with error status.
+# 4. If given the -d, --device option, check that the selected device exists and is not a partition. Otherwise, prompt the user to select a device and perform the above-mentioned controls.
 # 5. If not given the --no-usb-check option, assert that the given device is connected through USB via `udevadm' utility. If the assertion fails, exit with error status.
 # 6. If not given the -y, --assume-yes option, prompt the user for confirmation that data might be lost for selected device if he goes to next step.
 # 7. Unmount the USB if mounted, blank it and delete existing partitions.
@@ -43,8 +43,9 @@
 # 9. Create a temporary dir to mount the ISO file and mount it.
 # 10. Create a temporary dir to mount the USB device and mount it.
 # 11. Copy files from ISO to USB device.
-# 12. If option --bootloader is selected, install a bootloader with syslinux in slow mode.
+# 12. If option -b, --bootloader is selected, install a bootloader with syslinux in slow mode.
 # 13. Unmount devices and remove temporary folders.
+# 14. Eject USB device if -J, --no-eject is not selected
 
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
@@ -82,15 +83,10 @@ typeset autoselect=false
 typeset isEndOfOptions=false
 typeset strictMimeCheck=false
 
-typeset version="2.5.1"
+typeset version="2.5.2"
 typeset help_message="\
+Create a bootable USB from any ISO securely.
 Usage: $scriptName [<options>...] <file.iso>
-
-Bootiso v$version.
-Create a bootable USB from a linux-GNU/unix ISO securely.
-\`$scriptName' prevent any system-wide damages by enforcing the targeted device is on a USB bus.
-By default, create a FAT32 partition, mount and copy with \`rsync'.
-You should use \`--bootloader' option if you want to increase the odds your USB will be bootable at the expense of speed.
 
 Options
 
@@ -100,7 +96,7 @@ Options
                              If <device> is not connected through USB, \`$scriptName' will fail and exit.
                              Device block files are usually situated in /dev/sXX or /dev/hXX.
                              You will be prompted to select a device if you don't use this option.
--b, --bootloader             Install a bootloader with syslinux (safe mode). Does not work with \`--dd' option.
+-b, --bootloader             Install a bootloader with syslinux (safe mode) for non-hybrid ISOs. Does not work with \`--dd' option.
 -y, --assume-yes             \`$scriptName' won't prompt the user for confirmation before erasing and partitioning USB device.
                              \\033[1;33mUse at your own risks.\\033[0m
 -a, --autoselect             Enable autoselecting USB devices in conjunction with -y option.
@@ -115,6 +111,15 @@ Options
                              Does not allow bootloader installation with syslinux.
 --no-usb-check               \`$scriptName' won't assert that selected device is a USB (connected through USB bus).
                              \\033[0;31mUse at your own risks.\\033[0m
+
+Readme
+
+    Bootiso v$version.
+    Author: Jules Samuel Randolph
+    Bugs and new features: https://github.com/jsamr/bootiso/issues
+    If you like bootiso, please help the community by making it visible:
+    * star the project at https://github.com/jsamr/bootiso
+    * upvote those SE post: https://goo.gl/BNRmvm https://goo.gl/YDBvFe
 "
 
 display_help() {

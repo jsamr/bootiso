@@ -1,3 +1,7 @@
+# v2.5.2
+
+- documentation improvements + call for help from the community
+
 # v2.5.1
 
 - add `-M` alias for `--no-mime-check`

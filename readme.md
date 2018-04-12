@@ -1,6 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![v2.5.0](https://img.shields.io/badge/version-v2.5.1-green.svg)](#)
-[![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=0)](https://github.com/jsamr/bootiso/issues)
+[![v2.5.2](https://img.shields.io/badge/version-v2.5.2-green.svg)](#)
+[![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=3600)](https://github.com/jsamr/bootiso/issues)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
@@ -23,7 +23,7 @@ Or provide explicitly the USB device. Command fails and exit if the provided dev
 
     bootiso -d /dev/sde myfile.iso
 
-Add a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) to increase the odds your device will be bootable:
+Add a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) for [non-hybrid ISOs](https://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid):
 
     bootiso -bd /dev/sde myfile.iso
 
@@ -47,6 +47,14 @@ Optionally, move the script to a bin path
 
 Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
 
+
+### Help the community
+
+If you like `bootiso`, please help the community find it by **staring the project** and **upvoting those SE posts**:
+
+- [How to create a bootable Ubuntu USB flash drive from terminal?](https://goo.gl/BNRmvm)
+- [How to create a bootable USB from one ISO file securely from the shell?](https://goo.gl/YDBvFe)
+
 ### See it in action
 
 #### Using `--assume-yes` + `--autoselect`
@@ -64,7 +72,7 @@ Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
 | `-h`                            | `--help`                                                   | Display a help message and exit.                                                                                                                                                                                                                        |
 | `-v`                            | `--version`                                                | Display version and exit.                                                                                                                                                                                                                               |
 | `-d <device>`                   | `--device <device>`                                        | Select <device> block file as USB device. If `<device>` is not connected through a USB bus, bootiso will fail and exit. Device block files are usually situated in `/dev/sXX` or `/dev/hXX`. You will be prompted to select a device if you don't use this option.        |
-| `-b`                            | `--bootloader`                                             | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode). Does not work with `--dd` option.                                                                                                                                  |
+| `-b`                            | `--bootloader`                                             | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode) for non-hybrid ISOs. Does not work with `--dd` option.                                                                                                                                  |
 | `-y`                            | `--assume-yes`                                             | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                                       |
 | `-a`                            | `--autoselect`                                             | Enable autoselecting USB devices in conjunction with `-y` option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither `-d` nor `--no-usb-check` options are given. |
 | `-J`                            | `--no-eject`                                               | Do not eject device after unmounting.                                                                                                                                                                                                                   |
@@ -95,8 +103,8 @@ This script walks through the following steps:
 
 1. Request sudo.
 2. Check dependencies and prompt user to install any missing.
-3. If not given the `--no-mime-check option`, assert that provided ISO exists and has the expected `application/x-iso9660-image` mime-type via `file` utiltiy. If the assertion fails, exit with error status.
-4. If given with `-d`, `--device` option, check that the selected device exists and is not a partition. Otherwise, prompt the user to select a device and perform the above-mentioned controls.
+3. If not given the `-M`, `--no-mime-check` option, assert that provided ISO exists and has the expected `application/x-iso9660-image` mime-type via `file` utiltiy. If the assertion fails, exit with error status.
+4. If given the `-d`, `--device` option, check that the selected device exists and is not a partition. Otherwise, prompt the user to select a device and perform the above-mentioned controls.
 5. If not given the `--no-usb-check` option, assert that the given device is connected through USB via `udevadm` utility. If the assertion fails, exit with error status.
 6. If not given the `-y`, `--assume-yes` option, prompt the user for confirmation that data might be lost for selected device if he goes to next step.
 7. Unmount the USB if mounted, blank it and delete existing partitions.
@@ -104,8 +112,9 @@ This script walks through the following steps:
 9. Create a temporary dir to mount the ISO file and mount it.
 10. Create a temporary dir to mount the USB device and mount it.
 11. Copy files from ISO to USB device.
-12. If option `--bootloader` is selected, install a bootloader with syslinux in slow mode.
+12. If option `-b`, `--bootloader` is selected, install a bootloader with syslinux in slow mode.
 13. Unmount devices and remove temporary folders.
+14. Eject USB device if `-J`, `--no-eject` is not selected
 
 ### Credits
 
