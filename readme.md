@@ -68,21 +68,78 @@ If you like `bootiso`, please help the community find it by **staring the projec
 
 ### Options
 
-| Option&nbsp;(POSIX,&nbsp;short) | Option&nbsp;(GNU,&nbsp;long)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Description                                                                                                                                                                                                                                             |
-| ------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-h`                            | `--help`                                                   | Display a help message and exit.                                                                                                                                                                                                                        |
-| `-v`                            | `--version`                                                | Display version and exit.                                                                                                                                                                                                                               |
-| `-d <device>`                   | `--device <device>`                                        | Select <device> block file as USB device. If `<device>` is not connected through a USB bus, bootiso will fail and exit. Device block files are usually situated in `/dev/sXX` or `/dev/hXX`. You will be prompted to select a device if you don't use this option.        |
-| `-b`                            | `--bootloader`                                             | Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode) for non-hybrid ISOs. Does not work with `--dd` option.                                                                                                                                  |
-| `-y`                            | `--assume-yes`                                             | bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.                                                                                                                                       |
-| `-a`                            | `--autoselect`                                             | Enable autoselecting USB devices in conjunction with `-y` option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither `-d` nor `--no-usb-check` options are given. |
-| `-J`                            | `--no-eject`                                               | Do not eject device after unmounting.                                                                                                                                                                                                                   |
-| `-l`                            | `--list-usb-drives`                                        | List available USB drives.                                                                                                                                                                                                                              |
-| `-M`                            | `--no-mime-check`                                          | bootiso won't assert that selected ISO file has the right mime-type.                                                                                                                                                                                  |
-| `-s`                            | `--strict-mime-check`                                      | Disallow loose application/octet-stream mime type in ISO file.                                                                                                                                                                                          |
-|                                 | `--`                                                       | POSIX end of options.                                                                                                                                                                                                                                   |
-|                                 | `--dd`                                                     | Use dd utility instead of mounting + rsync. Does not allow bootloader installation with syslinux.                                                                                                                                                       |
-|                                 | `--no-usb-check`                                           | bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.                                                                                                                                                  |
+<table>
+  <tr>
+    <th>Option (POSIX&nbsp;short)</th>
+    <th>Option (GNU,&nbsp;long) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>`-h`</td>
+    <td>`--help`</td>
+    <td>Display a help message and exit.</td>
+  </tr>
+  <tr>
+    <td>`-v`</td>
+    <td>`--version`</td>
+    <td>Display version and exit.</td>
+  </tr>
+  <tr>
+    <td>`-d <device>`</td>
+    <td>`--device <device>`</td>
+    <td>Select `<device>` block file as USB device. If `<device>` is not connected through a USB bus, bootiso will fail and exit. Device block files are usually situated in `/dev/sXX` or `/dev/hXX`. You will be prompted to select a device if you don't use this option.</td>
+  </tr>
+  <tr>
+    <td>`-b`</td>
+    <td>`--bootloader`</td>
+    <td>Install a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) (safe mode) for non-hybrid ISOs. Does not work with `--dd` option.</td>
+  </tr>
+  <tr>
+    <td>`-y`</td>
+    <td>`--assume-yes`</td>
+    <td>bootiso won't prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.</td>
+  </tr>
+  <tr>
+    <td>`-a`</td>
+    <td>`--autoselect`</td>
+    <td>Enable autoselecting USB devices in conjunction with `-y` option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither `-d` nor `--no-usb-check` options are given.</td>
+  </tr>
+  <tr>
+    <td>`-J`</td>
+    <td>`--no-eject`</td>
+    <td>Do not eject device after unmounting.</td>
+  </tr>
+  <tr>
+    <td>`-l`</td>
+    <td>`--list-usb-drives`</td>
+    <td>List available USB drives.</td>
+  </tr>
+  <tr>
+    <td>`-M`</td>
+    <td>`--no-mime-check`</td>
+    <td>bootiso won't assert that selected ISO file has the right mime-type.</td>
+  </tr>
+  <tr>
+    <td>`-s`</td>
+    <td>`--strict-mime-check`</td>
+    <td>Disallow loose `application/octet-stream` mime type in ISO file.</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>`--`</td>
+    <td>POSIX end of options.</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>`--dd`</td>
+    <td>Use `dd` utility instead of mounting + `rsync`. Does not allow bootloader installation with syslinux.</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>`--no-usb-check`</td>
+    <td>bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.</td>
+  </tr>
+</table>                                                                                                                         |
 
 <a name="security" />
 
