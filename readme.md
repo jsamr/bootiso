@@ -1,6 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![v2.5.0](https://img.shields.io/badge/version-v2.5.0-green.svg)](#)
-[![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=2592000)](https://github.com/jsamr/bootiso/issues)
+[![v2.5.0](https://img.shields.io/badge/version-v2.5.1-green.svg)](#)
+[![GitHub issues open](https://img.shields.io/github/issues/jsamr/bootiso.svg?maxAge=0)](https://github.com/jsamr/bootiso/issues)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
@@ -69,9 +69,10 @@ Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
 | `-a`                            | `--autoselect`                                             | Enable autoselecting USB devices in conjunction with `-y` option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither `-d` nor `--no-usb-check` options are given. |
 | `-J`                            | `--no-eject`                                               | Do not eject device after unmounting.                                                                                                                                                                                                                   |
 | `-l`                            | `--list-usb-drives`                                        | List available USB drives.                                                                                                                                                                                                                              |
+| `-M`                            | `--no-mime-check`                                          | bootiso won't assert that selected ISO file has the right.` mime-type.                                                                                                                                                                                  |
+| `-s`                            | `--strict-mime-check`                                      | Disallow loose application/octet-stream mime type in ISO file.                                                                                                                                                                                          | 
 |                                 | `--`                                                       | POSIX end of options.                                                                                                                                                                                                                                   |
 |                                 | `--dd`                                                     | Use dd utility instead of mounting + rsync. Does not allow bootloader installation with syslinux.                                                                                                                                                       |
-|                                 | `--no-mime-check`                                          | bootiso won't assert that selected ISO file has the right mime-type.                                                                                                                                                                                    |
 |                                 | `--no-usb-check`                                           | bootiso won't assert that selected device is a USB (connected through USB bus). Use at your own risks.                                                                                                                                                  |
 
 <a name="security" />

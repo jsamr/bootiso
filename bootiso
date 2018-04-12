@@ -2,7 +2,7 @@
 
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.5.0
+# Version 2.5.1
 #
 # Usage: [<options>...] <file.iso>
 #
@@ -22,11 +22,11 @@
 #                               Enabled by default when neither -d nor --no-usb-check options are given.
 #  -J, --no-eject               Do not eject device after unmounting.
 #  -l, --list-usb-drives        List available USB drives and exit.
+#  -M, --no-mime-check          bootiso won't assert that selected ISO file has the right mime-type.
 #  -s, --strict-mime-check      Disallow loose application/octet-stream mime type in ISO file.
 #  --                           POSIX end of options.
 #  --dd                         Use dd utility and create an iso9660 fs instead of mounting + rsync.
 #                               Does not allow bootloader installation with syslinux.
-#  --no-mime-check              bootiso won't assert that selected ISO file has the right mime-type.
 #  --no-usb-check               bootiso won't assert that selected device is a USB (connected through USB bus).
 #
 # How it works
@@ -56,7 +56,7 @@ fi
 
 typeset -a commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel')
 typeset -A commandPackages=([lsblk]='util-linux' [sfdisk]='util-linux' [mkfs]='util-linux' [blkid]='util-linux' [wipefs]='util-linux' [grep]='grep' [file]='file' [awk]='gawk' [mlabel]='mtools' [syslinux]='syslinux' [rsync]='rsync')
-typeset shortOptions='bydJahls'
+typeset shortOptions='bydJahlsM'
 
 typeset selectedDevice
 typeset selectedPartition
@@ -82,7 +82,7 @@ typeset autoselect=false
 typeset isEndOfOptions=false
 typeset strictMimeCheck=false
 
-typeset version="2.5.0"
+typeset version="2.5.1"
 typeset help_message="\
 Usage: $scriptName [<options>...] <file.iso>
 
@@ -108,11 +108,11 @@ Options
                              Enabled by default when neither -d nor --no-usb-check options are given.
 -J, --no-eject               Do not eject device after unmounting.
 -l, --list-usb-drives        List available USB drives.
+-M, --no-mime-check          \`$scriptName' won't assert that selected ISO file has the right mime-type.
 -s, --strict-mime-check      Disallow loose application/octet-stream mime type in ISO file.
 --                           POSIX end of options.
 --dd                         Use \`dd' utility instead of mounting + \`rsync'.
                              Does not allow bootloader installation with syslinux.
---no-mime-check              \`$scriptName' won't assert that selected ISO file has the right mime-type.
 --no-usb-check               \`$scriptName' won't assert that selected device is a USB (connected through USB bus).
                              \\033[0;31mUse at your own risks.\\033[0m
 "
@@ -308,6 +308,10 @@ parseOptions() {
         echo "$version"
         exit 0
         ;;
+        -M|--no-mime-check)
+        disableMimeCheck=true
+        shift
+        ;;
         -s|--strict-mime-check)
         strictMimeCheck=true
         shift
@@ -315,10 +319,6 @@ parseOptions() {
         --dd)
         useDD=true
         shouldMakeFAT32Partition=false
-        shift
-        ;;
-        --no-mime-check)
-        disableMimeCheck=true
         shift
         ;;
         --no-usb-check)

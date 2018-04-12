@@ -1,3 +1,7 @@
+# v2.5.1
+
+- add `-M` alias for `--no-mime-check`
+
 # v2.5.0
 
 - allow loose `application/octet-stream` mime type by default in ISO files
