@@ -11,9 +11,9 @@
 # Options
 #  -h, --help, help             Display this help message.
 #  -v, --version                Display version and exit.
-#  -d, --device  <device>       Select <device> as USB device.
+#  -d, --device  <device>       Select <device> block file as USB device.
 #                               If <device> is not connected through USB, bootiso will fail and exit.
-#                               Device should be in the form /dev/sXX or /dev/hXX.
+#                               Device block files are usually situated in /dev/sXX or /dev/hXX.
 #                               You will be prompted to select a device if you don't use this option.
 #  -b, --bootloader             Install a bootloader with syslinux (safe mode). Does not work with --dd option.
 #  -y, --assume-yes             bootiso won't prompt the user for confirmation before erasing and partitioning USB device.
@@ -96,9 +96,9 @@ Options
 
 -h, --help, help             Display this help message and exit.
 -v, --version                Display version and exit.
--d, --device  <device>       Select <device> as USB device.
-                             If <device> is not connected through a USB bus, \`$scriptName' will fail and exit.
-                             Device name should be in the form /dev/sXX or /dev/hXX.
+-d, --device  <device>       Select <device> block file as USB device.
+                             If <device> is not connected through USB, \`$scriptName' will fail and exit.
+                             Device block files are usually situated in /dev/sXX or /dev/hXX.
                              You will be prompted to select a device if you don't use this option.
 -b, --bootloader             Install a bootloader with syslinux (safe mode). Does not work with \`--dd' option.
 -y, --assume-yes             \`$scriptName' won't prompt the user for confirmation before erasing and partitioning USB device.
