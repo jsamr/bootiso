@@ -1,7 +1,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?longCache=true)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/github/tag/jsamr/bootiso.svg?label=version)]()
-[![GitHub bug issues](https://img.shields.io/github/issues/jsamr/bootiso/bug.svg?label=bugs)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
-[![GitHub enhancement issues](https://img.shields.io/github/issues/jsamr/bootiso/enhancement.svg?label=enhancements&colorB=41bb13)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
+[![GitHub open bugs](https://img.shields.io/github/issues-raw/jsamr/bootiso/bug.svg?label=open%20bugs)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+[![GitHub closed bugs](https://img.shields.io/github/issues-closed-raw/jsamr/bootiso/bug.svg?label=resolved%20bugs&colorB=41bb13)](https://github.com/jsamr/bootiso/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aclosed+label%3Abug+)
+[![GitHub enhancement issues](https://img.shields.io/github/issues-raw/jsamr/bootiso/enhancement.svg?label=scheduled%20enhancements&colorB=41bb13)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
+[![Maintainability](https://api.codeclimate.com/v1/badges/2c3e1966005419f4d2b4/maintainability)](https://codeclimate.com/github/jsamr/bootiso/maintainability)
 [![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
@@ -12,7 +14,7 @@ Don't want to messup with the system with `dd` command? Create a bootable USB fr
 
     bootiso [<options>...] <file.iso>
 
-Note that **short POSIX options can be stacked** as of **v2.4.0**, like so: `-Jaybd /dev/sde`
+With [`<options>` listed in the bellow section](#options).
 
 ### Examples
 
@@ -68,6 +70,9 @@ If you like `bootiso`, please help the community find it by **staring the projec
 
 ### Options
 
+Note that **short POSIX options can be stacked** as of **v2.4.0**, like so: `bootiso -Jaybd /dev/sde`
+
+<a name="options"/>
 <table>
   <tr>
     <th>Option<br/>(POSIX&nbsp;short)&nbsp;<br/></th>

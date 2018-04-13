@@ -1,3 +1,6 @@
+version: "2"
 plugins:
   shellcheck:
     enabled: true
+exclude_paths:
+  - "!bootiso"
