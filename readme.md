@@ -1,10 +1,9 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/265cd295501a461281ef11f97fb1db80)](https://app.codacy.com/app/jsamr/bootiso?utm_source=github.com&utm_medium=referral&utm_content=jsamr/bootiso&utm_campaign=badger)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?longCache=true)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/github/tag/jsamr/bootiso.svg?label=version)]()
+[![Codacy grade](https://img.shields.io/codacy/grade/9f441cf6a1d6475484a9bb3ec2ed9713.svg)](https://app.codacy.com/app/jsamr/bootiso?utm_source=github.com&utm_medium=referral&utm_content=jsamr/bootiso&utm_campaign=badger)
 [![GitHub open bugs](https://img.shields.io/github/issues-raw/jsamr/bootiso/bug.svg?label=open%20bugs)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
 [![GitHub closed bugs](https://img.shields.io/github/issues-closed-raw/jsamr/bootiso/bug.svg?label=resolved%20bugs&colorB=41bb13)](https://github.com/jsamr/bootiso/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aclosed+label%3Abug+)
 [![GitHub enhancement issues](https://img.shields.io/github/issues-raw/jsamr/bootiso/enhancement.svg?label=scheduled%20enhancements&colorB=41bb13)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
-[![Build Status](https://travis-ci.org/jsamr/bootiso.svg?branch=master)](https://travis-ci.org/jsamr/bootiso)
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
 
@@ -156,7 +155,7 @@ Note that **short POSIX options can be stacked** as of **v2.4.0**, like so: `boo
 ✔ bootiso prompts the user for confirmation before erasing and paritioning USB device.  
 ✔ bootiso will handle any failure from a command properly and exit.  
 ✔ bootiso will call a cleanup routine on exit with `trap`.  
-✔ bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see travis build status).
+✔ bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see code quality badge from codacy).
 
 This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 
