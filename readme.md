@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/265cd295501a461281ef11f97fb1db80)](https://app.codacy.com/app/jsamr/bootiso?utm_source=github.com&utm_medium=referral&utm_content=jsamr/bootiso&utm_campaign=badger)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?longCache=true)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/github/tag/jsamr/bootiso.svg?label=version)]()
 [![GitHub open bugs](https://img.shields.io/github/issues-raw/jsamr/bootiso/bug.svg?label=open%20bugs)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
