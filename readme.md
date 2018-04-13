@@ -155,7 +155,7 @@ Note that **short POSIX options can be stacked** as of **v2.4.0**, like so: `boo
 ✔ bootiso prompts the user for confirmation before erasing and paritioning USB device.  
 ✔ bootiso will handle any failure from a command properly and exit.  
 ✔ bootiso will call a cleanup routine on exit with `trap`.  
-✔ bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see code quality badge from codacy).
+✔ bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see [code quality status from codacy](https://app.codacy.com/app/jsamr/bootiso/dashboard)).
 
 This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 
