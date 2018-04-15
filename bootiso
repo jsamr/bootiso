@@ -1,35 +1,54 @@
 #!/bin/bash
-
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 2.5.2
+# Version 2.6.0
 #
-# Usage: [<options>...] <file.iso>
+# Create a bootable USB from any ISO securely.
+# Usage: bootiso [<options>...] <file.iso>
+#        bootiso --dd [<options>...] <file.iso>
+#        bootiso <action> [<options>...]
 #
-# Create a bootable FAT32 USB device from a linux-GNU/unix ISO.
+# The default action as per first synopsis is to install an ISO file to a USB device with rsync.
+# Option and action flags can be stacked in their POSIX form.
 #
-# Options
-#  -h, --help, help             Display this help message.
-#  -v, --version                Display version and exit.
-#  -d, --device  <device>       Select <device> block file as USB device.
-#                               If <device> is not connected through USB, bootiso will fail and exit.
-#                               Device block files are usually situated in /dev/sXX or /dev/hXX.
-#                               You will be prompted to select a device if you don't use this option.
-#  -b, --bootloader             Install a bootloader with syslinux (safe mode). Does not work with --dd option.
-#  -y, --assume-yes             bootiso won't prompt the user for confirmation before erasing and partitioning USB device.
-#  -a, --autoselect             Enable autoselecting USB devices in conjunction with -y option.
-#                               Autoselect will automatically select a USB drive device if there is exactly one connected to the system.
-#                               Enabled by default when neither -d nor --no-usb-check options are given.
-#  -J, --no-eject               Do not eject device after unmounting.
-#  -l, --list-usb-drives        List available USB drives and exit.
-#  -M, --no-mime-check          bootiso won't assert that selected ISO file has the right mime-type.
-#  -s, --strict-mime-check      Disallow loose application/octet-stream mime type in ISO file.
-#  --                           POSIX end of options.
-#  --dd                         Use dd utility and create an iso9660 fs instead of mounting + rsync.
-#                               Does not allow bootloader installation with syslinux.
-#  --no-usb-check               bootiso won't assert that selected device is a USB (connected through USB bus).
+# ACTION FLAGS
 #
-# How it works
+# You can change the action with bellow flags:
+#
+# -h, --help, help             Display this help message and exit.
+# -v, --version                Display version and exit.
+# -l, --list-usb-drives        List available USB drives and exit.
+# -f, --format                 Format selected USB drive and exit.
+#     --dd                     Install ISO with `dd' utility instead of mounting + `rsync'.
+#                              Does not allow bootloader installation with syslinux.
+# OPTION FLAGS
+#
+# -d, --device  <device>       Select <device> block file as USB device.
+#                              If <device> is not connected through USB, `bootiso' will fail and exit.
+#                              Device block files are usually situated in /dev/sdX or /dev/hdX.
+#                              You will be prompted to select a device if you don't use this option.
+# -t, --type <type>            Format to `<type>' instead of standard FAT32 (vfat). Supported types: vfat exfat ntfs ext3 ext4 f2fs.
+#                              Only works with `install-rsync' and `format' actions.
+# -L, --label <label>          Use `<label>' instead of ISO name. Also work with `-f' option.
+#                              `bootiso' will strip labels which are too long regarding the selected filesystem (-t), and uppercase
+#                              FAT32 (vfat) labels.
+# -b, --bootloader             Install a bootloader with syslinux (safe mode) for non-hybrid ISOs.
+#                              Does not work with `--dd' option.
+#                              Does not works when selecting a partition type different from FAT32 (vfat).
+# -y, --assume-yes             `bootiso' won't prompt the user for confirmation before erasing and partitioning USB device.
+#                              [1;33mUse at your own risks.[0m
+# -a, --autoselect             Enable autoselecting USB devices in conjunction with -y option.
+#                              Autoselect will automatically select a USB drive device if there is exactly one connected to the system.
+#                              Enabled by default when neither -d nor --no-usb-check options are given.
+# -J, --no-eject               Do not eject device after unmounting.
+# -M, --no-mime-check          `bootiso' won't assert that selected ISO file has the right mime-type.
+# -s, --strict-mime-check      Disallow loose application/octet-stream mime type in ISO file.
+#     --                       POSIX end of options.
+#     --no-usb-check           `bootiso' won't assert that selected device is a USB (connected through USB bus).
+#                              [0;31mUse at your own risks.[0m
+#
+#
+# How it works (install-rsync action)
 #
 # The script walks through the following steps:
 # 1. Request sudo.
@@ -39,7 +58,7 @@
 # 5. If not given the --no-usb-check option, assert that the given device is connected through USB via `udevadm' utility. If the assertion fails, exit with error status.
 # 6. If not given the -y, --assume-yes option, prompt the user for confirmation that data might be lost for selected device if he goes to next step.
 # 7. Unmount the USB if mounted, blank it and delete existing partitions.
-# 8. Create a FAT32 partition on the USB device.
+# 8. Create a partition on the USB device.
 # 9. Create a temporary dir to mount the ISO file and mount it.
 # 10. Create a temporary dir to mount the USB device and mount it.
 # 11. Copy files from ISO to USB device.
@@ -47,77 +66,175 @@
 # 13. Unmount devices and remove temporary folders.
 # 14. Eject USB device if -J, --no-eject is not selected
 
+set -o pipefail
+set -E
+
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
 if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
-  echo "You need bash v4+ to run this script. Aborting..."
+  echoerr "You need bash v4+ to run this script. Aborting..."
   exit 1
 fi
 
-typeset -a commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel')
-typeset -A commandPackages=([lsblk]='util-linux' [sfdisk]='util-linux' [mkfs]='util-linux' [blkid]='util-linux' [wipefs]='util-linux' [grep]='grep' [file]='file' [awk]='gawk' [mlabel]='mtools' [syslinux]='syslinux' [rsync]='rsync')
-typeset shortOptions='bydJahlsM'
+# program constrains definitions
+typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel')
+typeset -Ar commandPackages=(
+  [lsblk]='util-linux'
+  [sfdisk]='util-linux'
+  [mkfs]='util-linux'
+  [blkid]='util-linux'
+  [wipefs]='util-linux'
+  [grep]='grep'
+  [file]='file'
+  [awk]='gawk'
+  [mlabel]='mtools'
+  [syslinux]='syslinux'
+  [rsync]='rsync'
+)
+typeset shortOptions='bydJahlsMftL'
+typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
+typeset -Ar userVarsCompatibilityMatrix=(
+  [iso-file]='install-rsync install-dd'
+  [device]='install-rsync install-dd format'
+  [type]='install-rsync format'
+  [label]='install-rsync format'
+)
+typeset -Ar userFlagsCompatibilityMatrix=(
+  [bootloader]='install-rsync format'
+  [assume-yes]='install-rsync install-dd format'
+  [no-eject]='install-rsync install-dd format'
+  [autoselect]='install-rsync install-dd format'
+  [no-mime-check]='install-rsync install-dd'
+  [strict-mime-check]='install-rsync install-dd'
+  [no-usb-check]='install-rsync install-dd format'
+)
 
-typeset selectedDevice
+# internal variables
+typeset version="2.6.0"
 typeset selectedPartition
-typeset selectedIsoFile
-typeset isoLabel
 typeset isoMountPoint
 typeset usbMountPoint
 typeset startTime
 typeset endTime
 typeset -a devicesList
-typeset operationSuccess=false
+typeset operationSuccess
+typeset expectingISOFile
+
+typeset -A userFlags=(
+  # Actions
+  [help]=''
+  [version]=''
+  [list-usb-drives]=''
+  [format]=''
+  [dd]=''
+  # Options
+  [bootloader]=''
+  [assume-yes]=''
+  [device]=''
+  [no-eject]=''
+  [autoselect]=''
+  [no-mime-check]=''
+  [strict-mime-check]=''
+  [no-usb-check]=''
+)
+
+typeset -A userVars=(
+  [iso-file]=''
+  [device]=''
+  [type]=''
+  [label]=''
+)
+
+# user defined variables
+typeset selectedIsoFile
+typeset selectedDevice
+typeset partitionLabel
+typeset partitionType # default to vfat
+typeset action='install-rsync'
 
 # options
+typeset addSyslinuxBootloader
+typeset disableMimeCheck
+typeset disableUSBCheck
+typeset disableConfirmation
+typeset autoselect
+typeset strictMimeCheck
+typeset shouldMakePartition
+typeset noDeviceEjection
 
-typeset addSyslinuxBootloader=false
-typeset disableMimeCheck=false
-typeset disableUSBCheck=false
-typeset disableConfirmation=false
-typeset useDD=false
-typeset shouldMakeFAT32Partition=true
-typeset ejectDevice=true
-typeset autoselect=false
-typeset isEndOfOptions=false
-typeset strictMimeCheck=false
+# $1: The text to colorify.
+redify() {
+  echo -e "\\033[0;31m$1\\033[0m"
+}
 
-typeset version="2.5.2"
+# $1: The text to colorify.
+greenify() {
+  echo -e "\\033[0;32m$1\\033[0m"
+}
+
+# $1: The text to colorify.
+yellowify() {
+ echo -e "\\033[1;33m$1\\033[0m"
+}
+
 typeset help_message="\
 Create a bootable USB from any ISO securely.
 Usage: $scriptName [<options>...] <file.iso>
+       $scriptName --dd [<options>...] <file.iso>
+       $scriptName <action> [<options>...]
 
-Options
+The default action [install-rsync] as per first synopsis is to install an ISO file to a USB device with rsync.
+Option and action flags can be stacked in their POSIX form.
 
--h, --help, help             Display this help message and exit.
--v, --version                Display version and exit.
+ACTION FLAGS
+
+You can change the default [install-rsync] action with bellow flags (cannonical names given in brackets):
+
+-h, --help, help             [help]
+                             Display this help message and exit.
+-v, --version                [version]
+                             Display version and exit.
+-l, --list-usb-drives        [list-usb-drives]
+                             List available USB drives and exit.
+-f, --format                 [format]
+                             Format selected USB drive and exit.
+     --dd                    [install-dd]
+                             Install ISO with \`dd' utility instead of mounting + \`rsync'.
+                             Does not allow bootloader installation with syslinux.
+OPTION FLAGS
+
 -d, --device  <device>       Select <device> block file as USB device.
-                             If <device> is not connected through USB, \`$scriptName' will fail and exit.
-                             Device block files are usually situated in /dev/sXX or /dev/hXX.
+                             If <device> is not connected through USB, $scriptName will fail and exit.
+                             Device block files are usually situated in /dev/sdX or /dev/hdX.
                              You will be prompted to select a device if you don't use this option.
--b, --bootloader             Install a bootloader with syslinux (safe mode) for non-hybrid ISOs. Does not work with \`--dd' option.
--y, --assume-yes             \`$scriptName' won't prompt the user for confirmation before erasing and partitioning USB device.
-                             \\033[1;33mUse at your own risks.\\033[0m
+-t, --type <type>            Format to \`<type>' instead of standard FAT32 (vfat). Supported types: ${supportedFS[*]}.
+                             Only works with [install-rsync] and [format] actions.
+-L, --label <label>          Use \`<label>' instead of ISO name. Also work with \`-f' option.
+                             $scriptName will strip labels which are too long regarding the selected filesystem (-t), and uppercase
+                             FAT32 (vfat) labels.
+-b, --bootloader             Install a bootloader with syslinux (safe mode) for non-hybrid ISOs.
+                             Does not work with \`--dd' flag [install-dd].
+                             Does not works when selecting a partition type different from FAT32 (vfat).
+-y, --assume-yes             $scriptName won't prompt the user for confirmation before erasing and partitioning USB device.
+                             $(yellowify 'Use at your own risks.')
 -a, --autoselect             Enable autoselecting USB devices in conjunction with -y option.
                              Autoselect will automatically select a USB drive device if there is exactly one connected to the system.
-                             Enabled by default when neither -d nor --no-usb-check options are given.
+                             Enabled by default when neither \`-d' nor \`--no-usb-check' options are given.
 -J, --no-eject               Do not eject device after unmounting.
--l, --list-usb-drives        List available USB drives.
--M, --no-mime-check          \`$scriptName' won't assert that selected ISO file has the right mime-type.
+-M, --no-mime-check          $scriptName won't assert that selected ISO file has the right mime-type.
 -s, --strict-mime-check      Disallow loose application/octet-stream mime type in ISO file.
---                           POSIX end of options.
---dd                         Use \`dd' utility instead of mounting + \`rsync'.
-                             Does not allow bootloader installation with syslinux.
---no-usb-check               \`$scriptName' won't assert that selected device is a USB (connected through USB bus).
-                             \\033[0;31mUse at your own risks.\\033[0m
+    --                       POSIX end of options.
+    --no-usb-check           $scriptName won't assert that selected device is a USB (connected through USB bus).
+                             $(redify 'Use at your own risks.')
 
-Readme
+INFO
 
     Bootiso v$version.
     Author: Jules Samuel Randolph
     Bugs and new features: https://github.com/jsamr/bootiso/issues
-    If you like bootiso, please help the community by making it visible:
+
+    If you like bootiso, feel free to help the community by making it visible:
     * star the project at https://github.com/jsamr/bootiso
     * upvote those SE post: https://goo.gl/BNRmvm https://goo.gl/YDBvFe
 "
@@ -126,25 +243,43 @@ display_help() {
   echo -e "$help_message"
 }
 
+indent() {
+  sed -e ':a;N;$!ba;s/\n/\n         /g'
+}
+
+indentAll() {
+  sed -e 's/^/         /'
+}
+
+# $1: The message to print.
 echoerr() {
-  >&2 echo -e "\\033[0;31m$1\\033[0m"
+  redify "$scriptName: $1" | indent >&2
 }
 
+# $1: The message to print.
 echowarn() {
-  echo -e "\\033[1;33m$1\\033[0m"
+  yellowify "$scriptName: $1" | indent
 }
 
+# $1: The message to print.
 echogood() {
-  echo -e "\\033[0;32m$1\\033[0m"
+  greenify "$scriptName: $1" | indent
 }
 
+# $1: The message to print.
+echoinfo() {
+  echo -e "$scriptName: $1" | indent
+}
+
+# $1: The message to print.
 failAndExit() {
-  echoerr "$1\\nExiting $scriptName..."
+  echoerr "$1\\nExiting..."
   exit 1
 }
 
+# $1: The name of the command to check against $PATH.
 hasPackage() {
-  which "$1" &> /dev/null
+  command -v "$1" &> /dev/null
   return $?
 }
 
@@ -162,7 +297,7 @@ initPckgManager() {
     return 0
   fi
   if hasPackage pacman; then # Arch
-    pkgmgr="pacman -S"
+    pkgmgr="pacman -S --noconfirm"
     return 0
   fi
   if hasPackage zypper; then # OpenSuse
@@ -178,7 +313,7 @@ initPckgManager() {
 
 checkSudo() {
   if ((EUID != 0)); then
-    echo "Granting root privileges for $scriptName."
+    echoinfo "Granting root privileges."
     if [[ -t 1 ]]; then
       sudo "$0" "$@"
     else
@@ -191,14 +326,25 @@ checkSudo() {
 
 failISOCheck() {
   echoerr "Provided file \`$selectedIsoFile' doesn't seem to be an ISO file (wrong mime type: \`$mimetype')."
-  echowarn "Try it with \`--no-mime-check' option."
-  echoerr "Exiting $scriptName..."
+  echowarn "You can bypass this policy with \`-M, --no-mime-check' option, but it is likely that operation will fail."
+  echoerr "Exiting..."
   exit 1
 }
 
-assertISOMimeType() {
-  typeset mimetype=$(file --mime-type  -b -- "$selectedIsoFile")
+assertISOIsOK() {
+  typeset mimetype
   typeset -i isOctetStream
+  if [ -z "$selectedIsoFile" ]; then
+    echoerr "Missing argument \`iso-file'."
+    exit 2
+  fi
+  if [ -d "$selectedIsoFile" ]; then
+    failAndExit "Provided file \`$selectedIsoFile' is a directory."
+  fi
+  if [ ! -f "$selectedIsoFile" ]; then
+    failAndExit "Provided iso file \`$selectedIsoFile' does not exists."
+  fi
+  mimetype=$(file --mime-type  -b -- "$selectedIsoFile")
   if [ "$disableMimeCheck" == 'true' ]; then
     echowarn "Mime check has been disabled with \`--no-mime-check'. Skipping."
     return 0
@@ -211,16 +357,49 @@ assertISOMimeType() {
   if ((isOctetStream != 0)) &&  [ ! "$mimetype" == "application/x-iso9660-image" ]; then
     failISOCheck
   fi
-  if ((isOctetStream == 0)); then
-    echowarn "Provided file \`$selectedIsoFile' seems to have a loose mime-type \`application/octet-stream'."
-    echowarn "It's possible that it is corrupted and you should control its integrity with a checksum tool."
-  else
-    echogood "The selected ISO file has the right \`application/x-iso9660-image' mime type."
+  # warnings
+  if ((EUID == 0)); then
+    if ((isOctetStream == 0)); then
+      echowarn "Provided file \`$selectedIsoFile' seems to have a loose mime-type \`application/octet-stream'.\\nIt's possible that it is corrupted and you should control its integrity with a checksum tool."
+    else
+      echogood "The selected ISO file has the right \`application/x-iso9660-image' mime type."
+    fi
   fi
-  # Label is set to uppercase because FAT32 labels should be
-  isoLabel=$(blkid -o value -s LABEL -- "$selectedIsoFile" | awk '{print toupper($0)}')
 }
 
+configureLabel() {
+  partitionLabel=${partitionLabel:-$(blkid -o value -s LABEL -- "$selectedIsoFile")}
+  case $partitionType in
+    vfat)
+    # Label to uppercase, otherwise some DOS systems won't work properly
+    partitionLabel=${partitionLabel^^}
+    # FAT32 labels have maximum 11 chars
+    partitionLabel=${partitionLabel:0:11}
+    ;;
+    exfat)
+    # EXFAT labels have maximum 15 chars
+    partitionLabel=${partitionLabel:0:15}
+    ;;
+    ntfs)
+    # NTFS labels have maximum 32 chars
+    partitionLabel=${partitionLabel:0:32}
+    ;;
+    ext2|ext3|ext4)
+    # EXT labels have maximum 16 chars
+    partitionLabel=${partitionLabel:0:16}
+    ;;
+  esac
+  # Default to "BOOTISO"
+  partitionLabel=${partitionLabel:-"BOOTISO"}
+  if [ -z "${userVars[label]}" ]; then
+    echogood "Partition label automatically set to \`$partitionLabel'.\\nYou can explicitly set label with \`-L, --label' option."
+  else
+    echogood "Partition label manually set to \`$partitionLabel'."
+  fi
+
+}
+
+# $1: The name of the package command to check.
 checkpkg() {
   if ! hasPackage "$1"; then
     echowarn "Package '$1' not found!"
@@ -243,7 +422,22 @@ checkpkg() {
 fi
 }
 
-joinBy() { local IFS="$1"; shift; echo "$*"; }
+# $1: The string by which elements will be joined.
+# $2-* : the elements to join
+joinBy() {
+  local IFS=$1;
+  shift;
+  echo "$*";
+}
+
+# $1: The element to check.
+# $2-* : the list to check against.
+containsElement () {
+  local e match="$1"
+  shift
+  for e; do [[ "$e" == "$match" ]] && return 0; done
+  return 1
+}
 
 initDevicesList() {
   typeset -a devices
@@ -259,84 +453,112 @@ listDevicesTable() {
   typeset lsblkCmd='lsblk -o NAME,HOTPLUG,SIZE,STATE,TYPE'
   initDevicesList
   if [ "$disableUSBCheck" == 'false' ]; then
-    echo "Listing USB drives available in your system:"
+    echoinfo "Listing USB drives available in your system:"
   else
-    echo "Listing devices available in your system:"
+    echoinfo "Listing devices available in your system:"
   fi
   if [ "${#devicesList[@]}" -gt 0 ]; then
-    $lsblkCmd | sed -n 1p
-    $lsblkCmd | grep --color=never -P "^($(joinBy '|' "${devicesList[@]}"))"
+    $lsblkCmd | sed -n 1p | sed 's/^/         /'
+    $lsblkCmd | grep --color=never -P "^($(joinBy '|' "${devicesList[@]}"))" | sed 's/^/         /'
     return 0
   else
-    echowarn "Couldn't find any USB drive in your system."
-    echowarn "If any is physically plugged in, it's likely that it has been ejected and should be plugged out/in to be discoverable."
+    echowarn "Couldn't find any USB drive in your system.\\nIf any is physically plugged in, it's likely that it has been ejected and should be plugged-in again to be discoverable.\\nYou can check the availability of USB drives with \`$scriptName -l' command."
     return 1
   fi
 }
 
-parseOptions() {
+parseArguments() {
+  enableUserFlag() {
+    userFlags[$1]=true
+  }
+  setUserVar() {
+    userVars[$1]=$2
+  }
   typeset key
+  typeset isEndOfOptions=false
   while [[ $# -gt 0 ]]; do
     key="$1"
     if [ "$isEndOfOptions" == 'false' ]; then
       case $key in
-        -b|--bootloader)
-        addSyslinuxBootloader=true
-        checkpkg 'syslinux'
-        shift
-        ;;
-        -y|--assume-yes)
-        disableConfirmation=true
-        shift
-        ;;
-        -d|--device)
-        selectedDevice="$2"
-        shift
-        shift
-        ;;
-        -J|--no-eject)
-        ejectDevice=false
-        shift
-        ;;
-        -a|--autoselect)
-        autoselect=true
-        shift
-        ;;
+        # ACTIONS
         -h|--help|help)
-        display_help
-        exit 0
-        ;;
-        -l|--list-usb-drives)
-        listDevicesTable
-        exit 0
+          enableUserFlag 'help'
+          shift
         ;;
         -v|--version)
-        echo "$version"
-        exit 0
+          enableUserFlag 'version'
+          shift
         ;;
-        -M|--no-mime-check)
-        disableMimeCheck=true
-        shift
+        -l|--list-usb-drives)
+          enableUserFlag 'list-usb-drives'
+          shift
         ;;
-        -s|--strict-mime-check)
-        strictMimeCheck=true
-        shift
+        -f|--format)
+          enableUserFlag 'format'
+          shift
         ;;
         --dd)
-        useDD=true
-        shouldMakeFAT32Partition=false
-        shift
+          enableUserFlag 'install-dd'
+          shift
+        ;;
+        # OPTIONS
+        -b|--bootloader)
+          enableUserFlag 'bootloader'
+          shift
+        ;;
+        -y|--assume-yes)
+          enableUserFlag 'assume-yes'
+          shift
+        ;;
+        -d|--device)
+          if (($# < 2)); then
+            failAndExit "Missing value for \`$1' flag. Please provide a device."
+          fi
+          setUserVar 'device' "$2"
+          shift 2
+        ;;
+        -t|--type)
+          if (($# < 2)); then
+            failAndExit "Missing value for \`$1' flag. Please provide a filesystem type."
+          fi
+          setUserVar 'type' "${2,,}" #lowercased
+          shift 2
+        ;;
+        -L|--label)
+          if (($# < 2)); then
+            failAndExit "Missing value for \`$1' flag. Please provide a label."
+          fi
+          setUserVar 'label' "$2"
+          shift 2
+        ;;
+        -J|--no-eject)
+          enableUserFlag 'no-eject'
+          shift
+        ;;
+        -a|--autoselect)
+          enableUserFlag 'autoselect'
+          shift
+        ;;
+        -M|--no-mime-check)
+          enableUserFlag 'no-mime-check'
+          shift
+        ;;
+        -s|--strict-mime-check)
+          enableUserFlag 'strict-mime-check'
+          shift
         ;;
         --no-usb-check)
-        disableUSBCheck=true
-        shift
+          enableUserFlag 'no-usb-check'
+          shift
         ;;
         --)
-        isEndOfOptions=true
-        shift
+          isEndOfOptions=true
+          shift
         ;;
         -*)
+        # Probably an option, possibly a file.
         if [ ! -f "$key" ]; then
+          # Assume it's stacked options
           if [[ "$key" =~ ^-["$shortOptions"]{2,}$ ]]; then
             shift
             typeset options=${key#*-}
@@ -344,27 +566,33 @@ parseOptions() {
             mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
             set -- "${extractedOptions[@]}" "$@"
           else
-            printf '\e[0;31m%s\e[m' "Unknown option: "
+            printf "\\e[0;31m%s\\e[m" "$scriptName: Unknown option: "
             printf '%s' "$key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
             if [[ "$key" =~ ^-[a-zA-Z0-9]+$ ]]; then
               typeset wrongOptions=$(printf '%s' "${key#*-}" | grep -Po "[^$shortOptions]" | tr -d '\n')
-              echowarn "Unknown stacked flag(s): \\033[0;31m\`$wrongOptions'\\033[0m."
+              if [ ${#key} -eq 2 ]; then
+                yellowify "flag: \\033[0;31m\`$wrongOptions'\\033[0m."
+              else
+                yellowify "stacked flags: \\033[0;31m\`$wrongOptions'\\033[0m."
+              fi
+
             fi
-            echoerr "Exiting $scriptName..."
+            echoerr "Exiting..."
             exit 2
           fi
         else
-          selectedIsoFile=$1
+          # Happened to be a file.
+          setUserVar 'iso-file' "$1"
           shift
         fi
         ;;
         *)
-        selectedIsoFile=$1
+        setUserVar 'iso-file' "$1"
         shift
         ;;
       esac
   else
-    selectedIsoFile=$1
+    setUserVar 'iso-file' "$1"
     break
   fi
   done
@@ -381,8 +609,8 @@ checkPackages() {
 
 }
 
+# $1 : the folder name prefix
 # print the name of the new folder if operation succeeded, fails otherwise
-# arg1 : template name
 createTempFolder() {
   typeset tmpFileTemplate="/tmp/$1.XXX"
   mktemp -d "$tmpFileTemplate"
@@ -400,7 +628,7 @@ mountIsoFile() {
   fi
 }
 
-# Given a device like /dev/sdd
+# $1 :  a device block
 # Return 0 if device is USB, 1 otherwise
 getDeviceType() {
   typeset deviceName=/sys/block/${1#/dev/}
@@ -415,20 +643,15 @@ deviceIsDisk() {
 
 selectDevice() {
   typeset _selectedDevice
-  containsElement () {
-    local e match="$1"
-    shift
-    for e; do [[ "$e" == "$match" ]] && return 0; done
-    return 1
-  }
   chooseDevice() {
-    echo -e "Select the device corresponding to the USB device you want to make bootable among: $(joinBy ',' "${devicesList[@]}")\\nType exit to quit."
+    echoinfo "Select the device corresponding to the USB device you want to make bootable among: $(joinBy ',' "${devicesList[@]}")\\nType CTRL+D to quit."
     read -r -p "Select device id>" _selectedDevice
+    echo
     if containsElement "$_selectedDevice" "${devicesList[@]}"; then
       selectedDevice="/dev/$_selectedDevice"
     else
-      if [ "$_selectedDevice" == 'exit' ]; then
-        echo "Exiting on user request."
+      if containsElement "$_selectedDevice" "" "exit"; then
+        echoinfo "Exiting on user request."
         exit 0
       else
         failAndExit "The drive $_selectedDevice does not exist."
@@ -455,8 +678,8 @@ selectDevice() {
       handleDeviceSelection
     else
       echoerr "There is no USB drive connected to your system."
-      echowarn "Use \`--no-usb-check' to bypass this detection at your own risk, or replug an plugged device which is likely ejected."
-      echoerr "Exiting $scriptName..."
+      echowarn "Use \`--no-usb-check' to bypass this policy at your own risk, or replug your USB device which is likely ejected.\\nYou can check the availability of USB drives with \`$scriptName -l' command."
+      echoerr "Exiting..."
       exit 1
     fi
   fi
@@ -464,14 +687,15 @@ selectDevice() {
 }
 
 assertDeviceIsOK() {
-  if [ ! -e "$selectedDevice" ]; then
-    failAndExit "The selected device \`$selectedDevice' does not exists"
+  typeset device=$1
+  if [ ! -e "$device" ]; then
+    failAndExit "The selected device \`$device' does not exists"
   fi
-  if [ ! -b "$selectedDevice" ]; then
-    failAndExit "The selected device \`$selectedDevice' is not a valid block file."
+  if [ ! -b "$device" ]; then
+    failAndExit "The selected device \`$device' is not a valid block file."
   fi
-  if ! deviceIsDisk "$selectedDevice"; then
-    failAndExit "The selected device \`$selectedDevice' is not a disk (might be a partition or loop). Select a disk instead."
+  if ! deviceIsDisk "$device"; then
+    failAndExit "The selected device \`$device' is either unmounted or not a disk (might be a partition or loop).\\nSelect a disk instead or replug the USB device.\\nYou can check the availability of USB drives with \`$scriptName -l' command."
   fi
 }
 
@@ -483,9 +707,9 @@ assertDeviceIsUSB() {
   fi
   deviceType=$(getDeviceType "$selectedDevice")
   if [ "$deviceType" != "usb" ]  ; then
-    echoerr "The device you selected is not connected through USB (found BUS: \`$deviceType')."
-    echowarn "Use \`--no-usb-check' option to bypass this limitation at your own risks."
-    echoerr "Exiting $scriptName..."
+    echoerr "The device you selected is not connected via USB (found BUS: \`$deviceType') and operation was therefore discarded."
+    echowarn "Use \`--no-usb-check' option to bypass this policy at your own risks."
+    echoerr "Exiting..."
     exit 1
   fi
   echogood "The selected device \`$selectedDevice' is connected through USB."
@@ -493,11 +717,11 @@ assertDeviceIsUSB() {
 
 shouldWipeUSBKey() {
   typeset answer='y'
-  echowarn "\`$scriptName' is about to wipe out the content of device \`$selectedDevice'."
+  echowarn "About to wipe out the content of device \`$selectedDevice'."
   if [ "$disableConfirmation" == 'false' ]; then
-    read -r -p "Are you sure you want to proceed? (y/n)>" answer
+    read -r -p "         Are you sure you want to proceed? (y/n)>" answer
   else
-    echowarn "Bypassing confirmation with \`-y' option."
+    echowarn "Bypassing confirmation with \`-y, --assume-yes' option."
   fi
   if [ "$answer" == 'y' ]; then
     return 0
@@ -506,23 +730,62 @@ shouldWipeUSBKey() {
   fi
 }
 
+createMBRPartitionTable() {
+  typeset -Ar mbrTypeCodes=([vfat]='c' [exfat]='7' [ntfs]='7' [ext2]='83' [ext3]='83' [ext4]='83' [f2fs]='83')
+  typeset partitionOptions
+  if [ "$notBootable" == true ]; then
+    partitionOptions="$selectedPartition : start=2048, type=${mbrTypeCodes[$partitionType]}"
+  else
+    partitionOptions="$selectedPartition : start=2048, type=${mbrTypeCodes[$partitionType]}, bootable"
+  fi
+  echogood "Creating MBR partition table with \`sfdisk'..."
+  # Create partition table
+  echo "$partitionOptions" | sfdisk -W always "$selectedDevice" 2>&1 | indentAll || failAndExit "Failed to write USB device partition table."
+  sync
+}
+
+# $1: not-bootable, default false. When true, the partition will not be bootable.
 partitionUSB() {
-  if shouldWipeUSBKey; then
-    echo "Erasing contents of $selectedDevice..."
-    # unmount any partition
-    umount "$selectedDevice" &> /dev/null || true;
-    umount "$selectedDevice"? &> /dev/null || true;
+  typeset notBootable=${false:-1}
+  # These options always end up with the label flag setter
+  typeset -Ar mkfsOpts=(
+    [vfat]="-v -F 32 -n"
+    [exfat]="-n"
+    [ntfs]="-Q -L"
+    [ext2]="-L"
+    [ext3]="-L"
+    [ext4]="-L"
+    [f2fs]="-l"
+  )
+  unmountPartitions() {
+    # unmount any partition on selected device
+    mapfile -t devicePartitions < <(grep -oP "^\\K$selectedDevice\\S*" /proc/mounts)
+    for partition in "${devicePartitions[@]}"; do
+        if ! umount "$partition" > /dev/null; then
+          failAndExit "Failed to unmount $partition. It's likely that partition is busy."
+        fi
+    done
+  }
+  eraseDevice() {
+    echoinfo "Erasing contents of $selectedDevice..."
     # clean signature from selected device
     wipefs --all --force "$selectedDevice" &> /dev/null
     # erase drive
-    dd if=/dev/zero of="$selectedDevice" bs=512 count=1 conv=notrunc status=none || failAndExit "Failed to erase USB device.\\nIt's likely that the device has been ejected and needs to be plugged-in again manually."
+    dd if=/dev/zero of="$selectedDevice" bs=512 count=1 conv=notrunc status=none || failAndExit "Failed to erase USB device.\\nIt's likely that the device has been ejected and needs to be replugged manually.\\nYou can check the availability of USB drives with \`$scriptName -l' command."
     sync
-    if [ "$shouldMakeFAT32Partition" == 'true' ]; then
-      # Create partition table
-      echo "$selectedPartition : start=2048, type=b, bootable" | sfdisk "$selectedDevice" > /dev/null  || failAndExit "Failed to write USB device partition table."
-      # format
-      echo "Creating FAT32 partition on \`$selectedPartition'..."
-      mkfs -t vfat -n "$isoLabel" "$selectedPartition" > /dev/null || failAndExit "Failed to create FAT32 partition on USB device.\\nMake sure you have mkfs.vfat installed on your system. Insall with \`$pkgmgr mkfs.vfat'"
+  }
+  formatPartition() {
+    # format
+    echogood "Creating $partitionType partition on \`$selectedPartition'..."
+    # shellcheck disable=SC2086
+    mkfs -V -t "$partitionType" ${mkfsOpts[$partitionType]} "$partitionLabel" "$selectedPartition" | indentAll || failAndExit "Failed to create $partitionType partition on USB device.\\nMake sure you have mkfs.$partitionType installed on your system."
+  }
+  if shouldWipeUSBKey; then
+    unmountPartitions
+    eraseDevice
+    if [ "$shouldMakePartition" == 'true' ]; then
+      createMBRPartitionTable
+      formatPartition
     fi
   else
     failAndExit "Discarding operation."
@@ -530,7 +793,7 @@ partitionUSB() {
 }
 
 mountUSB() {
-  typeset type=vfat
+  typeset type="$partitionType"
   usbMountPoint=$(createTempFolder usb) || exit 1
   echogood "Created USB device mount point at \`$usbMountPoint'"
   if ! mount -t "$type" "$selectedPartition" "$usbMountPoint" > /dev/null; then
@@ -544,7 +807,7 @@ updateProgress() {
   if tty -s; then
     printf "\\b%s" "${sp:i++%${#sp}:1}"
   fi
-  sleep 0.25
+  sleep 1 #0.25
 }
 
 cleanProgress() {
@@ -558,7 +821,7 @@ syncWithProgress() {
   printProgress() {
     typeset -i isWriting=1
     typeset -i i=1
-    echo -n "Synchronizing writes on device \`${selectedDevice}'    "
+    echo -n "$scriptName: Synchronizing writes on device \`${selectedDevice}'    "
     while ((isWriting != 0)); do
       isWriting=$(awk '{ print $9 }' "/sys/block/${selectedDevice#/dev/}/stat")
       updateProgress
@@ -568,129 +831,164 @@ syncWithProgress() {
   sync & printProgress
 }
 
-rsyncWithProgress() {
-  typeset -i i=1
-  typeset statusFile=$(mktemp)
-  (rsync -r -q -I --no-links --no-perms --no-owner --no-group "$isoMountPoint"/. "$usbMountPoint"; echo "$?" > "$statusFile") &
-  pid=$!
-  echo -n "Copying files from ISO to USB device with \`rsync'    "
-  while [ -e "/proc/$pid" ]; do
-    updateProgress
-  done
-  cleanProgress
-  typeset status=$(cat "$statusFile")
-  rm "$statusFile"
-  if [ ! "$status" -eq 0 ]; then
-    failAndExit "Copy command with \`rsync' failed. It's likely that your device has not enough space to contain the ISO image."
-  fi
-}
-
-ddWithProgress() {
-  typeset -i i=1
-  typeset statusFile=$(mktemp)
-  (dd if="$selectedIsoFile" of="$selectedDevice" bs=4MB status=none ; echo "$?" > "$statusFile") &
-  pid=$!
-  echo -n "Copying files from ISO to USB device with \`dd'    "
-  while [ -e "/proc/$pid" ]; do
-    updateProgress
-  done
-  cleanProgress
-  typeset status=$(cat "$statusFile")
-  rm "$statusFile"
-  if [ ! "$status" -eq 0 ]; then
-    failAndExit "Copy command with \`dd' failed. It's likely that your device has not enough space to contain the ISO image."
-  fi
-}
-
 copyWithRsync() {
+  rsyncWithProgress() {
+    typeset -i i=1
+    typeset statusFile=$(mktemp)
+    (rsync -r -q -I --no-links --no-perms --no-owner --no-group "$isoMountPoint"/. "$usbMountPoint"; echo "$?" > "$statusFile") &
+    pid=$!
+    echo -n "$scriptName: Copying files from ISO to USB device with \`rsync'    "
+    while [ -e "/proc/$pid" ]; do
+      updateProgress
+    done
+    cleanProgress
+    typeset status=$(cat "$statusFile")
+    rm "$statusFile"
+    if [ ! "$status" -eq 0 ]; then
+      failAndExit "Copy command with \`rsync' failed. It's likely that your device has not enough space to contain the ISO image."
+    fi
+  }
   checkpkg 'rsync'
   rsyncWithProgress
   syncWithProgress
 }
 
 copyWithDD() {
+  ddWithProgress() {
+    typeset -i i=1
+    typeset statusFile=$(mktemp)
+    (dd if="$selectedIsoFile" of="$selectedDevice" bs=4MB status=none ; echo "$?" > "$statusFile") &
+    pid=$!
+    echo -n "$scriptName: Copying files from ISO to USB device with \`dd'    "
+    while [ -e "/proc/$pid" ]; do
+      updateProgress
+    done
+    cleanProgress
+    typeset status=$(cat "$statusFile")
+    rm "$statusFile"
+    if [ ! "$status" -eq 0 ]; then
+      failAndExit "Copy command with \`dd' failed. It's likely that your device has not enough space to contain the ISO image."
+    fi
+  }
   ddWithProgress
   syncWithProgress
 }
 
 installSyslinux() {
-  if [ "$addSyslinuxBootloader" == 'true' ]; then
-    echo "Installing syslinux bootloader..."
-    #shellcheck disable=SC2086
-    if ! syslinux --stupid "$1"; then
-      echowarn "Syslinux could not properly install the bootloader."
+  inferSyslinuxLocation() {
+    typeset syslinuxFolder
+    syslinuxFolder=$(find "$usbMountPoint" -type d -wholename '*/boot/syslinux')
+    syslinuxFolder=${syslinuxFolder:-$(find "$usbMountPoint" -type d -wholename '*/syslinux')}
+    if [ -z "$syslinuxFolder" ]; then
+      syslinuxFolder="$usbMountPoint/syslinux"
+      mkdir -p "$syslinuxFolder"
     fi
-    if [ -d "$usbMountPoint/isolinux" ]; then
-      mv "$usbMountPoint/isolinux" "$usbMountPoint"/syslinux
+    echo "$syslinuxFolder"
+  }
+  echoinfo "Infering syslinux folder location..."
+  typeset syslinuxFolder=$(inferSyslinuxLocation)
+  echoinfo "Installing syslinux bootloader on \`$usbMountPoint'..."
+  cp /usr/lib/syslinux/bios/*.c32 "$syslinuxFolder" | indentAll || failAndExit "Syslinux bootloader could not be installed."
+  extlinux --install "$syslinuxFolder" | indentAll || failAndExit "Syslinux bootloader could not be installed."
+  # Look for existing syslinux.cfg file
+  # if [ -d "$usbMountPoint/isolinux" ]; then
+  #   mv "$usbMountPoint/isolinux" "$usbMountPoint"/syslinux
+  # fi
+  # if [ -e "$usbMountPoint/syslinux/isolinux.cfg" ]; then
+  #   mv "$usbMountPoint/syslinux/isolinux.cfg" "$usbMountPoint"/syslinux/syslinux.cfg
+  # fi
+}
+
+checkAction() {
+  typeset -ra actions=('help' 'version' 'format' 'install-dd' 'list-usb-drives')
+  typeset -a enabledActions=()
+  for act in "${actions[@]}"; do
+    if [ "${userFlags[$act]}" == 'true' ]; then
+      enabledActions+=("$act")
     fi
-    if [ -e "$usbMountPoint/syslinux/isolinux.cfg" ]; then
-      mv "$usbMountPoint/syslinux/isolinux.cfg" "$usbMountPoint"/syslinux/syslinux.cfg
-    fi
+  done
+  if ((${#enabledActions[@]} == 0)); then
+    action='install-rsync'
+  elif ((${#enabledActions[@]} == 1)); then
+    action=${enabledActions[0]}
+  else
+    failAndExit "You cannot invoke multiple actions at once: $(joinBy '+' "${enabledActions[@]}")."
   fi
 }
 
-execWithRsync() {
-  mountIsoFile
-  partitionUSB
-  mountUSB
-  copyWithRsync
-  installSyslinux "$selectedPartition"
+checkUserVars() {
+  # check partition type
+  if [ ! -z "${userVars[type]}" ]; then
+    if [ "${userVars[type],,}" == fat32 ]; then
+      userVars[type]=vfat
+    fi
+    if ! containsElement "${userVars[type]}" "${supportedFS[@]}"; then
+      failAndExit "FS type \`${userVars[type]}' not supported.\\nSupported FS types: $(joinBy "," "${supportedFS[*]}")."
+    fi
+    if ! containsElement "$action" "install-rsync" "format"; then
+      failAndExit "Cannot set partition type with action [$action].\\n\`-t, --type' option is compatible with [format] and [install-rsync] actions only."
+    fi
+  fi
+  # check device
+  if [ ! -z "${userVars[device]}" ]; then
+    assertDeviceIsOK "${userVars[device]}"
+  fi
+  # Bootloader constrains
+  if [ "${userFlags[bootloader]}" == true ]; then
+    case $action in
+      install-rsync);;
+      install-dd) failAndExit "Cannot install a syslinux bootloader with \`dd' utility.\\nSyslinux bootloader targets FAT32 writable partitions only, which is not possible through \`dd' utility.";;
+      *) failAndExit "Cannot install a syslinux bootloader with action [$action]." ;;
+    esac
+    checkpkg 'syslinux'
+    if [ ! -z "${userVars[type]}" ] && [ "${userVars[type]}" != 'vfat' ]; then
+      failAndExit "You cannot install syslinux bootloader on a \`${userVars[type]}' filesystem.\\nSyslinux targets FAT32 (vfat) filesystems only."
+    fi
+  fi
+
 }
 
-execWithDD() {
-  partitionUSB
-  copyWithDD
-}
-
-checkOptions() {
-  if [ -z "$selectedIsoFile" ]; then
-    echoerr "Missing argument \`iso-file'."
-    display_help
-    exit 2
-  fi
-  if [ -d "$selectedIsoFile" ]; then
-    failAndExit "Provided file \`$selectedIsoFile' is a directory."
-  fi
-  if [ ! -f "$selectedIsoFile" ]; then
-    failAndExit "Provided iso file \`$selectedIsoFile' does not exists."
-  fi
-  if [ "$useDD" == 'true' ] && [ "$addSyslinuxBootloader" == 'true' ]; then
-    failAndExit "In \`dd' mode, \`$scriptName' cannot install a bootloader with \`syslinux'."
-  fi
-  if [ "$autoselect" == 'true' ] && [ "$disableUSBCheck" == 'true' ]; then
-    failAndExit "You cannot set autoselect \`-a' option while disabling USB check with \`--no-usb-check'."
+checkUserFlags() {
+  # Autoselect security
+  if [ "${userFlags[autoselect]}" == 'true' ] && [ "${userFlags[no-usb-check]}" == 'true' ]; then
+    failAndExit "You cannot set \`-a, --autoselect' option while disabling USB check with \`--no-usb-check'."
   fi
   # warnings (only with sudo)
   if ((EUID == 0)); then
-    if [ "$autoselect" == 'true' ] && [ "$disableConfirmation" == 'false' ]; then
-      echowarn "Autoselect \`-a' option is enabled by default when \`-y' option is not set."
+    # Eject format
+    if [ "${userFlags[no-eject]}" == "true" ] && [ "$action" == "format" ]; then
+      echowarn "You don't need to prevent device ejection through \`-J' flag with \`format' action."
+    fi
+    # Warn autoselecting while assume yes is false
+    if [ "${userFlags[autoselect]}" == 'true' ] && [ "${userFlags[assume-yes]}" == 'false' ]; then
+      echowarn "\`-a, --autoselect' option is enabled by default when \`-y, --asume-yes' option is not set."
     fi
   fi
 }
 
-main() {
-  typeset method
-  initPckgManager "$@"
-  parseOptions "$@"
-  checkOptions
-  checkSudo "$@"
-  checkPackages
-  assertISOMimeType
-  selectDevice
-  assertDeviceIsOK
-  assertDeviceIsUSB
-  startTime=$(date +%s)
-  if [ "$useDD" == 'true' ]; then
-    method='dd'
-    execWithDD
-  else
-    method='rsync'
-    execWithRsync
-  fi
-  endTime=$(date +%s)
-  echogood "\`$scriptName' took $((endTime - startTime)) seconds to write ISO to USB device with \`$method' method."
-  operationSuccess=true
+checkFlagMatrix() {
+    for key in "${!userVarsCompatibilityMatrix[@]}"; do
+      if [ ! -z "${userVars[$key]}" ]; then
+        #shellcheck disable=SC2086
+        if ! containsElement "$action" ${userVarsCompatibilityMatrix[$key]}; then
+          if [ "$key" == "iso-file" ]; then
+            failAndExit "[$action] action doesn't require any arguments."
+          else
+            failAndExit "[$action] action doesn't support option \`--$key'."
+          fi
+        fi
+      fi
+    done
+    for key in "${!userFlagsCompatibilityMatrix[@]}"; do
+      if [ ! -z "${userFlags[$key]}" ]; then
+        #shellcheck disable=SC2086
+        if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
+          failAndExit "\`$action' action doesn't support option \`--$key'"
+        fi
+      fi
+    done
 }
+
 
 cleanup() {
   if ((EUID == 0)); then
@@ -705,24 +1003,155 @@ cleanup() {
     if [ -d "$usbMountPoint" ]; then
       if umount "$usbMountPoint"; then
         rmdir "$usbMountPoint"
-        echogood "USB device succesfully unmounted."
+        echogood "USB device partition succesfully unmounted."
       else
         echowarn "Could not unmount USB mount point."
       fi
     fi
-    if [ "$operationSuccess" == 'true' ]; then
-      if [ "$ejectDevice" == 'true' ]; then
+    if [[ "$operationSuccess" =~ 'install' ]]; then
+      if [ "$noDeviceEjection" == 'false' ]; then
         if eject "$selectedDevice" &> /dev/null; then
-          echogood "USB device succesfully ejected."
-          echogood "You can safely remove it !"
+          echogood "USB device succesfully ejected.\\nYou can safely remove it!"
+        else
+          echowarn "Failed to eject device \`$selectedDevice'."
         fi
       else
-        echowarn "USB device ejection skipped with \`-J' option."
+        echoinfo "USB device ejection skipped with \`-J, --no-eject' option."
       fi
     fi
   fi
 }
 
-trap cleanup EXIT INT TERM
+assignArguments() {
+  # Command argument
+  selectedIsoFile=${userVars[iso-file]:-''}
+  # Option flags
+  addSyslinuxBootloader=${userFlags[bootloader]:-'false'}
+  disableConfirmation=${userFlags[assume-yes]:-'false'}
+  autoselect=${userFlags[autoselect]:-'false'}
+  disableMimeCheck=${userFlags[no-mime-check]:-'false'}
+  strictMimeCheck=${userFlags[strict-mime-check]:-'false'}
+  disableUSBCheck=${userFlags[no-usb-check]:-'false'}
+  # Vars flags
+  partitionType=${userVars[type]:-'vfat'}
+  selectedDevice=${userVars[device]:-''}
+  partitionLabel=${userVars[label]:-''}
+  # Action-dependent flags
+  case $action in
+    install-rsync)
+      shouldMakePartition='true'
+      hasActionDuration='true'
+      expectingISOFile='true'
+      requiresRoot='true'
+      noDeviceEjection=${userFlags[no-eject]:-'false'};;
+    install-dd)
+      shouldMakePartition='false'
+      hasActionDuration='true'
+      expectingISOFile='true'
+      requiresRoot='true'
+      noDeviceEjection=${userFlags[no-eject]:-'false'};;
+    format)
+      shouldMakePartition='true'
+      hasActionDuration='true'
+      expectingISOFile='false'
+      requiresRoot='true'
+      noDeviceEjection=${userFlags[no-eject]:-'true'};;
+    version)
+      shouldMakePartition='false'
+      hasActionDuration='false'
+      expectingISOFile='false'
+      requiresRoot='false'
+      noDeviceEjection=${userFlags[no-eject]:-'true'};;
+    help)
+      shouldMakePartition='false'
+      hasActionDuration='false'
+      expectingISOFile='false'
+      requiresRoot='false'
+      noDeviceEjection=${userFlags[no-eject]:-'true'};;
+    list-usb-drives)
+      shouldMakePartition='false'
+      hasActionDuration='false'
+      expectingISOFile='false'
+      requiresRoot='false'
+      noDeviceEjection=${userFlags[no-eject]:-'true'};;
+  esac
+}
+
+startTimer() {
+  startTime=$(date +%s)
+}
+
+stopTimerAndPrintLapsed() {
+  endTime=$(date +%s)
+  echogood "Took $((endTime - startTime)) seconds to perform \`$action' action."
+  operationSuccess=$action
+}
+
+runSecurityAssessments() {
+  configureLabel
+  selectDevice
+  startTimer
+  assertDeviceIsOK "$selectedDevice"
+  assertDeviceIsUSB
+}
+
+execWithRsync() {
+  runSecurityAssessments
+  mountIsoFile
+  partitionUSB false
+  mountUSB
+  copyWithRsync
+  if [ "$addSyslinuxBootloader" == 'true' ]; then
+    installSyslinux
+  fi
+}
+
+execWithDD() {
+  runSecurityAssessments
+  partitionUSB false
+  copyWithDD
+}
+
+execFormat() {
+  selectDevice
+  startTimer
+  configureLabel
+  assertDeviceIsOK "$selectedDevice"
+  assertDeviceIsUSB
+  partitionUSB true
+}
+
+checkArguments() {
+  checkAction
+  checkUserVars
+  checkUserFlags
+}
+
+main() {
+  trap cleanup EXIT INT TERM
+  initPckgManager "$@"
+  parseArguments "$@"
+  checkArguments
+  assignArguments
+  checkFlagMatrix
+  checkPackages
+  if [ "$expectingISOFile" == 'true' ]; then
+    assertISOIsOK
+  fi
+  if [ "$requiresRoot" == 'true' ]; then
+    checkSudo "$@"
+  fi
+  case "$action" in
+    'install-dd') execWithDD "$@" ;;
+    'install-rsync') execWithRsync "$@" ;;
+    'format') execFormat "$@" ;;
+    'list-usb-drives') listDevicesTable ;;
+    'version') echo "$version";;
+    'help') display_help;;
+  esac
+  if [ "$hasActionDuration" == 'true' ]; then
+    stopTimerAndPrintLapsed
+  fi
+}
 
 main "$@"

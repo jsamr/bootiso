@@ -1,3 +1,18 @@
+# v2.6.0
+
+- securely handle unmounting of target device before altering data, exit when failing
+- added `-f`, `--format` option to format USB device and quit
+- added `-L`, `--label` option to chose a label
+- added `-t`, `--type` option to chose a FS type amongst vfat, exfat, ext2, ext3, ext4, f2fs
+- set FAT32-LBA by default instead of FAT32
+- forbid -t option with "-b" option when fstype is not VFAT
+- add '--noconfirm' option to pacman install
+- print bootiso name in log messages to comply with UNIX customs
+- refactoring with options map
+- exhaustive flags combination tests
+- better faulty command line argument option assignments handling
+- better user feedback and error reports in many corner cases
+
 # v2.5.2
 
 - documentation improvements + call for help from the community

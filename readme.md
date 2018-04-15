@@ -7,13 +7,17 @@
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
 
-Don't want to messup with the system with `dd` command? Create a bootable USB from an ISO in one line.
+Don't want to messup the system with `dd` command? Create a bootable USB from an ISO in one line.
 
 ### Synopsis
 
     bootiso [<options>...] <file.iso>
+    bootiso --dd [<options>...] <file.iso>
+    bootiso <other-action> [<options>...]
 
-With [`<options>` listed in the bellow section](#options).
+Default bootiso action is to install a live image with `rsync`, given an ISO file (first synopsis).
+Alternative actions can be provided to perform other tasks, such as formating USB stick.  
+[`<options>` and `<actions>` are listed in the bellow section](#flags).
 
 ### Examples
 
@@ -25,7 +29,7 @@ Or provide explicitly the USB device. Command fails and exit if the provided dev
 
     bootiso -d /dev/sde myfile.iso
 
-Add a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) for [non-hybrid ISOs](https://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid):
+Add a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) for [non-hybrid ISOs](https://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid) such as Windows':
 
     bootiso -bd /dev/sde myfile.iso
 
@@ -47,12 +51,12 @@ Optionally, move the script to a bin path
 
     mv bootiso <bin-path>
 
-Where `bin-path` is any folder in the `$PATH` environment such as `$HOME/bin`.
+Where `bin-path` is any folder in the `$PATH` environment such as `/usr/sbin/`.
 
 
 ### Help the community
 
-If you like `bootiso`, please help the community find it by **staring the project** and **upvoting those SE posts**:
+If you like `bootiso`, feel free to help the community find it by **staring the project** and **upvoting those SE posts**:
 
 - [How to create a bootable Ubuntu USB flash drive from terminal?](https://goo.gl/BNRmvm)
 - [How to create a bootable USB from one ISO file securely from the shell?](https://goo.gl/YDBvFe)
@@ -67,9 +71,61 @@ If you like `bootiso`, please help the community find it by **staring the projec
 
 [![](images/bootiso.png)](https://webmshare.com/ra8Ge)
 
-### Options
+<a name="flags"/>
 
-Note that **short POSIX options can be stacked** as of **v2.4.0**, like so: `bootiso -Jaybd /dev/sde`
+### Flags
+
+Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `bootiso -Jaybd /dev/sde`
+
+#### Actions
+
+<a name="actions"/>
+<table>
+  <tr>
+    <th>Action<br/>(POSIX&nbsp;short)&nbsp;<br/></th>
+    <th><br/>Action<br/>(GNU,&nbsp;long)<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th>Description</th>
+    <th>Requires root</th>
+  </tr>
+  <tr>
+        <td></td>
+        <td></td>
+        <td>Default action is to install given ISO with <code>rsync</code>.</td>
+        <td>yes</td>
+  </tr>
+  <tr>
+      <td><code>-h</code></td>
+      <td><code>--help</code></td>
+      <td>Display a help message and exit.</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td><code>-v</code></td>
+      <td><code>--version</code></td>
+      <td>Display version and exit.</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td><code>-l</code></td>
+      <td><code>--list-usb-drives</code></td>
+      <td>List available USB drives.</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td><code>-f</code></td>
+      <td><code>--format</code></td>
+      <td>Format USB drive.</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><code>--dd</code></td>
+      <td>Install with <code>dd</code> utility instead of mounting + <code>rsync</code>. Does not allow bootloader installation with syslinux.</td>
+      <td>yes</td>
+    </tr>
+</table>
+
+#### Options
 
 <a name="options"/>
 <table>
@@ -77,71 +133,62 @@ Note that **short POSIX options can be stacked** as of **v2.4.0**, like so: `boo
     <th>Option<br/>(POSIX&nbsp;short)&nbsp;<br/></th>
     <th><br/>Option<br/>(GNU,&nbsp;long)<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
     <th>Description</th>
+    <th>Compatible actions</th>
   </tr>
-  <tr>
-      <td><code>-h</code></td>
-      <td><code>--help</code></td>
-      <td>Display a help message and exit.</td>
-    </tr>
-    <tr>
-      <td><code>-v</code></td>
-      <td><code>--version</code></td>
-      <td>Display version and exit.</td>
-    </tr>
     <tr>
       <td><code>-d &lt;device&gt;</code></td>
       <td><code>--device &lt;device&gt;</code></td>
       <td>Select <code>&lt;device&gt;</code> block file as USB device. If <code>&lt;device&gt;</code> is not connected through a USB bus, bootiso will fail and exit. Device block files are usually situated in <code>/dev/sXX</code> or <code>/dev/hXX</code>. You will be prompted to select a device if you don&#39;t use this option.</td>
+      <td>install, format</td>
     </tr>
     <tr>
       <td><code>-b</code></td>
       <td><code>--bootloader</code></td>
-      <td>Install a <a href="https://en.wikipedia.org/wiki/SYSLINUX">syslinux bootloader</a> (safe mode) for non-hybrid ISOs. Does not work with <code>--dd</code> option.</td>
+      <td>Install a <a href="https://en.wikipedia.org/wiki/SYSLINUX">syslinux bootloader</a> (safe mode) for non-hybrid ISOs. Does not work with <code>--dd</code> action.</td>
+      <td>install (<code>rsync</code>)</td>
     </tr>
     <tr>
       <td><code>-y</code></td>
       <td><code>--assume-yes</code></td>
       <td>bootiso won&#39;t prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.</td>
+      <td>install, format</td>
     </tr>
     <tr>
       <td><code>-a</code></td>
       <td><code>--autoselect</code></td>
       <td>Enable autoselecting USB devices in conjunction with <code>-y</code> option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither <code>-d</code> nor <code>--no-usb-check</code> options are given.</td>
+      <td>install, format</td>
     </tr>
     <tr>
       <td><code>-J</code></td>
       <td><code>--no-eject</code></td>
       <td>Do not eject device after unmounting.</td>
-    </tr>
-    <tr>
-      <td><code>-l</code></td>
-      <td><code>--list-usb-drives</code></td>
-      <td>List available USB drives.</td>
+      <td>install</td>
     </tr>
     <tr>
       <td><code>-M</code></td>
       <td><code>--no-mime-check</code></td>
       <td>bootiso won&#39;t assert that selected ISO file has the right mime-type.</td>
+      <td>install</td>
     </tr>
     <tr>
       <td><code>-s</code></td>
       <td><code>--strict-mime-check</code></td>
       <td>Disallow loose <code>application/octet-stream</code> mime type in ISO file.</td>
+      <td>install</td>
     </tr>
     <tr>
       <td></td>
       <td><code>--</code></td>
       <td>POSIX end of options.</td>
-    </tr>
-    <tr>
       <td></td>
-      <td><code>--dd</code></td>
-      <td>Use <code>dd</code> utility instead of mounting + <code>rsync</code>. Does not allow bootloader installation with syslinux.</td>
     </tr>
+
     <tr>
       <td></td>
       <td><code>--no-usb-check</code></td>
       <td>bootiso won&#39;t assert that selected device is a USB (connected through USB bus). Use at your own risks.</td>
+      <td>install, format</td>
     </tr>
 </table>                                                                           
 
@@ -161,7 +208,7 @@ This script will also check for dependencies and prompt user for installation (w
 
 ### What it does
 
-This script walks through the following steps:
+With install-rsync action, the script walks through the following steps:
 
 1. Request sudo.
 2. Check dependencies and prompt user to install any missing.
