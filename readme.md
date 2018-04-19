@@ -40,7 +40,7 @@ List available USB drives and exit:
 
 ### Quick install
 
-    curl -L https://rawgit.com/jsamr/bootiso/latest/bootiso -O
+    curl -L https://git.io/bootiso -O
     chmod +x bootiso
 
 Optionally, move the script to a bin path
