@@ -12,35 +12,46 @@ Don't want to messup the system with `dd` command? Create a bootable USB from an
 ### Synopsis
 
     bootiso [<options>...] <file.iso>
-    bootiso --dd [<options>...] <file.iso>
-    bootiso <other-action> [<options>...]
+    bootiso <action> [<options>...] <file.iso>
+    bootiso <action> [<options>...]
 
-Default bootiso action is to install a live image with `rsync`, given an ISO file (first synopsis).
-Alternative actions can be provided to perform other tasks, such as formating USB stick.  
-[`<options>` and `<actions>` are listed in the bellow section](#flags).
+The default action `[install-auto]` as per first synopsis is to install an ISO file to a USB device in
+automatic mode. In such mode, bootiso will analyse the ISO file and select the best course of
+actions to maximize the odds your USB stick is proven bootable (see [automatic mode behavior](#auto)).  
+Other [`<options>` and `<actions>` are listed in the bellow section](#flags).
 
 ### Examples
 
-Provide the ISO as first argument and you'll be prompted to select from available USB drives amongst a list extracted from `lsblk`. If there is only one USB device connected, `bootiso` will automatically select it:
+To have a quick feedback, `[probe]` around to check bootiso capabilities with given ISO file and list USB drives candidates:
+
+    bootiso -p myfile.iso
+
+With the default action `[install-auto]` ([read its behavior here](#auto)), give the ISO as first argument and you'll be prompted to select from available USB drives amongst a list extracted from `lsblk`. If there is only one USB device connected, `bootiso` will automatically select it:
 
     bootiso myfile.iso
 
-Or provide explicitly the USB device. Command fails and exit if the provided device is not USB, such as sata:
+Or provide explicitly the USB device with `-d` flag. Command fails and exit if the provided device is not USB, such as sata:
 
-    bootiso -d /dev/sde myfile.iso
+    bootiso -d sde myfile.iso
 
-Add a [syslinux bootloader](https://en.wikipedia.org/wiki/SYSLINUX) for [non-hybrid ISOs](https://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid) such as Windows':
+Avoid being promtped before writting to USB drive and autoselect device when there is exactly one:
 
-    bootiso -bd /dev/sde myfile.iso
-
-Use `dd` instead of mount + `rsync`:
-
-    bootiso --dd -d /dev/sde myfile.iso  
+    bootiso -ay myfile.iso
 
 List available USB drives and exit:
 
-    bootiso -l  
+    bootiso -l
 
+`[inspect]` the given ISO file and exit:
+
+    bootiso -i myfile.iso
+
+Quick-`[format]` the USB drive to NTFS and label it 'SAMUEL_SONY':
+
+    bootiso -f -t ntfs -L 'SAMUEL_SONY'
+
+
+Go to the [flags](#flags) section to see a detailed list of actions and options.
 
 ### Quick install
 
@@ -51,7 +62,7 @@ Optionally, move the script to a bin path
 
     mv bootiso <bin-path>
 
-Where `bin-path` is any folder in the `$PATH` environment such as `/usr/sbin/`.
+Where `bin-path` is any folder in the `$PATH` environment, preferably for superuser utilities such as `/usr/local/sbin/`.
 
 
 ### Help the community
@@ -63,13 +74,17 @@ If you like `bootiso`, feel free to help the community find it by **staring the 
 
 ### See it in action
 
-#### Using `--assume-yes` + `--autoselect`
+#### Probing
 
-[![](images/bootiso.png)](https://webmshare.com/RRnY6)
+[![](images/bootiso-p.png)](https://webmshare.com/JZrVW)
+
+#### Using `--assume-yes` + `--autoselect` (shorten `-ay`)
+
+[![](images/bootiso-ay.png)](https://webmshare.com/mw7Q4)
 
 #### The selected device is not connected through USB
 
-[![](images/bootiso.png)](https://webmshare.com/ra8Ge)
+[![](images/bootiso-d-no-usb.png)](https://webmshare.com/36rRn)
 
 <a name="flags"/>
 
@@ -90,37 +105,55 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
   <tr>
         <td></td>
         <td></td>
-        <td>Default action is to install given ISO with <code>rsync</code>.</td>
+        <td><code>[install-auto]</code>: Default action. Install ISO file in <a href="#auto">automatic mode</a>.</td>
         <td>yes</td>
   </tr>
   <tr>
       <td><code>-h</code></td>
       <td><code>--help</code></td>
-      <td>Display a help message and exit.</td>
+      <td><code>[help]</code>: Display a help message and exit.</td>
       <td>no</td>
     </tr>
     <tr>
       <td><code>-v</code></td>
       <td><code>--version</code></td>
-      <td>Display version and exit.</td>
+      <td><code>[version]</code>: Display version and exit.</td>
       <td>no</td>
     </tr>
     <tr>
       <td><code>-l</code></td>
       <td><code>--list-usb-drives</code></td>
-      <td>List available USB drives.</td>
+      <td><code>[list-usb-drives]</code>: List available USB drives.</td>
       <td>no</td>
+    </tr>
+    <tr>
+      <td><code>-i</code></td>
+      <td><code>--inspect</code></td>
+      <td><code>[inspect]</code>: Inspect ISO file boot capabilities and how <code>bootiso</code> can handle it, then exit.</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td><code>-p</code></td>
+      <td><code>--probe</code></td>
+      <td><code>[probe]</code>: Equivalent of <code>[inspect]</code> and <code>[list-usb-drives]</code> actions.</td>
+      <td>yes</td>
     </tr>
     <tr>
       <td><code>-f</code></td>
       <td><code>--format</code></td>
-      <td>Format USB drive.</td>
+      <td><code>[format]: </code>Format USB drive.</td>
       <td>yes</td>
     </tr>
     <tr>
       <td></td>
       <td><code>--dd</code></td>
-      <td>Install with <code>dd</code> utility instead of mounting + <code>rsync</code>. Does not allow bootloader installation with syslinux.</td>
+      <td><code>[install-dd]</code>: Overrides "automatic" mode and install ISO in image-copy mode with <code>dd</code> utility. It is recommended to run [inspect] action first.</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><code>--mrsync</code></td>
+      <td><code>[install-mount-rsync]</code>: Overrides "automatic" mode and install ISO in mount-rsync mode with <code>rsync</code> utility. It is recommended to run [inspect] action first.</td>
       <td>yes</td>
     </tr>
 </table>
@@ -133,63 +166,76 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <th>Option<br/>(POSIX&nbsp;short)&nbsp;<br/></th>
     <th><br/>Option<br/>(GNU,&nbsp;long)<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
     <th>Description</th>
-    <th>Compatible actions</th>
+    <th>Applicable actions<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
   </tr>
     <tr>
       <td><code>-d &lt;device&gt;</code></td>
       <td><code>--device &lt;device&gt;</code></td>
-      <td>Select <code>&lt;device&gt;</code> block file as USB device. If <code>&lt;device&gt;</code> is not connected through a USB bus, bootiso will fail and exit. Device block files are usually situated in <code>/dev/sXX</code> or <code>/dev/hXX</code>. You will be prompted to select a device if you don&#39;t use this option.</td>
-      <td>install, format</td>
-    </tr>
-    <tr>
-      <td><code>-b</code></td>
-      <td><code>--bootloader</code></td>
-      <td>Install a <a href="https://en.wikipedia.org/wiki/SYSLINUX">syslinux bootloader</a> (safe mode) for non-hybrid ISOs. Does not work with <code>--dd</code> action.</td>
-      <td>install (<code>rsync</code>)</td>
+      <td>Select <code>&lt;device&gt;</code> block file as USB device. If <code>&lt;device&gt;</code> is not connected through a USB bus, bootiso will fail and exit. Device block files are usually situated in <code>/dev/sXX</code> or <code>/dev/hXX</code>. You will be prompted to select a device if you don&#39;t use this option. You can omit `/dev/` prefix.</td>
+      <td>install-*, format</td>
     </tr>
     <tr>
       <td><code>-y</code></td>
       <td><code>--assume-yes</code></td>
       <td>bootiso won&#39;t prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.</td>
-      <td>install, format</td>
+      <td>install-*,<br/>format</td>
     </tr>
     <tr>
       <td><code>-a</code></td>
       <td><code>--autoselect</code></td>
       <td>Enable autoselecting USB devices in conjunction with <code>-y</code> option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither <code>-d</code> nor <code>--no-usb-check</code> options are given.</td>
-      <td>install, format</td>
+      <td>install-*,<br/>format</td>
     </tr>
     <tr>
       <td><code>-J</code></td>
       <td><code>--no-eject</code></td>
       <td>Do not eject device after unmounting.</td>
-      <td>install</td>
+      <td>install-*</td>
     </tr>
     <tr>
       <td><code>-M</code></td>
       <td><code>--no-mime-check</code></td>
       <td>bootiso won&#39;t assert that selected ISO file has the right mime-type.</td>
-      <td>install</td>
+      <td>install-*</td>
     </tr>
     <tr>
-      <td><code>-s</code></td>
-      <td><code>--strict-mime-check</code></td>
-      <td>Disallow loose <code>application/octet-stream</code> mime type in ISO file.</td>
-      <td>install</td>
+      <td><code>-t &lt;type&gt;</code></td>
+      <td><code>--type &lt;type&gt;</code></td>
+      <td>Format to <code>&lt;type&gt;</code> instead of standard FAT32 (vfat). Supported types: vfat exfat ntfs ext2 ext3 ext4 f2fs.
+      </td>
+      <td>install-mount-rsync,<br/>format</td>
+    </tr>
+    <tr>
+      <td><code>-L &lt;label&gt;</code></td>
+      <td><code>--label &lt;label&gt;</code></td>
+      <td>Set partition label as <code>&lt;type&gt;</code> instead of automatically inferred.
+      <code>bootiso</code> will cut labels which are too long regarding the selected filesystem limitations.
+      </td>
+      <td>install-mount-rsync,<br/>format</td>
     </tr>
     <tr>
       <td></td>
       <td><code>--</code></td>
       <td>POSIX end of options.</td>
-      <td></td>
+      <td>install-*<br/>inspect</td>
     </tr>
-
     <tr>
       <td></td>
       <td><code>--no-usb-check</code></td>
       <td>bootiso won&#39;t assert that selected device is a USB (connected through USB bus). Use at your own risks.</td>
-      <td>install, format</td>
+      <td>install-*,<br/>format</td>
     </tr>
+    <tr>
+      <td></td>
+      <td><code>--local-bootloader</code></td>
+      <td>Prevent download of remote bootloader and force local (SYSLINUX) during installation.</td>
+      <td>install-auto,<br/>install-mount-rsync</td>
+    </tr>    
+    <tr>
+      <td><code><s>-b</s></code></td>
+      <td><code><s>--bootloader</s></code></td>
+      <td>Removed in v3.0.0. SYSLINUX installation is now automated.</td>
+    </tr>    
 </table>                                                                           
 
 <a name="security" />
@@ -198,7 +244,7 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
 
 ✔ bootiso asserts that selected ISO has the correct mime-type and exit if it doesn't (with [file](https://askubuntu.com/a/3397/276357) utility).  
 ✔ bootiso asserts that selected device is connected through USB preventing system damages and exit if it doesn't (with [udevadm](https://askubuntu.com/a/168654/276357) utility).  
-✔ bootiso asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).  
+✔ bootiso asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).
 ✔ bootiso prompts the user for confirmation before erasing and paritioning USB device.  
 ✔ bootiso will handle any failure from a command properly and exit.  
 ✔ bootiso will call a cleanup routine on exit with `trap`.  
@@ -206,24 +252,18 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
 
 This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 
-### What it does
+<a name="auto" />
 
-With install-rsync action, the script walks through the following steps:
+### Automatic mode behavior
 
-1. Request sudo.
-2. Check dependencies and prompt user to install any missing.
-3. If not given the `-M`, `--no-mime-check` option, assert that provided ISO exists and has the expected `application/x-iso9660-image` mime-type via `file` utiltiy. If the assertion fails, exit with error status.
-4. If given the `-d`, `--device` option, check that the selected device exists and is not a partition. Otherwise, prompt the user to select a device and perform the above-mentioned controls.
-5. If not given the `--no-usb-check` option, assert that the given device is connected through USB via `udevadm` utility. If the assertion fails, exit with error status.
-6. If not given the `-y`, `--assume-yes` option, prompt the user for confirmation that data might be lost for selected device if he goes to next step.
-7. Unmount the USB if mounted, blank it and delete existing partitions.
-8. Create a FAT32 partition on the USB device.
-9. Create a temporary dir to mount the ISO file and mount it.
-10. Create a temporary dir to mount the USB device and mount it.
-11. Copy files from ISO to USB device.
-12. If option `-b`, `--bootloader` is selected, install a bootloader with syslinux in slow mode.
-13. Unmount devices and remove temporary folders.
-14. Eject USB device if `-J`, `--no-eject` is not selected
+With `[install-auto]` action, `bootiso` will inspect the ISO file and chose the best strategy to end up with a bootable USB stick.
+
+The main decision is to chose between image-copy and mount+rsync modes.
+In image-copy `dd` mode (enforcable with `[install-dd]` action, `--dd` flag), `bootiso` uses `dd` utility to make a block-by-block copy of the ISO.
+This is perfectly appropriate when the ISO file is aimed both at disk drives and flat disks. Those ISO are called [hybrids](https://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid).
+
+In mount+rsync mode (enforcable with `[install-mount-rsync]` action, `--mrsync` flag), `bootiso` creates one partition with MBR table in the USB drive and copy files from mounted ISO.
+It will also install SYSLINUX bootlaoder if configuration files are found which will allow legacy BIOS boot. When local version doesn't match ISO version, it will attempt to download the closest version available in [kernel.org](https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing) if `--local-bootloader` flag is not set.
 
 ### Credits
 

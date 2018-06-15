@@ -1,17 +1,27 @@
-# v2.6.0
+# v3.0.0
 
+- `[install-auto]` default mode: bootiso chooses the most appropriate copy mode after inspecting ISO file
+- `--dd` option now overrides `[install-auto]` in lieu of `[install-mount-rsync]` and force image-copy (`[install-dd]` mode)
+- added `-m`, `--mrsync` option to override `[install-auto]` and force mounting+rsync (`[install-mount-rsync]` mode)
 - securely handle unmounting of target device before altering data, exit when failing
 - added `-f`, `--format` option to format USB device and quit
 - added `-L`, `--label` option to chose a label
-- added `-t`, `--type` option to chose a FS type amongst vfat, exfat, ext2, ext3, ext4, f2fs
+- added `-t`, `--type` option to chose a FS type amongst vfat, exfat, ntfs, ext2, ext3, ext4 and f2fs
+- added `-M` alias to `--no-mime-check`
+- removed `-b`, `--bootloader` option since its installation is now automatic
+- added `-i`, `--inspect` and `-p`, `--probe` action flags to inspect ISO file boot capabilities.
+- fixed bug preventing label to be set with `--no-mime-check` option
 - set FAT32-LBA by default instead of FAT32
-- forbid -t option with "-b" option when fstype is not VFAT
-- add '--noconfirm' option to pacman install
+- removed "noconfirm" or "yes" options to pakage managers install commands
 - print bootiso name in log messages to comply with UNIX customs
 - refactoring with options map
 - exhaustive flags combination tests
 - better faulty command line argument option assignments handling
 - better user feedback and error reports in many corner cases
+- added short device selection with omission of full path prefix (`/dev/`)
+- check the existence of `mkfs.<type>` before formating
+- removed `-s` strict mime check option
+- create temporary folders in `/var/tmp` instead of `/tmp` (some systems mount `/tmp` in RAM, which can be problematic with large ISO files)
 
 # v2.5.2
 
