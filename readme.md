@@ -7,7 +7,10 @@
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
 
-Don't want to messup the system with `dd` command? Create a bootable USB from an ISO in one line.
+Don't want to messup the system with `dd` command? Create a bootable USB from an ISO in one line.  
+
+Works seamlessly with hybrid and non-hybrid ISOs (SYSLINUX or UEFI compliant) such as any linux ISO, Windows ISO or rescue live-cds like UltimateBootCD.
+You don't have to tweak anything: `bootiso` inspects the ISO file and [chooses the best method to make your USB bootable](#auto).
 
 ### Synopsis
 
@@ -256,14 +259,15 @@ This script will also check for dependencies and prompt user for installation (w
 
 ### Automatic mode behavior
 
-With `[install-auto]` action, `bootiso` will inspect the ISO file and chose the best strategy to end up with a bootable USB stick.
+With default `[install-auto]` action, `bootiso` will inspect the ISO file and chose the best strategy to end up with a bootable USB stick.  
+99% of the time, you shouldn't enforce any strategy and let `bootiso` choose.
 
 The main decision is to chose between image-copy and mount+rsync modes.
-In image-copy `dd` mode (enforcable with `[install-dd]` action, `--dd` flag), `bootiso` uses `dd` utility to make a block-by-block copy of the ISO.
-This is perfectly appropriate when the ISO file is aimed both at disk drives and flat disks. Those ISO are called [hybrids](https://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid).
+In image-copy `dd` mode (enforcable with `[install-dd]` action, `--dd` flag), `bootiso` uses `dd` utility to make a raw copy of the ISO.
+This is perfectly appropriate when the ISO file is aimed both at disk drives and CDs. Those ISO are called [hybrids](https://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid).
 
 In mount+rsync mode (enforcable with `[install-mount-rsync]` action, `--mrsync` flag), `bootiso` creates one partition with MBR table in the USB drive and copy files from mounted ISO.
-It will also install SYSLINUX bootlaoder if configuration files are found which will allow legacy BIOS boot. When local version doesn't match ISO version, it will attempt to download the closest version available in [kernel.org](https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing) if `--local-bootloader` flag is not set.
+It will also install SYSLINUX bootlaoder if configuration files are found, which will allow legacy BIOS boot. When local version doesn't match ISO version, it will attempt to download the closest version available in [kernel.org](https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing) if `--local-bootloader` flag is not set.
 
 ### Credits
 
