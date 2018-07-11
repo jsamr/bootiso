@@ -6,14 +6,14 @@
 
 - `[install-auto]` default mode: bootiso chooses the most appropriate copy mode after inspecting ISO file
 - `--dd` option now overrides `[install-auto]` in lieu of `[install-mount-rsync]` and force image-copy (`[install-dd]` mode)
-- added `-m`, `--mrsync` option to override `[install-auto]` and force mounting+rsync (`[install-mount-rsync]` mode)
+- added `--mrsync` option to override `[install-auto]` and force mounting+rsync (`[install-mount-rsync]` mode)
 - securely handle unmounting of target device before altering data, exit when failing
 - added `-f`, `--format` option to format USB device and quit
 - added `-L`, `--label` option to chose a label
 - added `-t`, `--type` option to chose a FS type amongst vfat, exfat, ntfs, ext2, ext3, ext4 and f2fs
 - added `-M` alias to `--no-mime-check`
 - removed `-b`, `--bootloader` option since its installation is now automatic
-- added `-i`, `--inspect` and `-p`, `--probe` action flags to inspect ISO file boot capabilities.
+- added `-i`, `--inspect` and `-p`, `--probe` action flags to inspect ISO file boot capabilities
 - fixed bug preventing label to be set with `--no-mime-check` option
 - set FAT32-LBA by default instead of FAT32
 - removed "noconfirm" or "yes" options to pakage managers install commands
