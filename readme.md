@@ -150,13 +150,13 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <tr>
       <td></td>
       <td><code>--dd</code></td>
-      <td><code>[install-dd]</code>: Overrides "automatic" mode and install ISO in image-copy mode with <code>dd</code> utility. It is recommended to run [inspect] action first.</td>
+      <td><code>[install-dd]</code>: Overrides "automatic" mode and install ISO in image-copy mode with <code>dd</code> utility. It is recommended to run <code>[inspect]</code> action first.</td>
       <td>yes</td>
     </tr>
     <tr>
       <td></td>
       <td><code>--mrsync</code></td>
-      <td><code>[install-mount-rsync]</code>: Overrides "automatic" mode and install ISO in mount-rsync mode with <code>rsync</code> utility. It is recommended to run [inspect] action first.</td>
+      <td><code>[install-mount-rsync]</code>: Overrides "automatic" mode and install ISO in mount-rsync mode with <code>rsync</code> utility. It is recommended to run <code>[inspect]</code> action first.</td>
       <td>yes</td>
     </tr>
 </table>
@@ -175,38 +175,38 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
       <td><code>-d &lt;device&gt;</code></td>
       <td><code>--device &lt;device&gt;</code></td>
       <td>Select <code>&lt;device&gt;</code> block file as USB device. If <code>&lt;device&gt;</code> is not connected through a USB bus, bootiso will fail and exit. Device block files are usually situated in <code>/dev/sXX</code> or <code>/dev/hXX</code>. You will be prompted to select a device if you don&#39;t use this option. You can omit `/dev/` prefix.</td>
-      <td>install-*, format</td>
+      <td><code>[install-*]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
       <td><code>-y</code></td>
       <td><code>--assume-yes</code></td>
       <td>bootiso won&#39;t prompt the user for confirmation before erasing and partitioning USB device. Use at your own risks.</td>
-      <td>install-*,<br/>format</td>
+      <td><code>[install-*]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
       <td><code>-a</code></td>
       <td><code>--autoselect</code></td>
       <td>Enable autoselecting USB devices in conjunction with <code>-y</code> option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither <code>-d</code> nor <code>--no-usb-check</code> options are given.</td>
-      <td>install-*,<br/>format</td>
+      <td><code>[install-*]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
       <td><code>-J</code></td>
       <td><code>--no-eject</code></td>
       <td>Do not eject device after unmounting.</td>
-      <td>install-*</td>
+      <td><code>[install-*]</code></td>
     </tr>
     <tr>
       <td><code>-M</code></td>
       <td><code>--no-mime-check</code></td>
       <td>bootiso won&#39;t assert that selected ISO file has the right mime-type.</td>
-      <td>install-*</td>
+      <td><code>[install-*]</code></td>
     </tr>
     <tr>
       <td><code>-t &lt;type&gt;</code></td>
       <td><code>--type &lt;type&gt;</code></td>
       <td>Format to <code>&lt;type&gt;</code> instead of standard FAT32 (vfat). Supported types: vfat exfat ntfs ext2 ext3 ext4 f2fs.
       </td>
-      <td>install-mount-rsync,<br/>format</td>
+      <td><code>[install-mount-rsync]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
       <td><code>-L &lt;label&gt;</code></td>
@@ -214,25 +214,25 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
       <td>Set partition label as <code>&lt;type&gt;</code> instead of automatically inferred.
       <code>bootiso</code> will cut labels which are too long regarding the selected filesystem limitations.
       </td>
-      <td>install-mount-rsync,<br/>format</td>
+      <td><code>[install-mount-rsync]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
       <td></td>
       <td><code>--</code></td>
       <td>POSIX end of options.</td>
-      <td>install-*<br/>inspect</td>
+      <td><code>[install-*]</code>,<br/><code>[inspect]</code>,<br/><code>[probe]</code></td>
     </tr>
     <tr>
       <td></td>
       <td><code>--no-usb-check</code></td>
       <td>bootiso won&#39;t assert that selected device is a USB (connected through USB bus). Use at your own risks.</td>
-      <td>install-*,<br/>format</td>
+      <td><code>[install-*]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
       <td></td>
       <td><code>--local-bootloader</code></td>
       <td>Prevent download of remote bootloader and force local (SYSLINUX) during installation.</td>
-      <td>install-auto,<br/>install-mount-rsync</td>
+      <td><code>[install-auto]</code>,<br/><code>[install-mount-rsync]</code></td>
     </tr>    
     <tr>
       <td><code><s>-b</s></code></td>
