@@ -245,13 +245,14 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
 
 ### Security checks and robustness
 
-✔ bootiso asserts that selected ISO has the correct mime-type and exit if it doesn't (with [file](https://askubuntu.com/a/3397/276357) utility).  
-✔ bootiso asserts that selected device is connected through USB preventing system damages and exit if it doesn't (with [udevadm](https://askubuntu.com/a/168654/276357) utility).  
-✔ bootiso asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).
-✔ bootiso prompts the user for confirmation before erasing and paritioning USB device.  
-✔ bootiso will handle any failure from a command properly and exit.  
-✔ bootiso will call a cleanup routine on exit with `trap`.  
-✔ bootiso is being carefully linted and validated with [shellcheck](https://www.shellcheck.net/) (see [code quality status from codacy](https://app.codacy.com/app/jsamr/bootiso/dashboard)).
+✔ `bootiso` inspects ISO file to find [the best strategy](#auto) resulting in a booting USB stick  
+✔ `bootiso` asserts that selected ISO has the correct mime-type and exit if it doesn't (with [file](https://askubuntu.com/a/3397/276357) utility).  
+✔ `bootiso` asserts that selected device is connected through USB preventing system damages and exit if it doesn't (with [udevadm](https://askubuntu.com/a/168654/276357) utility).  
+✔ `bootiso` asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).  
+✔ `bootiso` prompts the user for confirmation before erasing and paritioning USB device.  
+✔ `bootiso` will handle any failure from a command properly and exit.  
+✔ `bootiso` will call a cleanup routine on exit with `trap`.  
+✔ `bootiso` is being carefully linted and validated with [`shellcheck`](https://www.shellcheck.net/) (see [code quality status from codacy](https://app.codacy.com/app/jsamr/bootiso/dashboard)) and formatted with `shfmt`.
 
 This script will also check for dependencies and prompt user for installation (works with `apt-get`, `yum`, `dnf`, `pacman`, `zypper`, `emerge`).
 
@@ -259,10 +260,10 @@ This script will also check for dependencies and prompt user for installation (w
 
 ### Automatic mode behavior
 
-With default `[install-auto]` action, `bootiso` will inspect the ISO file and chose the best strategy to end up with a bootable USB stick.  
+With default `[install-auto]` action, `bootiso` will inspect the ISO file and choose the best strategy to end up with a bootable USB stick.  
 99% of the time, you shouldn't enforce any strategy and let `bootiso` choose.
 
-The main decision is to chose between image-copy and mount+rsync modes.
+The main decision is to pick up image-copy or mount+rsync modes.
 In image-copy `dd` mode (enforcable with `[install-dd]` action, `--dd` flag), `bootiso` uses `dd` utility to make a raw copy of the ISO.
 This is perfectly appropriate when the ISO file is aimed both at disk drives and CDs. Those ISO are called [hybrids](https://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid).
 
