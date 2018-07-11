@@ -1,3 +1,7 @@
+# v3.0.1
+
+- fixed non-working `-M`, `--no-mime-check` flag
+
 # v3.0.0
 
 - `[install-auto]` default mode: bootiso chooses the most appropriate copy mode after inspecting ISO file

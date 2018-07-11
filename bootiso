@@ -3,7 +3,7 @@
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.0.0
+# Version 3.0.1
 
 set -o pipefail
 set -E
@@ -51,7 +51,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 )
 
 # internal variables
-typeset version="3.0.0"
+typeset version="3.0.1"
 typeset ticketsurl="https://github.com/jsamr/bootiso/issues"
 typeset mountRoot=/mnt
 typeset tempRoot=/var/tmp/bootiso
@@ -355,11 +355,13 @@ assertISOIsOK() {
 	if [ ! -f "$selectedIsoFile" ]; then
 		failAndExit "Provided iso file \`$selectedIsoFile' does not exists."
 	fi
-	mimetype=$(file --mime-type -b -- "$selectedIsoFile")
-	[ "$mimetype" == "application/octet-stream" ]
-	isOctetStream=$?
-	if ((isOctetStream != 0)) && [ ! "$mimetype" == "application/x-iso9660-image" ]; then
-		failISOCheck
+	if [ "$disableMimeCheck" == 'false' ]; then
+		mimetype=$(file --mime-type -b -- "$selectedIsoFile")
+		[ "$mimetype" == "application/octet-stream" ]
+		isOctetStream=$?
+		if ((isOctetStream != 0)) && [ ! "$mimetype" == "application/x-iso9660-image" ]; then
+			failISOCheck
+		fi
 	fi
 }
 
