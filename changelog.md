@@ -1,3 +1,11 @@
+# v3.1.0
+
+- fixed a bug with `--local-bootloader` where C32 BIOS modules were not copied on USB key
+- better handling of GNU option errors
+- minor message improvements
+- add `--remote-bootloader` flag to enforce a specific version of SYSLINUX in mount-rsync mode
+- fix a bug in mount-rsync mode preventing ejection of USB device
+
 # v3.0.1
 
 - fixed non-working `-M`, `--no-mime-check` flag

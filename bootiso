@@ -3,7 +3,7 @@
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.0.1
+# Version 3.1.0
 
 set -o pipefail
 set -E
@@ -40,6 +40,7 @@ typeset -Ar userVarsCompatibilityMatrix=(
 	['device']='install-auto install-mount-rsync install-dd format'
 	['type']='install-mount-rsync format'
 	['label']='install-mount-rsync format'
+	['remote-bootloader']='install-auto install-mount-rsync'
 )
 typeset -Ar userFlagsCompatibilityMatrix=(
 	['local-bootloader']='install-auto install-mount-rsync'
@@ -51,7 +52,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 )
 
 # internal variables
-typeset version="3.0.1"
+typeset version="3.1.0"
 typeset ticketsurl="https://github.com/jsamr/bootiso/issues"
 typeset mountRoot=/mnt
 typeset tempRoot=/var/tmp/bootiso
@@ -62,6 +63,7 @@ typeset usbMountPoint
 typeset startTime
 typeset endTime
 typeset addSyslinuxBootloader=false
+typeset syslinuxVersion
 typeset -a devicesList
 typeset operationSuccess
 typeset expectingISOFile
@@ -98,14 +100,16 @@ typeset -A userVars=(
 	['device']=''
 	['type']=''
 	['label']=''
+	['remote-bootloader']=''
 )
 
 # user defined variables
-typeset selectedIsoFile
-typeset selectedDevice
-typeset partitionLabel
-typeset partitionType # default to vfat
+typeset selectedIsoFile # no default
+typeset selectedDevice  # default to prompted to user
+typeset partitionLabel  # default to inferred from ISO file label
+typeset partitionType   # default to vfat
 typeset action='install-auto'
+typeset selectedBootloaderVersion # default to auto
 
 # options
 typeset disableMimeCheck
@@ -140,55 +144,57 @@ Usage: $scriptName [<options>...] <file.iso>
        $scriptName <action> [<options>...]
 
 The default action [install-auto] as per first synopsis is to install an ISO file to a USB device in
-automatic mode. In such mode, $scriptName will analyse the ISO file and select the best course of
+automatic mode. In such mode, $scriptName will analyze the ISO file and select the best course of
 actions to maximize the odds your USB stick be proven bootable. Option and action flags can be
 stacked in their POSIX form.
 
 ACTION FLAGS
 
-You can change the default [install-auto] action with bellow flags (cannonical names given in
+You can override the default [install-auto] action with bellow flags (cannonical names given in
 brackets):
 
--h, --help, help             [help] Display this help message and exit.
--v, --version                [version] Display version and exit.
--l, --list-usb-drives        [list-usb-drives] List available USB drives and exit.
--i, --inspect                [inspect] Inspect ISO file boot capabilities and how $scriptName can handle
-                             it, then exit.
--p, --probe                  [probe] Equivalent of [inspect] and [list-usb-drives] actions.
--f, --format                 [format] Format selected USB drive and exit.
-    --dd                     [install-dd] Overrides \"automatic\" mode and install ISO in image-copy
-                             mode with \`dd' utility. It is recommended to run [inspect] action first.
-    --mrsync                 [install-mount-rsync] Overrides \"automatic\" mode and install ISO in
-                             mount-rsync mode with \`rsync' utility. It is recommended to run [inspect]
-                             action first.
+-h, --help, help                   [help] Display this help message and exit.
+-v, --version                      [version] Display version and exit.
+-l, --list-usb-drives              [list-usb-drives] List available USB drives and exit.
+-i, --inspect                      [inspect] Inspect ISO file boot capabilities and how $scriptName can handle
+                                   it, then exit.
+-p, --probe                        [probe] Equivalent to [inspect] followed by [list-usb-drives] actions.
+-f, --format                       [format] Format selected USB drive and exit.
+    --dd                           [install-dd] Overrides \"automatic\" mode and install ISO in image-copy
+                                   mode with \`dd' utility. It is recommended to run [inspect] action first.
+    --mrsync                       [install-mount-rsync] Overrides \"automatic\" mode and install ISO in
+                                   mount-rsync mode with \`rsync' utility. It is recommended to run [inspect]
+                                   action first.
 
 OPTION FLAGS
 
--d, --device  <device>       Select <device> block file as USB device.
-                             If <device> is not connected through USB, $scriptName will fail and
-                             exit. Device block files are usually situated in /dev/sdX or /dev/hdX.
-                             You can omit \`/dev/' prefix. You will be prompted to select a device
-                             if you don't use this option.
--y, --assume-yes             $scriptName won't prompt the user for confirmation before erasing and
-                             partitioning USB device. $(yellowify 'Use at your own risks.')
--a, --autoselect             Enable autoselecting USB devices in conjunction with -y option.
-                             Autoselect will automatically select a USB drive device if there is
-                             exactly one connected to the system. Enabled by default when neither
-                             \`-d' nor \`--no-usb-check' options are given.
--J, --no-eject               Do not eject device after unmounting.
--M, --no-mime-check          $scriptName won't assert that selected ISO file has the right mime-type.
--t, --type <type>            Format to \`<type>' instead of standard FAT32 (vfat). Supported types:
-                             ${supportedFS[*]}.
-                             Only works with [install-mount-rsync] and [format] actions.
--L, --label <label>          Set partition label as \`<label>' instead of automatically inferred.
-                             Only works with [install-mount-rsync] and [format] actions. $scriptName
-                             will cut labels which are too long regarding the selected filesystem 
-                             limitations.
-    --no-usb-check           $scriptName won't assert that selected device is a USB (connected
-                             through USB bus). $(redify 'Use at your own risks.')
-    --local-bootloader       Prevent download of remote bootloader and force local (SYSLINUX) during
-                             installation. Works with [install-auto] and [install-mount-rsync] actions.
-    --                       POSIX end of options.
+-d, --device  <device>             Select <device> block file as USB device.
+                                   If <device> is not connected through USB, $scriptName will fail and
+                                   exit. Device block files are usually situated in /dev/sdX or /dev/hdX.
+                                   You can omit \`/dev/' prefix.
+-y, --assume-yes                   $scriptName won't prompt the user for confirmation before erasing and
+                                   partitioning USB device. $(yellowify 'Use at your own risks.')
+-a, --autoselect                   Enable autoselecting USB devices in combination with -y option.
+                                   Autoselect will automatically select a USB drive device if there is
+                                   exactly one connected to the system. Enabled by default when neither
+                                   \`-d' nor \`--no-usb-check' options are given.
+-J, --no-eject                     Do not eject device after unmounting.
+-M, --no-mime-check                $scriptName won't assert that selected ISO file has the right mime-type.
+-t, --type <type>                  Format to \`<type>' instead of default FAT32 (vfat). Supported types:
+                                   ${supportedFS[*]}.
+                                   Applicable to [install-mount-rsync] and [format] actions.
+-L, --label <label>                Set partition label as \`<label>' instead of inferring.
+                                   Applicable to [install-mount-rsync] and [format] actions. $scriptName
+                                   will cut labels which are too long regarding the selected filesystem 
+                                   limitations.
+    --no-usb-check                 $scriptName won't assert that selected device is connected
+                                   through USB bus. $(redify 'Use at your own risks.')
+    --local-bootloader             Prevent download of remote bootloader and force local (SYSLINUX) during
+                                   installation. Applicable to [install-mount-rsync] action.
+    --remote-bootloader <version>  Force download of remote bootloader at version <version>.
+	                               Version must follow the pattern MAJOR.MINOR. Examples: 4.08, 6.04.
+								   Applicable to [install-mount-rsync] action.
+    --                             POSIX end of options.
 
 
 INFO
@@ -277,7 +283,7 @@ isMounted() {
 
 umountUSB() {
 	if isMounted "$usbMountPoint"; then
-		if umount "$usbMountPoint"; then
+		if umount "$usbMountPoint" |& indentAll; then
 			echogood "USB device partition succesfully unmounted."
 		else
 			echowarn "Could not unmount USB mount point."
@@ -287,7 +293,7 @@ umountUSB() {
 
 umountISO() {
 	if isMounted "$isoMountPoint"; then
-		if umount "$isoMountPoint"; then
+		if umount "$isoMountPoint" |& indentAll; then
 			echogood "ISO succesfully unmounted ($isoMountPoint)."
 		else
 			echowarn "Could not unmount ISO mount point."
@@ -565,6 +571,13 @@ parseArguments() {
 				enableUserFlag 'local-bootloader'
 				shift
 				;;
+			--remote-bootloader)
+				if (($# < 2)); then
+					failAndExit "Missing value for \`$1' flag. Please provide a version following MAJOR.MINOR pattern. ex: \`4.10'."
+				fi
+				setUserVar 'remote-bootloader' "$2"
+				shift 2
+				;;
 			-y | --assume-yes)
 				enableUserFlag 'assume-yes'
 				shift
@@ -620,6 +633,8 @@ parseArguments() {
 						typeset -a extractedOptions
 						mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
 						set -- "${extractedOptions[@]}" "$@"
+					elif [[ "$key" =~ ^--[a-zA-Z0-9]{2,}$ ]]; then
+						failAndExit "Unknown option: \`$key'"
 					else
 						printf "\\e[0;31m%s\\e[m" "$scriptName: Unknown option: "
 						printf '%s' "$key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
@@ -962,11 +977,11 @@ installSyslinuxVersion() {
 	typeset versions
 	typeset minor
 	typeset filename
-	typeset syslinuxVersion=$1
 	typeset rootURL="https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing"
 	typeset syslinuxArchive
 	typeset assetURL
 	typeset status
+	typeset selectedSyslinuxVersion=$1
 	typeset abortingMessage="Aborting SYSLINUX installation and resuming with local install."
 	checkConnexion() {
 		status=$(curl -sLIo /dev/null -w "%{http_code}" "$rootURL")
@@ -975,7 +990,7 @@ installSyslinuxVersion() {
 				failAndExit "You don't seem to have an internet connexion.\\nPlease try again later or use \`--local-bootloader' option to force usage of local SYSLINUX version."
 				return 9
 			else
-				echowarn "Couldn't get $rootURL.\\nReceived status code \`$status'.\\n$openTicketMessage\\n$abortingMessage"
+				echowarn "Couldn't GET $rootURL.\\nReceived status code \`$status'.\\n$openTicketMessage\\n$abortingMessage"
 				return 10
 			fi
 		fi
@@ -985,17 +1000,23 @@ installSyslinuxVersion() {
 		typeset syslinuxInstallDir
 		versions="$(curl -sL "$rootURL" | grep -oP 'href="\K\d+\.\d+(?=/")' | sort --version-sort)"
 		if (($? != 0)); then
-			echowarn "Couldn't get $rootURL.\\nAborting syslinux installation and resuming with local install."
+			echowarn "Couldn't GET $rootURL.\\nAborting syslinux installation and resuming with local install."
 			return 10
 		elif [ -z "$versions" ]; then
 			echoerr "Couldn't parse the result of $rootURL.\\nThis is not expected: please open a ticket at $ticketsurl.\\n$abortingMessage"
+			return 11
 		fi
-		minor=$(echo "$versions" | grep -E "^$syslinuxVersion" | grep "^${syslinuxVersion%.}" | tail -n 1)
+		minor=$(echo "$versions" | grep -E "^$selectedSyslinuxVersion" | grep "^${selectedSyslinuxVersion%.}" | tail -n 1)
+		if [ -z "$minor" ]; then
+			echoerr "Version \`$selectedSyslinuxVersion' is not available at kernel.org."
+			return 8
+		fi
 		return 0
 	}
 	findMatchedRelease() {
 		filename=$(curl -sL "$rootURL/$minor/" | grep -oP 'href="\Ksyslinux-\d+\.\d+-\w+\d+\.tar\.gz(?=")' | sort --version-sort | tail -n1)
 		if [ -z "$filename" ]; then
+			echoerr "Couldn't find \`$filename'."
 			return 11
 		fi
 		assetURL="$rootURL/$minor/$filename"
@@ -1045,6 +1066,7 @@ installSyslinuxVersion() {
 		return 0
 	}
 	checkpkg 'curl'
+	inferSyslinuxVersion
 	checkConnexion || return "$?"
 	findMinorVersions || return "$?"
 	findMatchedRelease || return "$?"
@@ -1067,17 +1089,53 @@ installBootloader() {
 	typeset syslinuxFolder
 	typeset syslinuxConfig
 	typeset -i versionsMatch=0
+	typeset localSyslinuxVersion
+	inferSyslinuxVersion() {
+		localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
+		if [ "$selectedBootloaderVersion" != 'auto' ]; then
+			syslinuxVersion="$selectedBootloaderVersion"
+		else
+			syslinuxVersion=${isoInspection['syslinuxVer']:-"$localSyslinuxVersion"}
+		fi
+	}
+	# return 0 : install from kernel.org
+	# return 1+: install from local
 	checkSyslinuxVersion() {
-		typeset localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
+		if [ "$localBootloader" == "true" ]; then
+			echogood "Enfoced local SYSLINUX bootloader at version \`$localSyslinuxVersion'."
+			return 1
+		fi
+		if [ -z "$syslinuxVersion" ]; then
+			return 1
+		fi
+		if [ "$selectedBootloaderVersion" != 'auto' ]; then
+			echoinfo "Searching for SYSLINUX V$syslinuxVersion remotely."
+			if ! installSyslinuxVersion "$syslinuxVersion"; then
+				if [ ! -z "${isoInspection['syslinuxVer']}" ]; then
+					echowarn "Falling back to ISO SYSLINUX version \`${isoInspection['syslinuxVer']}'"
+					syslinuxVersion="${isoInspection['syslinuxVer']}"
+					installSyslinuxVersion "${isoInspection['syslinuxVer']}"
+					return $?
+				else
+					return 1
+				fi
+			else
+				return 0
+			fi
+		fi
 		echoinfo "Found local SYSLINUX version \`$localSyslinuxVersion'"
 		compute "$localSyslinuxVersion == ${isoInspection['syslinuxVer']}" >/dev/null
 		versionsMatch=$?
 		if ((versionsMatch == 0)); then
 			echogood "ISO SYSLINUX version matches local version."
+			return 1
 		else
-			echowarn "ISO SYSLINUX version doesn't match local version.\\nScheduling download of version ${isoInspection['syslinuxVer']}..."
-			if ! installSyslinuxVersion "${isoInspection['syslinuxVer']}"; then
-				echowarn "Using local SYSLINUX version \`$localSyslinuxVersion'."
+			typeset -i status
+			echowarn "ISO SYSLINUX version doesn't match local version.\\nScheduling download of version $syslinuxVersion..."
+			if ! installSyslinuxVersion "$syslinuxVersion"; then
+				echowarn "Falling back to local SYSLINUX version \`$localSyslinuxVersion'."
+				syslinuxVersion="$localSyslinuxVersion"
+				return 1
 			fi
 		fi
 	}
@@ -1095,38 +1153,35 @@ installBootloader() {
 	}
 	installWtLocalExtlinux() {
 		syslinuxInstall=(['mbrBin']=/usr/lib/syslinux/bios/mbr.bin ['extBin']='extlinux')
-		echoinfo "Installing SYSLINUX bootloader in \`$syslinuxFolder' with local version..."
-		if ((versionsMatch != 0)); then
-			rsync --no-links --no-perms --no-owner --no-group -I /usr/lib/syslinux/bios/*.c32 "$syslinuxFolder" |& indentAll || echowarn "SYSLINUX could not install c32 BIOS modules."
-		fi
+		syslinuxVersion="$localSyslinuxVersion"
+		echoinfo "Installing SYSLINUX bootloader in \`$syslinuxFolder' with local version \`$syslinuxVersion'..."
+		rsync --no-links --no-perms --no-owner --no-group -I /usr/lib/syslinux/bios/*.c32 "$syslinuxFolder" |& indentAll || echowarn "SYSLINUX could not install C32 BIOS modules."
+		sync
+		echogood "C32 BIOS modules successfully installed."
 		${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll || failAndExit "SYSLINUX bootloader could not be installed."
 		sync
-		umountUSB
 	}
 	installWtKernelOrgExtlinux() {
-		echoinfo "Installing SYSLINUX bootloader in \`$syslinuxFolder' with kernel.org version..."
+		echoinfo "Installing SYSLINUX bootloader in \`$syslinuxFolder' with kernel.org version \`$syslinuxVersion'..."
 		if ! ${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll; then
-			echowarn "kernel.org version cannot be run.\\nAttempting with local SYSLINUX install..."
+			echowarn "kernel.org version \`$syslinuxVersion' could not be run.\\nAttempting with local SYSLINUX install..."
 			installWtLocalExtlinux >/dev/null
 		fi
 		sync
-		umountUSB
 	}
 	installMasterBootRecordProg() {
 		dd bs=440 count=1 conv=notrunc status=none if="${syslinuxInstall['mbrBin']}" of="$selectedDevice" |& indentAll || failAndExit "Failed to install Master Boot Record program."
 		sync
 		echogood "Succesfully installed Master Boot Record program."
 	}
-	if [ "$localBootloader" == "false" ]; then
-		checkSyslinuxVersion
-	fi
+	inferSyslinuxVersion
 	setSyslinuxLocation
-	if [ "$localBootloader" == true ] || ((versionsMatch == 0)); then
-		installWtLocalExtlinux
-	else
-		installWtKernelOrgExtlinux
-	fi
-	echogood "Successfully installed SYSLINUX bootloader."
+	checkSyslinuxVersion
+	case $? in
+	0) installWtKernelOrgExtlinux ;;
+	*) installWtLocalExtlinux ;;
+	esac
+	echogood "Successfully installed SYSLINUX bootloader at version \`$syslinuxVersion'."
 	installMasterBootRecordProg
 }
 
@@ -1171,6 +1226,9 @@ checkUserVars() {
 			userVars['device']="/dev/${userVars['device']}"
 		fi
 		assertDeviceIsOK "${userVars['device']}"
+	fi
+	if [ ! -z "${userVars['remote-bootloader']}" ] && [[ ! "${userVars['remote-bootloader']}" =~ ^[0-9]+\.[0-9]+$ ]]; then
+		failAndExit "Remote bootloader version \`${userVars['remote-bootloader']}' set with \`--remote-bootloader' doesn't follow MAJOR.MINOR pattern.\\nValid examples are 4.10, 6.02"
 	fi
 }
 
@@ -1267,6 +1325,7 @@ assignInternalVariables() {
 	partitionType=${userVars['type']:-'vfat'}
 	selectedDevice=${userVars['device']:-''}
 	partitionLabel=${userVars['label']:-''}
+	selectedBootloaderVersion=${userVars['remote-bootloader']:-'auto'}
 	# Action-dependent flags
 	case $action in
 	install-*)
@@ -1326,11 +1385,11 @@ inspectISO() {
 	typeset isHybrid
 	typeset supportsEFIBoot
 	typeset syslinuxBinary
-	typeset syslinuxVersion
+	typeset isoSyslinuxVersion
 	inspectSyslinux() {
 		syslinuxBinary=$(matchFirstExpression "$isoMountPoint" 'syslinux.bin' 'isolinux.bin' 'extlinux.bin' 'boot.bin' 'extlinux' 'syslinux' 'isolinux')
 		if [ ! -z "$syslinuxBinary" ]; then
-			syslinuxVersion=$(strings "$syslinuxBinary" | grep -E 'ISOLINUX|SYSLINUX|EXTLINUX' | grep -oP '(\d+\.\d+)' | awk 'NR==1{print $1}')
+			isoSyslinuxVersion=$(strings "$syslinuxBinary" | grep -E 'ISOLINUX|SYSLINUX|EXTLINUX' | grep -oP '(\d+\.\d+)' | awk 'NR==1{print $1}')
 		fi
 		syslinuxConfig=$(findFileFromPatterns "$isoMountPoint" "${sysLinuxLocations[@]}")
 		if [ -z "$syslinuxConfig" ]; then
@@ -1365,7 +1424,7 @@ inspectISO() {
 	# set relative paths
 	isoInspection['syslinuxConf']=${syslinuxConfig#${isoMountPoint}}
 	isoInspection['syslinuxBin']=${syslinuxBinary#${isoMountPoint}}
-	isoInspection['syslinuxVer']=$syslinuxVersion
+	isoInspection['syslinuxVer']=$isoSyslinuxVersion
 	isoInspection['isHybrid']=$isHybrid
 	isoInspection['supportsEFIBoot']=$supportsEFIBoot
 }
@@ -1461,7 +1520,6 @@ execWithRsync() {
 execWithDD() {
 	shouldMakePartition=false
 	runSecurityAssessments
-	mountISOFile
 	partitionUSB false
 	copyWithDD
 }

@@ -19,25 +19,25 @@ You don't have to tweak anything: `bootiso` inspects the ISO file and [chooses t
     bootiso <action> [<options>...]
 
 The default action `[install-auto]` as per first synopsis is to install an ISO file to a USB device in
-automatic mode. In such mode, bootiso will analyse the ISO file and select the best course of
-actions to maximize the odds your USB stick is proven bootable (see [automatic mode behavior](#auto)).  
-Other [`<options>` and `<actions>` are listed in the bellow section](#flags).
+automatic mode. In such mode, bootiso will analyze the ISO file and select the best course of
+actions to maximize the odds your USB stick be proven bootable (see [automatic mode behavior](#auto)).  
+Other [`<options>` and `<actions>` are listed in this bellow section](#flags).
 
 ### Examples
 
-To have a quick feedback, `[probe]` around to check bootiso capabilities with given ISO file and list USB drives candidates:
+To have a quick feedback, `[probe]` around to check bootiso capabilities with given ISO file and list USB drives candidates [[watch video](https://webmshare.com/JZrVW)]:
 
     bootiso -p myfile.iso
 
-With the default action `[install-auto]` ([read its behavior here](#auto)), give the ISO as first argument and you'll be prompted to select from available USB drives amongst a list extracted from `lsblk`. If there is only one USB device connected, `bootiso` will automatically select it:
+With the default action `[install-auto]` [[read its detailed behavior here](#auto)], give the ISO as first argument and you'll be prompted to select from available USB drives amongst a list extracted from `lsblk`. If there is only one USB device connected, `bootiso` will automatically select it:
 
     bootiso myfile.iso
 
-Or provide explicitly the USB device with `-d` flag. Command fails and exit if the provided device is not USB, such as sata:
+Or provide explicitly the USB device with `-d` flag. Command fails and exit if the provided device is not USB, such as sata [[watch video](https://webmshare.com/36rRn)]:
 
     bootiso -d sde myfile.iso
 
-Avoid being promtped before writting to USB drive and autoselect device when there is exactly one:
+Avoid being promtped before writting to USB drive and autoselect device when there is exactly one [[watch video](https://webmshare.com/mw7Q4)]:
 
     bootiso -ay myfile.iso
 
@@ -54,7 +54,7 @@ Quick-`[format]` the USB drive to NTFS and label it 'SAMUEL_SONY':
     bootiso -f -t ntfs -L 'SAMUEL_SONY'
 
 
-Go to the [flags](#flags) section to see a detailed list of actions and options.
+Go to the [flags](#flags) section to see the full list of actions and options.
 
 ### Quick install
 
@@ -138,7 +138,7 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <tr>
       <td><code>-p</code></td>
       <td><code>--probe</code></td>
-      <td><code>[probe]</code>: Equivalent of <code>[inspect]</code> and <code>[list-usb-drives]</code> actions.</td>
+      <td><code>[probe]</code>: Equivalent to <code>[inspect]</code> followed by <code>[list-usb-drives]</code> actions.</td>
       <td>yes</td>
     </tr>
     <tr>
@@ -169,7 +169,7 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <th>Option<br/>(POSIX&nbsp;short)&nbsp;<br/></th>
     <th><br/>Option<br/>(GNU,&nbsp;long)<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
     <th>Description</th>
-    <th>Applicable actions<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th>Applicable actions<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
   </tr>
     <tr>
       <td><code>-d &lt;device&gt;</code></td>
@@ -186,7 +186,7 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <tr>
       <td><code>-a</code></td>
       <td><code>--autoselect</code></td>
-      <td>Enable autoselecting USB devices in conjunction with <code>-y</code> option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither <code>-d</code> nor <code>--no-usb-check</code> options are given.</td>
+      <td>Enable autoselecting USB devices in combination with <code>-y</code> option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither <code>-d</code> nor <code>--no-usb-check</code> options are given.</td>
       <td><code>[install-*]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
@@ -204,14 +204,14 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <tr>
       <td><code>-t &lt;type&gt;</code></td>
       <td><code>--type &lt;type&gt;</code></td>
-      <td>Format to <code>&lt;type&gt;</code> instead of standard FAT32 (vfat). Supported types: vfat exfat ntfs ext2 ext3 ext4 f2fs.
+      <td>Format to <code>&lt;type&gt;</code> instead of default FAT32 (vfat). Supported types: vfat exfat ntfs ext2 ext3 ext4 f2fs.
       </td>
       <td><code>[install-mount-rsync]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
       <td><code>-L &lt;label&gt;</code></td>
       <td><code>--label &lt;label&gt;</code></td>
-      <td>Set partition label as <code>&lt;type&gt;</code> instead of automatically inferred.
+      <td>Set partition label as <code>&lt;type&gt;</code> instead of inferring.
       <code>bootiso</code> will cut labels which are too long regarding the selected filesystem limitations.
       </td>
       <td><code>[install-mount-rsync]</code>,<br/><code>[format]</code></td>
@@ -225,15 +225,21 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <tr>
       <td></td>
       <td><code>--no-usb-check</code></td>
-      <td>bootiso won&#39;t assert that selected device is a USB (connected through USB bus). Use at your own risks.</td>
+      <td>bootiso won&#39;t assert that selected device is connected through USB bus. Use at your own risks.</td>
       <td><code>[install-*]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
       <td></td>
       <td><code>--local-bootloader</code></td>
       <td>Prevent download of remote bootloader and force local (SYSLINUX) during installation.</td>
-      <td><code>[install-auto]</code>,<br/><code>[install-mount-rsync]</code></td>
-    </tr>    
+      <td><code>[install-mount-rsync]</code>,<br/><code>[install-auto]</code></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><code>--remote-bootloader &lt;version&gt;</code></td>
+      <td>Force download of remote bootloader at version <code>&lt;version&gt;</code>. Version must follow the pattern MAJOR.MINOR. Examples: 4.10, 6.04.</td>
+      <td><code>[install-mount-rsync]</code>,<br/><code>[install-auto]</code></td>
+    </tr>
     <tr>
       <td><code><s>-b</s></code></td>
       <td><code><s>--bootloader</s></code></td>
