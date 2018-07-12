@@ -7,7 +7,7 @@
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
 
-Don't want to messup the system with `dd` command? Create a bootable USB from an ISO in one line.  
+Don't want to messup the system with `dd` command? Create a bootable USB from an ISO in one line [[see it in action](#action)].
 
 Works seamlessly with hybrid and non-hybrid ISOs (SYSLINUX or UEFI compliant) such as any linux ISO, Windows ISO or rescue live-cds like UltimateBootCD.
 You don't have to tweak anything: `bootiso` inspects the ISO file and [chooses the best method to make your USB bootable](#auto).
@@ -75,19 +75,28 @@ If you like `bootiso`, feel free to help the community find it by **staring the 
 - [How to create a bootable Ubuntu USB flash drive from terminal?](https://goo.gl/BNRmvm)
 - [How to create a bootable USB from one ISO file securely from the shell?](https://goo.gl/YDBvFe)
 
+
+<a name="action"/>
+
 ### See it in action
 
 #### Probing
 
-[![](images/bootiso-p.png)](https://webmshare.com/JZrVW)
+`--probe` (shorten `-p`) gives you details about ISO boot capabilities and list available USB drives.
 
-#### Using `--assume-yes` + `--autoselect` (shorten `-ay`)
+[![](images/bootiso-p.png)](https://webmshare.com/play/JZrVW)
 
-[![](images/bootiso-ay.png)](https://webmshare.com/mw7Q4)
+#### Using `--assume-yes` + `--autoselect`
 
-#### The selected device is not connected through USB
+`--assume-yes` (shorten `-y`) bypass prompting the user for overwritting USB device, and `--autoselect` (shorten `-a`) allow automatic selection of USB device when exactly one device is connected in combination with `--assume-yes`.
 
-[![](images/bootiso-d-no-usb.png)](https://webmshare.com/36rRn)
+[![](images/bootiso-ay.png)](https://webmshare.com/play/mw7Q4)
+
+#### No-USB device failure
+
+In the bellow example, the selected device with `--device` (shorten `-d`) flag is not connected through USB and `bootiso` fails.
+
+[![](images/bootiso-d-no-usb.png)](https://webmshare.com/play/36rRn)
 
 <a name="flags"/>
 
