@@ -25,7 +25,7 @@ Other [`<options>` and `<actions>` are listed in this bellow section](#flags).
 
 ### Examples
 
-To have a quick feedback, `[probe]` around to check bootiso capabilities with given ISO file and list USB drives candidates [[watch video](https://webmshare.com/JZrVW)]:
+To have a quick feedback, `[probe]` around to check bootiso capabilities with given ISO file and list USB drives candidates [[watch video](https://webmshare.com/play/JZrVW)]:
 
     bootiso -p myfile.iso
 
@@ -33,11 +33,11 @@ With the default action `[install-auto]` [[read its detailed behavior here](#aut
 
     bootiso myfile.iso
 
-Or provide explicitly the USB device with `-d` flag. Command fails and exit if the provided device is not USB, such as sata [[watch video](https://webmshare.com/36rRn)]:
+Or provide explicitly the USB device with `-d` flag. Command fails and exit if the provided device is not USB, such as sata [[watch video](https://webmshare.com/play/36rRn)]:
 
     bootiso -d sde myfile.iso
 
-Avoid being promtped before writting to USB drive and autoselect device when there is exactly one [[watch video](https://webmshare.com/mw7Q4)]:
+Avoid being promtped before writting to USB drive and autoselect device when there is exactly one [[watch video](https://webmshare.com/play/mw7Q4)]:
 
     bootiso -ay myfile.iso
 
