@@ -3,7 +3,7 @@
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.1.0
+# Version 3.1.1
 
 set -o pipefail
 set -E
@@ -52,7 +52,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 )
 
 # internal variables
-typeset version="3.1.0"
+typeset version="3.1.1"
 typeset ticketsurl="https://github.com/jsamr/bootiso/issues"
 typeset mountRoot=/mnt
 typeset tempRoot=/var/tmp/bootiso
@@ -185,7 +185,7 @@ OPTION FLAGS
                                    Applicable to [install-mount-rsync] and [format] actions.
 -L, --label <label>                Set partition label as \`<label>' instead of inferring.
                                    Applicable to [install-mount-rsync] and [format] actions. $scriptName
-                                   will cut labels which are too long regarding the selected filesystem 
+                                   will cut labels which are too long regarding the selected filesystem
                                    limitations.
     --no-usb-check                 $scriptName won't assert that selected device is connected
                                    through USB bus. $(redify 'Use at your own risks.')
@@ -242,6 +242,15 @@ echoinfo() {
 failAndExit() {
 	echoerr "$1\\nExiting..."
 	exit 1
+}
+
+compute() {
+	answer=$(echo "$@" | bc)
+	if ((answer == 0)); then
+		return 1
+	else
+		return 0
+	fi
 }
 
 # $1: The name of the command to check against $PATH.
@@ -820,16 +829,25 @@ shouldWipeUSBKey() {
 }
 
 createMBRPartitionTable() {
+	typeset sfdiskCommand='sfdisk'
+	typeset sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+')
 	typeset -Ar mbrTypeCodes=(['vfat']='c' ['exfat']='7' ['ntfs']='7' ['ext2']='83' ['ext3']='83' ['ext4']='83' ['f2fs']='83')
 	typeset partitionOptions
+	makeSfdiskCommand() {
+		# Retrocompatibility for 'old' sfdisk versions
+		if compute "$sfdiskVersion >= 2.28"; then
+			sfdiskCommand='sfdisk -W always'
+		fi
+	}
+	makeSfdiskCommand
 	if [ "$notBootable" == true ]; then
 		partitionOptions="$selectedPartition : start=2048, type=${mbrTypeCodes[$partitionType]}"
 	else
 		partitionOptions="$selectedPartition : start=2048, type=${mbrTypeCodes[$partitionType]}, bootable"
 	fi
-	echogood "Creating MBR partition table with \`sfdisk'..."
+	echogood "Creating MBR partition table with \`sfdisk' v$sfdiskVersion..."
 	# Create partition table
-	echo "$partitionOptions" | sfdisk -W always "$selectedDevice" |& indentAll || failAndExit "Failed to write USB device partition table."
+	echo "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "Failed to write USB device partition table."
 	partprobe "$selectedDevice" # Refresh partition table
 	sync
 }
@@ -1074,15 +1092,6 @@ installSyslinuxVersion() {
 	extractMatchedVersion || return "$?"
 	configureSyslinuxInstall || return "$?"
 	echogood "SYSLINUX version \`$minor' temporarily set for installation."
-}
-
-compute() {
-	answer=$(echo "$@" | bc)
-	if ((answer == 0)); then
-		return 1
-	else
-		return 0
-	fi
 }
 
 installBootloader() {

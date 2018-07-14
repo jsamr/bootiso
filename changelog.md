@@ -1,3 +1,7 @@
+# v3.1.1
+
+- add compatibility code for `sfdisk` versions older then 2.28 which don't support `-W` option
+
 # v3.1.0
 
 - fixed a bug with `--local-bootloader` where C32 BIOS modules were not copied on USB key
