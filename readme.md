@@ -1,9 +1,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?longCache=true)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/github/tag/jsamr/bootiso.svg?label=version)]()
-[![Codacy grade](https://img.shields.io/codacy/grade/9f441cf6a1d6475484a9bb3ec2ed9713.svg)](https://app.codacy.com/app/jsamr/bootiso?utm_source=github.com&utm_medium=referral&utm_content=jsamr/bootiso&utm_campaign=badger)
+[![Codacy grade](https://img.shields.io/codacy/grade/9f441cf6a1d6475484a9bb3ec2ed9713.svg)](https://app.codacy.com/app/jsamr/bootiso?utm_source=github.com&utm_medium=referral&utm_content=jsamr/bootiso&utm_campaign=badger)  
 [![GitHub open bugs](https://img.shields.io/github/issues-raw/jsamr/bootiso/bug.svg?label=open%20bugs)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
-[![GitHub closed bugs](https://img.shields.io/github/issues-closed-raw/jsamr/bootiso/bug.svg?label=resolved%20bugs&colorB=41bb13)](https://github.com/jsamr/bootiso/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aclosed+label%3Abug+)
-[![GitHub enhancement issues](https://img.shields.io/github/issues-raw/jsamr/bootiso/enhancement.svg?label=scheduled%20enhancements&colorB=41bb13)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
+[![GitHub closed bugs](https://img.shields.io/github/issues-closed-raw/jsamr/bootiso/bug.svg?label=resolved%20bugs&colorB=125bba)](https://github.com/jsamr/bootiso/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aclosed+label%3Abug+)
+[![GitHub enhancement issues](https://img.shields.io/github/issues-raw/jsamr/bootiso/scheduled-feature.svg?label=scheduled%20features&colorB=125bba)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aopen+label%3Ascheduled-feature)
+[![GitHub enhancement issues](https://img.shields.io/github/issues-closed-raw/jsamr/bootiso/scheduled-feature.svg?label=implemented%20features&colorB=125bba)](https://github.com/jsamr/bootiso/issues?q=is%3Aissue+is%3Aclosed+label%3Ascheduled-feature)
 
 **Create a USB bootable device from an ISO image easily and [securely](#security).**
 
