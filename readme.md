@@ -221,7 +221,7 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <tr>
       <td><code>-L &lt;label&gt;</code></td>
       <td><code>--label &lt;label&gt;</code></td>
-      <td>Set partition label as <code>&lt;type&gt;</code> instead of inferring.
+      <td>Set partition label as <code>&lt;label&gt;</code> instead of inferring.
       <code>bootiso</code> will cut labels which are too long regarding the selected filesystem limitations.
       </td>
       <td><code>[install-mount-rsync]</code>,<br/><code>[format]</code></td>
