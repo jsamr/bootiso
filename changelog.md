@@ -1,3 +1,11 @@
+# v3.1.2
+
+- improved robustness of `checkpkg` function
+- fix issue with SYSLINUX and EXTLINUX on Ubuntu and debian-based distros #21
+- replaced `find` arguments `-wholename` with `-path` which is more portable
+- systematic usage the `-print -quit` pattern with `find` command when possible
+- add explicit dependency to `tar`
+
 # v3.1.1
 
 - add compatibility code for `sfdisk` versions older then 2.28 which don't support `-W` option
