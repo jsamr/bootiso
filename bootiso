@@ -3,11 +3,12 @@
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.1.1
+# Version 3.1.2
 
 set -o pipefail
 set -E
 
+version="3.1.2"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
@@ -52,7 +53,6 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 )
 
 # internal variables
-typeset version="3.1.1"
 typeset ticketsurl="https://github.com/jsamr/bootiso/issues"
 typeset mountRoot=/mnt
 typeset tempRoot=/var/tmp/bootiso
@@ -67,6 +67,8 @@ typeset syslinuxVersion
 typeset -a devicesList
 typeset operationSuccess
 typeset expectingISOFile
+typeset foundSyslinuxMbrBinary
+typeset foundSyslinuxBiosFolder
 typeset -A syslinuxInstall
 typeset -a temporaryAssets=()
 typeset -A isoInspection=(
@@ -381,7 +383,7 @@ assertISOIsOK() {
 }
 
 firstMatchInFolder() {
-	find "$1" -type f -iname "$2" | head -n1 | awk '{print $1;}'
+	find "$1" -type f -iname "$2" -print -quit
 }
 
 matchFirstExpression() {
@@ -411,7 +413,7 @@ findFileFromPatterns() {
 	done
 	if [ -z "$found" ]; then
 		for loc in "$@"; do
-			typeset candidate=$(find "$root" -type f -wholename "*/$loc")
+			typeset candidate=$(find "$root" -type f -path "*/$loc" -print -quit)
 			if [ ! -z "$candidate" ]; then
 				found="$candidate"
 				break
@@ -466,7 +468,13 @@ checkpkg() {
 			echo
 			case $answer in
 			y | Y)
-				$pkgmgr "${commandPackages["$1"]}"
+				if ! $pkgmgr "${commandPackages["$1"]}"; then
+					failAndExit "Installation of dependency \`$1' failed.\\nPerhaps this dependency has a slightly different name in your distribution.\\nFind it and install manually."
+				else
+					if ! hasPackage "$1"; then
+						failAndExit "Program \`$1' is not accessible in the \$PATH environment even though the package ${commandPackages["$1"]} has just been installed."
+					fi
+				fi
 				;;
 			*)
 				failAndExit "Missing dependency \`$1'."
@@ -1161,10 +1169,10 @@ installBootloader() {
 		syslinuxFolder=$(dirname "$syslinuxConfig")
 	}
 	installWtLocalExtlinux() {
-		syslinuxInstall=(['mbrBin']=/usr/lib/syslinux/bios/mbr.bin ['extBin']='extlinux')
+		syslinuxInstall=(['mbrBin']="$foundSyslinuxMbrBinary" ['extBin']='extlinux')
 		syslinuxVersion="$localSyslinuxVersion"
 		echoinfo "Installing SYSLINUX bootloader in \`$syslinuxFolder' with local version \`$syslinuxVersion'..."
-		rsync --no-links --no-perms --no-owner --no-group -I /usr/lib/syslinux/bios/*.c32 "$syslinuxFolder" |& indentAll || echowarn "SYSLINUX could not install C32 BIOS modules."
+		rsync --no-links --no-perms --no-owner --no-group -I "$foundSyslinuxBiosFolder"/*.c32 "$syslinuxFolder" |& indentAll || echowarn "SYSLINUX could not install C32 BIOS modules."
 		sync
 		echogood "C32 BIOS modules successfully installed."
 		${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll || failAndExit "SYSLINUX bootloader could not be installed."
@@ -1418,8 +1426,8 @@ inspectISO() {
 		fi
 	}
 	inspectEFICapabilities() {
-		typeset hasEfiRoot=$(find "$isoMountPoint" -type d -iname 'efi')
-		typeset hasEfiFile=$(find "$isoMountPoint" -type f -ipath '*/efi/*.efi' -prune)
+		typeset hasEfiRoot=$(find "$isoMountPoint" -type d -iname 'efi' -print -quit)
+		typeset hasEfiFile=$(find "$isoMountPoint" -type f -ipath '*/efi/*.efi' -prune -print -quit)
 		supportsEFIBoot=false
 		if [ ! -z "$hasEfiFile" ] && [ ! -z "$hasEfiRoot" ]; then
 			supportsEFIBoot=true
@@ -1463,6 +1471,21 @@ inspectISOBootCapabilities() {
 	fi
 	if [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
 		failAndExit "The selected ISO is not hybrid, doesn't supports UEFI nor legacy booting with SYSLINUX.\\nTherefore, it cannot result in any successful booting with $scriptName.\\nConsider following the documentation provided with this ISO file."
+	fi
+}
+
+checkSyslinuxInstall() {
+	checkpkg 'syslinux'
+	if ! command -v extlinux > /dev/null; then
+		failAndExit "Your distribution doesn't ship \`extlinux' binary with \`syslinux' package.\\nPlease install \`extlinux' and try again."
+	fi
+	foundSyslinuxBiosFolder=$(find /usr/lib/syslinux/ -type d -path '*/bios' -print -quit)
+	foundSyslinuxMbrBinary=$(findFileFromPatterns /usr/lib/syslinux 'bios/mbr.bin' 'mbr.bin')
+	if [ -z "$foundSyslinuxBiosFolder" ]; then
+		failAndExit "Could not find a SYSLINUX bios folder containing c32 bios module files on this system."
+	fi
+	if [ -z "$foundSyslinuxMbrBinary" ]; then
+		failAndExit "Could not find a SYSLINUX MBR binary file on this system."
 	fi
 }
 
@@ -1514,6 +1537,7 @@ execProbe() {
 
 execWithRsync() {
 	shouldMakePartition=true
+	checkSyslinuxInstall
 	inspectISOBootCapabilities
 	runSecurityAssessments
 	mountISOFile
@@ -1521,7 +1545,6 @@ execWithRsync() {
 	mountUSB
 	copyWithRsync
 	if [ "$addSyslinuxBootloader" == 'true' ]; then
-		checkpkg 'syslinux'
 		installBootloader
 	fi
 }
