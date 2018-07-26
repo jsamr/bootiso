@@ -1,3 +1,7 @@
+# v3.1.4
+
+- better message when missing dependecy
+
 # v3.1.3
 
 - remove unecessary debug log

@@ -3,12 +3,12 @@
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.1.2
+# Version 3.1.3
 
 set -o pipefail
 set -E
 
-version="3.1.2"
+version="3.1.3"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
@@ -463,7 +463,7 @@ configureLabel() {
 checkpkg() {
 	typeset answer
 	if ! hasPackage "$1"; then
-		echowarn "Package '$1' not found!"
+		echowarn "Command \`$1' not found!. Should be in package '${commandPackages["$1"]}'."
 		if [ ! -z "$pkgmgr" ]; then
 			read -r -n1 -p "Attempt installation? (y/n)>" answer
 			echo
