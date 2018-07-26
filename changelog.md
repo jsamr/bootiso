@@ -1,3 +1,7 @@
+# v3.1.3
+
+- remove unecessary debug log
+
 # v3.1.2
 
 - improved robustness of `checkpkg` function

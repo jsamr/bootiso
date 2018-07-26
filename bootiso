@@ -3,12 +3,12 @@
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.1.2
+# Version 3.1.3
 
 set -o pipefail
 set -E
 
-version="3.1.2"
+version="3.1.3"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
@@ -1090,7 +1090,6 @@ installSyslinuxVersion() {
 		fi
 		syslinuxInstall['mbrBin']="$mbrBin"
 		syslinuxInstall['extBin']="$extlinuxBin"
-		ls -l "$extlinuxBin" # TODO DELETE
 		return 0
 	}
 	checkpkg 'curl'
@@ -1182,7 +1181,6 @@ installBootloader() {
 	}
 	installWtKernelOrgExtlinux() {
 		echoinfo "Installing SYSLINUX bootloader in \`$syslinuxFolder' with kernel.org version \`$syslinuxVersion'..."
-		ls -l "${syslinuxInstall['extBin']}" # TODO DELETE
 		if ! ${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll; then
 			echowarn "kernel.org version \`$syslinuxVersion' could not be run.\\nAttempting with local SYSLINUX install..."
 			installWtLocalExtlinux >/dev/null
