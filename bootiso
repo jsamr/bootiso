@@ -25,6 +25,7 @@ typeset -Ar commandPackages=(
 	['mkfs']='util-linux'
 	['blkid']='util-linux'
 	['wipefs']='util-linux'
+	['blockdev']='util-linux'
 	['grep']='grep'
 	['file']='file'
 	['awk']='gawk'
@@ -97,6 +98,7 @@ typeset -A userFlags=(
 	['autoselect']=''
 	['no-mime-check']=''
 	['no-usb-check']=''
+	['no-size-check']=''
 )
 typeset -A userVars=(
 	['iso-file']=''
@@ -117,6 +119,7 @@ typeset selectedBootloaderVersion # default to auto
 # options
 typeset disableMimeCheck
 typeset disableUSBCheck
+typeset disableSizeCheck
 typeset disableConfirmation
 typeset autoselect
 typeset shouldMakePartition
@@ -192,6 +195,8 @@ OPTION FLAGS
                                    limitations.
     --no-usb-check                 $scriptName won't assert that selected device is connected
                                    through USB bus. $(redify 'Use at your own risks.')
+    --no-size-check                $scriptName won't assert that the device size is larger
+                                   than the image. $(redify 'Use at your own risks.')
     --local-bootloader             Prevent download of remote bootloader and force local (SYSLINUX) during
                                    installation. Applicable to [install-mount-rsync] action.
     --remote-bootloader <version>  Force download of remote bootloader at version <version>.
@@ -637,6 +642,10 @@ parseArguments() {
 				enableUserFlag 'no-usb-check'
 				shift
 				;;
+			--no-size-check)
+				enableUserFlag 'no-size-check'
+				shift
+				;;
 			--)
 				isEndOfOptions=true
 				shift
@@ -822,6 +831,21 @@ assertDeviceIsUSB() {
 	echogood "The selected device \`$selectedDevice' is connected through USB."
 }
 
+assertISOSize() {
+	typeset -r device=$1
+	typeset -r iso=$2
+	if [ "$disableSizeCheck" == 'true' ]; then
+		echowarn "Size check has been disabled. Skipping."
+		return 0
+	fi
+	if [ "$(blockdev --getsz "$iso")" -gt "$(blockdev --getsz "$device")" ]; then
+		echoerr "The image is larger than the selected device \`$device' and the operation was therefore discarded."
+		echowarn "Use \`--no-size-check' option to bypass this policy at your own risks."
+		echoerr "Exiting..."
+		exit 1
+	fi
+}
+
 shouldWipeUSBKey() {
 	typeset answer='y'
 	echowarn "About to wipe out the content of device \`$selectedDevice'."
@@ -968,7 +992,7 @@ copyWithRsync() {
 		cleanProgress
 		typeset status=$(cat "$statusFile")
 		if [ ! "$status" -eq 0 ]; then
-			failAndExit "Copy command with \`rsync' failed.\\nIt's likely that your device has not enough space to contain the ISO image."
+			failAndExit "Copy command with \`rsync' failed."
 		fi
 	}
 	checkpkg 'rsync'
@@ -993,7 +1017,7 @@ copyWithDD() {
 		cleanProgress
 		typeset status=$(cat "$statusFile")
 		if [ ! "$status" -eq 0 ]; then
-			failAndExit "Copy command with \`dd' failed. It's likely that your device has not enough space to contain the ISO image."
+			failAndExit "Copy command with \`dd' failed."
 		fi
 	}
 	ddWithProgress
@@ -1339,6 +1363,7 @@ assignInternalVariables() {
 	localBootloader=${userFlags['local-bootloader']:-'false'}
 	disableMimeCheck=${userFlags['no-mime-check']:-'false'}
 	disableUSBCheck=${userFlags['no-usb-check']:-'false'}
+	disableSizeCheck=${userFlags['no-size-check']:-'false'}
 	# Vars flags
 	partitionType=${userVars['type']:-'vfat'}
 	selectedDevice=${userVars['device']:-''}
@@ -1393,6 +1418,7 @@ runSecurityAssessments() {
 	startTimer
 	assertDeviceIsOK "$selectedDevice"
 	assertDeviceIsUSB
+	assertISOSize "$selectedDevice" "$selectedIsoFile"
 }
 
 inspectISO() {
