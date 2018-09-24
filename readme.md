@@ -240,6 +240,12 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     </tr>
     <tr>
       <td></td>
+      <td><code>--no-size-check</code></td>
+      <td>Prevent script from asserting that the device size is larger then the image.</td>
+      <td><code>[install-*]</code></td>
+    </tr>
+    <tr>
+      <td></td>
       <td><code>--local-bootloader</code></td>
       <td>Prevent download of remote bootloader and force local (SYSLINUX) during installation.</td>
       <td><code>[install-mount-rsync]</code>,<br/><code>[install-auto]</code></td>
@@ -264,7 +270,8 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
 ✔ `bootiso` inspects ISO file to find [the best strategy](#auto) resulting in a booting USB stick  
 ✔ `bootiso` asserts that selected ISO has the correct mime-type and exit if it doesn't (with [file](https://askubuntu.com/a/3397/276357) utility).  
 ✔ `bootiso` asserts that selected device is connected through USB preventing system damages and exit if it doesn't (with [udevadm](https://askubuntu.com/a/168654/276357) utility).  
-✔ `bootiso` asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).  
+✔ `bootiso` asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).
+✔ `bootiso` asserts that selected image is not larger than selected device.
 ✔ `bootiso` prompts the user for confirmation before erasing and paritioning USB device.  
 ✔ `bootiso` will handle any failure from a command properly and exit.  
 ✔ `bootiso` will call a cleanup routine on exit with `trap`.  

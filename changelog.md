@@ -1,3 +1,8 @@
+# Next
+
+- image size is checked to be smaller than device size, PR #30 (@SibrenVasse)
+- image size check can be disabled with `--no-size-check option`, PR #30 (@SibrenVasse)
+
 # v3.1.4
 
 - better message when missing dependecy
