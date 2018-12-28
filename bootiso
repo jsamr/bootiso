@@ -13,7 +13,7 @@ scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
 if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
-	echoerr "You need bash v4+ to run this script. Aborting..."
+	>&2 echo "You need bash v4+ to run this script. Aborting..."
 	exit 1
 fi
 
