@@ -1,14 +1,15 @@
 #!/bin/bash
 # shellcheck disable=SC2181
+# shellcheck disable=SC2236
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.1.3
+# Version 3.2.0
 
 set -o pipefail
 set -E
 
-version="3.1.3"
+version="3.2.0"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
@@ -18,7 +19,7 @@ if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
 fi
 
 # program constrains definitions
-typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel' 'partprobe' 'tar' 'bc')
+typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel' 'partprobe' 'tar' 'bc' 'wimlib-imagex')
 typeset -Ar commandPackages=(
 	['lsblk']='util-linux'
 	['sfdisk']='util-linux'
@@ -36,6 +37,7 @@ typeset -Ar commandPackages=(
 	['curl']='curl'
 	['tar']='tar'
   ['bc']='bc'
+  ['wimlib-imagex']='wimlib'
 )
 typeset shortOptions='bydJahlMftLp'
 typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
@@ -101,6 +103,7 @@ typeset -A userFlags=(
 	['no-mime-check']=''
 	['no-usb-check']=''
 	['no-size-check']=''
+  ['no-wimsplit']=''
 )
 typeset -A userVars=(
 	['iso-file']=''
@@ -123,6 +126,7 @@ typeset disableMimeCheck
 typeset disableUSBCheck
 typeset disableSizeCheck
 typeset disableConfirmation
+typeset disableWimsplit
 typeset autoselect
 typeset shouldMakePartition
 typeset noDeviceEjection
@@ -199,6 +203,7 @@ OPTION FLAGS
                                    through USB bus. $(redify 'Use at your own risks.')
     --no-size-check                $scriptName won't assert that the device size is larger
                                    than the image. $(redify 'Use at your own risks.')
+    --no-wimsplit                  Prevent splitting sources/install.wim file in Windows ISOs.                             
     --local-bootloader             Prevent download of remote bootloader and force local (SYSLINUX) during
                                    installation. Applicable to [install-mount-rsync] action.
     --remote-bootloader <version>  Force download of remote bootloader at version <version>.
@@ -648,6 +653,10 @@ parseArguments() {
 				enableUserFlag 'no-size-check'
 				shift
 				;;
+      --no-wimsplit)
+        enableUserFlag 'no-wimsplit'
+        shift
+        ;;
 			--)
 				isEndOfOptions=true
 				shift
@@ -981,10 +990,25 @@ copyWithRsync() {
 	rsyncWithProgress() {
 		typeset -i i=1
 		typeset statusFile=$(createTempFile "bootiso-status")
+    typeset wimFile="$isoMountPoint/sources/install.wim"
+    typeset rsyncOptions=""
 		temporaryAssets+=("$statusFile")
+    if [ -f "$wimFile" ]; then
+        if [ "$disableWimsplit" == 'false' ]; then
+          rsyncOptions="--exclude sources/install.wim"
+          echogood "Detected a Windows install.wim file, which will be handled by \`wimlib-imagex' utility."
+        else
+          echowarn "Detected a Windows install.wim file but wimsplit has been disabled with \`--no-wim-split' option."
+        fi
+    fi
 		(
-			rsync -r -q -I --no-links --no-perms --no-owner --no-group "$isoMountPoint"/. "$usbMountPoint"
-			echo "$?" >"$statusFile"
+			rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$isoMountPoint"/. "$usbMountPoint"
+      local status=$?
+      if [ -f "$wimFile" ] && [ "$disableWimsplit" == 'false' ]; then
+        echo 
+        wimlib-imagex split "$wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
+      fi
+			echo "$status" >"$statusFile"
 		) &
 		pid=$!
 		echo -n "$scriptName: Copying files from ISO to USB device with \`rsync'    "
@@ -1366,6 +1390,7 @@ assignInternalVariables() {
 	disableMimeCheck=${userFlags['no-mime-check']:-'false'}
 	disableUSBCheck=${userFlags['no-usb-check']:-'false'}
 	disableSizeCheck=${userFlags['no-size-check']:-'false'}
+  disableWimsplit=${userFlags['no-wimsplit']:-'false'}
 	# Vars flags
 	partitionType=${userVars['type']:-'vfat'}
 	selectedDevice=${userVars['device']:-''}

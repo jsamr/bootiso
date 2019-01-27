@@ -246,6 +246,12 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     </tr>
     <tr>
       <td></td>
+      <td><code>--no-wimsplit</code></td>
+      <td>Prevent splitting sources/install.wim file in Windows ISOs.</td>
+      <td><code>[install-*]</code></td>
+    </tr>
+    <tr>
+      <td></td>
       <td><code>--local-bootloader</code></td>
       <td>Prevent download of remote bootloader and force local (SYSLINUX) during installation.</td>
       <td><code>[install-mount-rsync]</code>,<br/><code>[install-auto]</code></td>

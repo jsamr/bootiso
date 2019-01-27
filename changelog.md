@@ -1,7 +1,21 @@
 # Next
 
+**Features**
+
 - image size is checked to be smaller than device size, PR #30 (@SibrenVasse)
-- image size check can be disabled with `--no-size-check option`, PR #30 (@SibrenVasse)
+- image size check can be disabled with `--no-size-check` option, PR #30 (@SibrenVasse)
+- automatically split `sources/install.wim` files in windows ISO's, which would otherwise cause rsync to fail on file too large error; #32
+- automatic splitting can be disabled with `--no-wimsplit` option
+
+**Bugfixes**
+
+- fix dependency check on `bc`, issue #34 ; thanks to @SibrenVasse for the catch
+
+**Dependencies**
+
+- new dependency to `wimlib-imagex`
+  - provided by  `wimlib` on Archlinux
+  - provided by `wimtools` on debian
 
 # v3.1.4
 
