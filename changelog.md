@@ -1,4 +1,4 @@
-# Next
+# v3.2.0
 
 **Features**
 
@@ -7,6 +7,7 @@
 - automatically split `sources/install.wim` files in windows ISO's, which would otherwise cause rsync to fail with file too large error; #32
 - automatic splitting can be disabled with `--no-wimsplit` option
 - added `SYSLINUX_LIB_ROOT` environment variable to set syslinux library root manually, #29
+- better message when missing dependecy
 
 **Bugfixes**
 
@@ -17,10 +18,6 @@
 - new dependency to `wimlib-imagex`
   - provided by  `wimlib` on Archlinux
   - provided by `wimtools` on debian
-
-# v3.1.4
-
-- better message when missing dependecy
 
 # v3.1.3
 
