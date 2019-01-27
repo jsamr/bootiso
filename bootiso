@@ -59,6 +59,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 )
 
 # internal variables
+typeset syslinuxLibRoot=${SYSLINUX_LIB_ROOT:-'/usr/lib/syslinux'}
 typeset ticketsurl="https://github.com/jsamr/bootiso/issues"
 typeset mountRoot=/mnt
 typeset tempRoot=/var/tmp/bootiso
@@ -211,6 +212,10 @@ OPTION FLAGS
 								   Applicable to [install-mount-rsync] action.
     --                             POSIX end of options.
 
+
+ENVIRONMENT VARIABLES
+
+- SYSLINUX_LIB_ROOT : set the root of syslinux assets, defaults to /usr/lib/syslinux
 
 INFO
 
@@ -1002,6 +1007,7 @@ copyWithRsync() {
         fi
     fi
 		(
+      # shellcheck disable=SC2086
 			rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$isoMountPoint"/. "$usbMountPoint"
       local status=$?
       if [ -f "$wimFile" ] && [ "$disableWimsplit" == 'false' ]; then
@@ -1533,8 +1539,8 @@ checkSyslinuxInstall() {
 	if ! command -v extlinux > /dev/null; then
 		failAndExit "Your distribution doesn't ship \`extlinux' binary with \`syslinux' package.\\nPlease install \`extlinux' and try again."
 	fi
-	foundSyslinuxBiosFolder=$(find /usr/lib/syslinux/ -type d -path '*/bios' -print -quit)
-	foundSyslinuxMbrBinary=$(findFileFromPatterns /usr/lib/syslinux 'bios/mbr.bin' 'mbr.bin')
+	foundSyslinuxBiosFolder=$(find "$syslinuxLibRoot" -type d -path '*/bios' -print -quit)
+	foundSyslinuxMbrBinary=$(findFileFromPatterns "$syslinuxLibRoot" 'bios/mbr.bin' 'mbr.bin')
 	if [ -z "$foundSyslinuxBiosFolder" ]; then
 		failAndExit "Could not find a SYSLINUX bios folder containing c32 bios module files on this system."
 	fi

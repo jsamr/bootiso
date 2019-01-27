@@ -4,8 +4,9 @@
 
 - image size is checked to be smaller than device size, PR #30 (@SibrenVasse)
 - image size check can be disabled with `--no-size-check` option, PR #30 (@SibrenVasse)
-- automatically split `sources/install.wim` files in windows ISO's, which would otherwise cause rsync to fail on file too large error; #32
+- automatically split `sources/install.wim` files in windows ISO's, which would otherwise cause rsync to fail with file too large error; #32
 - automatic splitting can be disabled with `--no-wimsplit` option
+- added `SYSLINUX_LIB_ROOT` environment variable to set syslinux library root manually, #29
 
 **Bugfixes**
 

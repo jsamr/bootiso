@@ -68,6 +68,7 @@ Optionally, move the script to a bin path
 
 Where `bin-path` is any folder in the `$PATH` environment, preferably for superuser utilities such as `/usr/local/sbin/`.
 
+Make sure to [follow our distro-dependent tweaks](#distro-tweaks) to have bootiso settled.
 
 ### Help the community
 
@@ -298,6 +299,18 @@ This is perfectly appropriate when the ISO file is aimed both at disk drives and
 
 In mount+rsync mode (enforcable with `[install-mount-rsync]` action, `--mrsync` flag), `bootiso` creates one partition with MBR table in the USB drive and copy files from mounted ISO.
 It will also install SYSLINUX bootlaoder if configuration files are found, which will allow legacy BIOS boot. When local version doesn't match ISO version, it will attempt to download the closest version available in [kernel.org](https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing) if `--local-bootloader` flag is not set.
+
+### Environment variables and distro-specific tweaks
+
+#### Variables
+
+- `SYSLINUX_LIB_ROOT`: set syslinux assets root, where mbr will be searched.
+
+<a name="distro-tweaks">
+
+#### Distros tweaks
+
+- On Fedora, set `SYSLINUX_LIB_ROOT` env to `/usr/share/syslinux`
 
 ### Credits
 
