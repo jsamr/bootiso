@@ -18,7 +18,7 @@ if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
 fi
 
 # program constrains definitions
-typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel' 'partprobe' 'tar')
+typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel' 'partprobe' 'tar' 'bc')
 typeset -Ar commandPackages=(
 	['lsblk']='util-linux'
 	['sfdisk']='util-linux'
@@ -35,6 +35,7 @@ typeset -Ar commandPackages=(
 	['partprobe']='parted'
 	['curl']='curl'
 	['tar']='tar'
+  ['bc']='bc'
 )
 typeset shortOptions='bydJahlMftLp'
 typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
