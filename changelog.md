@@ -1,3 +1,9 @@
+# v3.2.1
+
+**Bugfixes**
+
+- fix indentation, PR #35
+
 # v3.2.0
 
 **Features**
