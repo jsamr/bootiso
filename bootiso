@@ -36,8 +36,8 @@ typeset -Ar commandPackages=(
 	['partprobe']='parted'
 	['curl']='curl'
 	['tar']='tar'
-  ['bc']='bc'
-  ['wimlib-imagex']='wimlib'
+	['bc']='bc'
+	['wimlib-imagex']='wimlib'
 )
 typeset shortOptions='bydJahlMftLp'
 typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
@@ -104,7 +104,7 @@ typeset -A userFlags=(
 	['no-mime-check']=''
 	['no-usb-check']=''
 	['no-size-check']=''
-  ['no-wimsplit']=''
+	['no-wimsplit']=''
 )
 typeset -A userVars=(
 	['iso-file']=''
@@ -204,12 +204,12 @@ OPTION FLAGS
                                    through USB bus. $(redify 'Use at your own risks.')
     --no-size-check                $scriptName won't assert that the device size is larger
                                    than the image. $(redify 'Use at your own risks.')
-    --no-wimsplit                  Prevent splitting sources/install.wim file in Windows ISOs.                             
+    --no-wimsplit                  Prevent splitting sources/install.wim file in Windows ISOs.
     --local-bootloader             Prevent download of remote bootloader and force local (SYSLINUX) during
                                    installation. Applicable to [install-mount-rsync] action.
     --remote-bootloader <version>  Force download of remote bootloader at version <version>.
-	                               Version must follow the pattern MAJOR.MINOR. Examples: 4.08, 6.04.
-								   Applicable to [install-mount-rsync] action.
+                                   Version must follow the pattern MAJOR.MINOR. Examples: 4.08, 6.04.
+                                   Applicable to [install-mount-rsync] action.
     --                             POSIX end of options.
 
 
@@ -658,10 +658,10 @@ parseArguments() {
 				enableUserFlag 'no-size-check'
 				shift
 				;;
-      --no-wimsplit)
-        enableUserFlag 'no-wimsplit'
-        shift
-        ;;
+			--no-wimsplit)
+				enableUserFlag 'no-wimsplit'
+				shift
+				;;
 			--)
 				isEndOfOptions=true
 				shift
@@ -995,25 +995,25 @@ copyWithRsync() {
 	rsyncWithProgress() {
 		typeset -i i=1
 		typeset statusFile=$(createTempFile "bootiso-status")
-    typeset wimFile="$isoMountPoint/sources/install.wim"
-    typeset rsyncOptions=""
+		typeset wimFile="$isoMountPoint/sources/install.wim"
+		typeset rsyncOptions=""
 		temporaryAssets+=("$statusFile")
-    if [ -f "$wimFile" ]; then
-        if [ "$disableWimsplit" == 'false' ]; then
-          rsyncOptions="--exclude sources/install.wim"
-          echogood "Detected a Windows install.wim file, which will be handled by \`wimlib-imagex' utility."
-        else
-          echowarn "Detected a Windows install.wim file but wimsplit has been disabled with \`--no-wim-split' option."
-        fi
-    fi
+		if [ -f "$wimFile" ]; then
+			if [ "$disableWimsplit" == 'false' ]; then
+				rsyncOptions="--exclude sources/install.wim"
+				echogood "Detected a Windows install.wim file, which will be handled by \`wimlib-imagex' utility."
+			else
+				echowarn "Detected a Windows install.wim file but wimsplit has been disabled with \`--no-wim-split' option."
+			fi
+		fi
 		(
-      # shellcheck disable=SC2086
+			# shellcheck disable=SC2086
 			rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$isoMountPoint"/. "$usbMountPoint"
-      local status=$?
-      if [ -f "$wimFile" ] && [ "$disableWimsplit" == 'false' ]; then
-        echo 
-        wimlib-imagex split "$wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
-      fi
+			local status=$?
+			if [ -f "$wimFile" ] && [ "$disableWimsplit" == 'false' ]; then
+				echo 
+				wimlib-imagex split "$wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
+			fi
 			echo "$status" >"$statusFile"
 		) &
 		pid=$!
@@ -1396,7 +1396,7 @@ assignInternalVariables() {
 	disableMimeCheck=${userFlags['no-mime-check']:-'false'}
 	disableUSBCheck=${userFlags['no-usb-check']:-'false'}
 	disableSizeCheck=${userFlags['no-size-check']:-'false'}
-  disableWimsplit=${userFlags['no-wimsplit']:-'false'}
+	disableWimsplit=${userFlags['no-wimsplit']:-'false'}
 	# Vars flags
 	partitionType=${userVars['type']:-'vfat'}
 	selectedDevice=${userVars['device']:-''}
