@@ -1,6 +1,8 @@
-# v3.2.1
+# v3.2.2
 
-**Bugfixes**
+- fix typos + rewording messages (@SibrenVasse)
+
+# v3.2.1
 
 - fix indentation, PR #35
 
