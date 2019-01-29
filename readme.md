@@ -277,8 +277,8 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
 ✔ `bootiso` inspects ISO file to find [the best strategy](#auto) resulting in a booting USB stick  
 ✔ `bootiso` asserts that selected ISO has the correct mime-type and exit if it doesn't (with [file](https://askubuntu.com/a/3397/276357) utility).  
 ✔ `bootiso` asserts that selected device is connected through USB preventing system damages and exit if it doesn't (with [udevadm](https://askubuntu.com/a/168654/276357) utility).  
-✔ `bootiso` asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).
-✔ `bootiso` asserts that selected image is not larger than selected device.
+✔ `bootiso` asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).  
+✔ `bootiso` asserts that selected image is not larger than selected device.  
 ✔ `bootiso` prompts the user for confirmation before erasing and paritioning USB device.  
 ✔ `bootiso` will handle any failure from a command properly and exit.  
 ✔ `bootiso` will call a cleanup routine on exit with `trap`.  
