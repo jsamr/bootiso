@@ -14,7 +14,7 @@ scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
 if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
-	>&2 echo "You need bash v4+ to run this script. Aborting..."
+	echo >&2 "You need bash v4+ to run this script. Aborting..."
 	exit 1
 fi
 
@@ -54,7 +54,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 	['no-eject']='install-auto install-mount-rsync install-dd format'
 	['autoselect']='install-auto install-mount-rsync install-dd format'
 	['no-mime-check']='install-auto install-mount-rsync install-dd'
-	['no-usb-check']='install-auto install-mount-rsync install-dd format'
+	['no-usb-check']='install-auto install-mount-rsync install-dd list-usb-drives probe format'
 	['no-size-check']='install-auto install-mount-rsync install-dd'
 )
 
@@ -151,7 +151,7 @@ yellowify() {
 typeset openTicketMessage="This is not expected: please open a ticket at $ticketsurl."
 
 # 100 wide + no tabs
-typeset help_message="Create a bootable USB from any ISO securely.
+typeset help_message="Securely create a bootable USB from any ISO.
 Usage: $scriptName [<options>...] <file.iso>
        $scriptName <action> [<options>...] <file.iso>
        $scriptName <action> [<options>...]
@@ -547,7 +547,7 @@ initDevicesList() {
 listDevicesTable() {
 	typeset lsblkCmd='lsblk -o NAME,MODEL,VENDOR,SIZE,TRAN,HOTPLUG,SERIAL'
 	initDevicesList
-	if [ "$disableUSBCheck" == 'false' ]; then
+	if [ "$disableUSBCheck" == 'true' ]; then
 		echoinfo "Listing drives available in your system:"
 	else
 		echoinfo "Listing USB devices available in your system:"
@@ -770,7 +770,7 @@ mountISOFile() {
 }
 
 # $1 : a device block
-# Return 0 if device is USB, 1 otherwise
+# Returns "usb" if device is USB, "ata" for SATA
 getDeviceType() {
 	typeset deviceName=/sys/block/${1#/dev/}
 	typeset deviceType=$(udevadm info --query=property --path="$deviceName" | grep -Po 'ID_BUS=\K\w+')
