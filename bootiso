@@ -795,7 +795,7 @@ getDeviceType() {
 # Returns 1 if device is a thumb drive, 0 otherwise
 deviceIsThumb() {
 	typeset deviceName=/sys/block/${1#/dev/}
-	typeset isThumb=$(udevadm info --query=property --path="$deviceName" | grep -Po 'ID_BUS=\K\w+')
+	typeset isThumb=$(udevadm info --query=property --path="$deviceName" | grep -Po 'ID_DRIVE_THUMB=\K\d+')
 	[ "$isThumb" == "1" ] && echo "$isThumb" || echo "0"
 }
 
