@@ -19,7 +19,8 @@ if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
 fi
 
 # program constrains definitions
-typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel' 'partprobe' 'tar' 'bc' 'wimlib-imagex')
+typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'blockdev' 'grep' 'file' 'awk' 'mlabel' 'syslinux' 'rsync'
+	'partprobe' 'curl' 'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum' 'sha256sum' 'sha512sum' 'cut')
 typeset -Ar commandPackages=(
 	['lsblk']='util-linux'
 	['sfdisk']='util-linux'
@@ -38,6 +39,11 @@ typeset -Ar commandPackages=(
 	['tar']='tar'
 	['bc']='bc'
 	['wimlib-imagex']='wimlib'
+	['md5sum']='coreutils'
+	['sha1sum']='coreutils'
+	['sha256sum']='coreutils'
+	['sha512sum']='coreutils'
+	['cut']='coreutils'
 )
 typeset shortOptions='bydJahlMftLp'
 typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
@@ -54,6 +60,8 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 	['no-eject']='install-auto install-mount-rsync install-dd format'
 	['autoselect']='install-auto install-mount-rsync install-dd format'
 	['no-mime-check']='install-auto install-mount-rsync install-dd'
+	['no-hash-check']='install-auto install-mount-rsync install-dd probe inspect'
+	['force-hash-check']='install-auto install-mount-rsync install-dd probe inspect'
 	['no-usb-check']='install-auto install-mount-rsync install-dd list-usb-drives probe format'
 	['no-thumb-check']='install-auto install-mount-rsync install-dd list-usb-drives probe format'
 	['no-size-check']='install-auto install-mount-rsync install-dd'
@@ -106,10 +114,13 @@ typeset -A userFlags=(
 	['no-usb-check']=''
 	['no-thumb-check']=''
 	['no-size-check']=''
+	['no-hash-check']=''
+	['force-hash-check']=''
 	['no-wimsplit']=''
 )
 typeset -A userVars=(
 	['iso-file']=''
+	['hash-file']=''
 	['device']=''
 	['type']=''
 	['label']=''
@@ -118,9 +129,10 @@ typeset -A userVars=(
 
 # user defined variables
 typeset selectedIsoFile # no default
-typeset selectedDevice  # default to prompted to user
-typeset partitionLabel  # default to inferred from ISO file label
-typeset partitionType   # default to vfat
+typeset hashFile
+typeset selectedDevice # default to prompted to user
+typeset partitionLabel # default to inferred from ISO file label
+typeset partitionType  # default to vfat
 typeset action='install-auto'
 typeset selectedBootloaderVersion # default to auto
 
@@ -130,6 +142,8 @@ typeset disableUSBCheck
 typeset disableThumbCheck
 typeset disableSizeCheck
 typeset disableConfirmation
+typeset disableHashCheck
+typeset forceHashCheck
 typeset disableWimsplit
 typeset autoselect
 typeset shouldMakePartition
@@ -211,6 +225,10 @@ OPTION FLAGS
     --no-size-check                $scriptName won't assert that the device size is larger
                                    than the image. $(redify 'Use at your own risk.')
     --no-wimsplit                  Prevent splitting sources/install.wim file in Windows ISOs.
+    --no-hash-check                Do not search for hash files and check ISO integrity.
+    --force-hash-check             Fail when no valid hash is found. Cannot be used with '--no-hash-check'.
+    --hash-file                    Specify file containing the ISO hash. Other files will not be checked.
+                                   Cannot be used with '--no-hash-check'
     --local-bootloader             Prevent download of remote bootloader and force local (SYSLINUX) during
                                    installation. Applicable to [install-mount-rsync] action.
     --remote-bootloader <version>  Force download of remote bootloader at version <version>.
@@ -386,8 +404,7 @@ checkSudo() {
 failISOCheck() {
 	echoerr "Provided file '$selectedIsoFile' doesn't seem to be an ISO file (wrong mime-type: '$mimetype')."
 	echowarn "You can bypass this policy with '-M, --no-mime-check', but it is likely that the operation will fail."
-	echoerr "Exiting..."
-	exit 1
+	failAndExit "Exiting..."
 }
 
 assertISOIsOK() {
@@ -410,6 +427,92 @@ assertISOIsOK() {
 		if ((isOctetStream != 0)) && [ ! "$mimetype" == "application/x-iso9660-image" ]; then
 			failISOCheck
 		fi
+	fi
+}
+
+checkISOHash() {
+	checkHash() {
+		typeset hashPath=$1 # Path to file containing hashes
+		typeset isoName=$2  # File to be checked
+		typeset hashName=$3 # Name of command of hash
+
+		# Hash from hash file
+		typeset gHash=$(awk -v pattern="$isoName$" '$0 ~ pattern { print $1; exit }' "$hashPath")
+		if [ -z "$gHash" ]; then
+			echoerr "No matching filename found in hash file '$hashPath'"
+			return
+		elif [ -z "$hashName" ]; then
+			case ${#gHash} in
+			32)
+				hashName="md5sum"
+				;;
+			40)
+				hashName="sha1sum"
+				;;
+			64)
+				hashName="sha256sum"
+				;;
+			128)
+				hashName="sha512sum"
+				;;
+			*)
+				failAndExit "Matching line in '$hashPath' has an unexpected hash format."
+				;;
+			esac
+		fi
+
+		typeset lHash=$($hashName "$isoName" | awk "{print \$1; exit }") # Hash from iso
+		if [ "$gHash" != "$lHash" ]; then
+			if [ "$forceHashCheck" == 'true' ]; then
+				failAndExit "Hash mismatch in '$hashPath' (${hashName%sum})."
+			else
+				echowarn "Hash mismatch in '$hashPath' (${hashName%sum})."
+				typeset answer
+				read -r -n1 -p "Do you still want to continue? (y/n)> " answer
+				echo
+				case $answer in
+				y | Y)
+					return
+					;;
+				*)
+					failAndExit
+					;;
+				esac
+				echoinfo "Ignoring mismatching hash."
+			fi
+		else
+			echogood "Matching ${hashName%sum} hash found in '$hashPath'"
+			numValidHashes=$((numValidHashes + 1))
+		fi
+	}
+
+	typeset numValidHashes=0
+	typeset isoDirectory=$(dirname "$selectedIsoFile")
+	typeset isoFileName=$(basename "$selectedIsoFile")
+	typeset -ar hashes=("md5sum" "sha1sum" "sha256sum" "sha512sum")
+
+	if [ -n "$hashFile" ]; then
+		if [ -f "$hashFile" ]; then
+			checkHash "$hashFile" "$isoFileName"
+		else
+			failAndExit "Specified hash file '$hashFile' does not exist."
+		fi
+	else
+		shopt -s nullglob nocaseglob
+		for hash in "${hashes[@]}"; do
+			for file in "$isoDirectory/$hash"*; do
+				checkHash "$file" "$isoFileName" "$hash"
+			done
+
+			if [ -f "$selectedIsoFile.${hash%sum}" ]; then
+				checkHash "$selectedIsoFile.${hash%sum}" "$isoFileName" "$hash"
+			fi
+		done
+		shopt -u nullglob nocaseglob
+	fi
+
+	if [ "$forceHashCheck" == 'true' ] && [ $numValidHashes == 0 ]; then
+		failAndExit "No matching hashes found. Assert forced by '--force-hash-check'"
 	fi
 }
 
@@ -660,6 +763,13 @@ parseArguments() {
 				setUserVar 'label' "$2"
 				shift 2
 				;;
+			--hash-file)
+				if (($# < 2)); then
+					failAndExit "Missing value for '$1' flag. Please provide a hash file."
+				fi
+				setUserVar 'hash-file' "$2"
+				shift 2
+				;;
 			-J | --no-eject)
 				enableUserFlag 'no-eject'
 				shift
@@ -683,6 +793,14 @@ parseArguments() {
 				;;
 			--no-size-check)
 				enableUserFlag 'no-size-check'
+				shift
+				;;
+			--no-hash-check)
+				enableUserFlag 'no-hash-check'
+				shift
+				;;
+			--force-hash-check)
+				enableUserFlag 'force-hash-check'
 				shift
 				;;
 			--no-wimsplit)
@@ -1382,6 +1500,11 @@ checkUserFlags() {
 		failAndExit "You cannot set '-a, --autoselect' while disabling USB check with '--no-usb-check' " \
 			"or thumb drive check with '--no-thumb-check'"
 	fi
+	if [ "${userFlags['no-hash-check']}" == 'true' ] && [ "${userFlags['force-hash-check']}" == 'true' ]; then
+		failAndExit "You cannot combine '--no-hash-check' and '--force-hash-check'"
+	elif [ "${userFlags['no-hash-check']}" == 'true' ] && [ -n "${userVars['hash-file']}" ]; then
+		failAndExit "You cannot combine '--no-hash-check' and '--hash-file'"
+	fi
 	# warnings (only with sudo)
 	if ((EUID == 0)); then
 		# Eject format
@@ -1471,9 +1594,12 @@ assignInternalVariables() {
 	disableUSBCheck=${userFlags['no-usb-check']:-'false'}
 	disableThumbCheck=${userFlags['no-thumb-check']:-'false'}
 	disableSizeCheck=${userFlags['no-size-check']:-'false'}
+	disableHashCheck=${userFlags['no-hash-check']:-'false'}
+	forceHashCheck=${userFlags['force-hash-check']:-'false'}
 	disableWimsplit=${userFlags['no-wimsplit']:-'false'}
 	# Vars flags
 	partitionType=${userVars['type']:-'vfat'}
+	hashFile=${userVars['hash-file']:-''}
 	selectedDevice=${userVars['device']:-''}
 	partitionLabel=${userVars['label']:-''}
 	selectedBootloaderVersion=${userVars['remote-bootloader']:-'auto'}
@@ -1750,6 +1876,9 @@ main() {
 		configureFolders
 	fi
 	if [ "$expectingISOFile" == 'true' ]; then
+		if [ "$disableHashCheck" == 'false' ]; then
+			checkISOHash
+		fi
 		inspectISO
 	fi
 	case "$action" in
