@@ -19,7 +19,7 @@ if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
 fi
 
 # program constrains definitions
-typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel' 'partprobe' 'tar' 'bc' 'wimlib-imagex')
+typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'grep' 'file' 'awk' 'mlabel' 'partx' 'tar' 'bc' 'wimlib-imagex')
 typeset -Ar commandPackages=(
 	['lsblk']='util-linux'
 	['sfdisk']='util-linux'
@@ -33,7 +33,7 @@ typeset -Ar commandPackages=(
 	['mlabel']='mtools'
 	['syslinux']='syslinux'
 	['rsync']='rsync'
-	['partprobe']='parted'
+	['partx']='util-linux'
 	['curl']='curl'
 	['tar']='tar'
 	['bc']='bc'
@@ -913,7 +913,7 @@ createMBRPartitionTable() {
 	echogood "Creating MBR partition table with 'sfdisk' v$sfdiskVersion..."
 	# Create partition table
 	echo "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "Failed to write USB device partition table."
-	partprobe "$selectedDevice" # Refresh partition table
+	partx -u "$selectedDevice" # Refresh partition table
 	sync
 }
 
