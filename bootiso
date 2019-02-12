@@ -55,7 +55,6 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 	['autoselect']='install-auto install-mount-rsync install-dd format'
 	['no-mime-check']='install-auto install-mount-rsync install-dd'
 	['no-usb-check']='install-auto install-mount-rsync install-dd list-usb-drives probe format'
-	['no-thumb-check']='install-auto install-mount-rsync install-dd list-usb-drives probe format'
 	['no-size-check']='install-auto install-mount-rsync install-dd'
 )
 
@@ -104,7 +103,6 @@ typeset -A userFlags=(
 	['autoselect']=''
 	['no-mime-check']=''
 	['no-usb-check']=''
-	['no-thumb-check']=''
 	['no-size-check']=''
 	['no-wimsplit']=''
 )
@@ -127,7 +125,6 @@ typeset selectedBootloaderVersion # default to auto
 # options
 typeset disableMimeCheck
 typeset disableUSBCheck
-typeset disableThumbCheck
 typeset disableSizeCheck
 typeset disableConfirmation
 typeset disableWimsplit
@@ -192,8 +189,8 @@ OPTION FLAGS
                                    partitioning the USB device. $(yellowify 'Use at your own risk.')
 -a, --autoselect                   Enable autoselecting USB devices in combination with '-y'.
                                    This will automatically select an USB drive device if there is
-                                   exactly one connected to the system. Enabled by default when options
-                                   '-d', '--no-usb-check' or '--no-thumb-check' are not given.
+                                   exactly one connected to the system. Enabled by default when neither
+                                   '-d' nor '--no-usb-check' options are given.
 -J, --no-eject                     Do not eject device after unmounting.
 -M, --no-mime-check                $scriptName won't assert that the ISO file is the right mime-type.
 -t, --type <type>                  Format to '<type>' instead of default FAT32 (vfat). Supported types:
@@ -203,11 +200,8 @@ OPTION FLAGS
                                    Applicable to the [install-mount-rsync] and [format] actions. $scriptName
                                    will cut labels which are too long regarding the selected filesystem
                                    limitations.
-    --no-thumb-check               $scriptName won't assert that the selected device is a thumb drive.
-                                   $(redify 'Use at your own risk.')
     --no-usb-check                 $scriptName won't assert that the selected device is connected
-                                   through USB. Also disables thumb drive check.
-                                   $(redify 'Use at your own risk.')
+                                   through USB. $(redify 'Use at your own risk.')
     --no-size-check                $scriptName won't assert that the device size is larger
                                    than the image. $(redify 'Use at your own risk.')
     --no-wimsplit                  Prevent splitting sources/install.wim file in Windows ISOs.
@@ -544,8 +538,7 @@ initDevicesList() {
 	mapfile -t devices < <(lsblk -o NAME,TYPE | grep --color=never -oP '^\K\w+(?=\s+disk$)')
 	devicesList=()
 	for device in "${devices[@]}"; do
-		if { [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; } &&
-			{ [ "$(deviceIsThumb "/dev/$device")" == "1" ] || [ "$disableThumbCheck" == 'true' ]; }; then
+		if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
 			devicesList+=("$device")
 		fi
 	done
@@ -555,11 +548,9 @@ listDevicesTable() {
 	typeset lsblkCmd='lsblk -o NAME,MODEL,VENDOR,SIZE,TRAN,HOTPLUG,SERIAL'
 	initDevicesList
 	if [ "$disableUSBCheck" == 'true' ]; then
-		echoinfo "Listing drives available on your system:"
-	elif [ "$disableThumbCheck" == 'true' ]; then
-		echoinfo "Listing USB drives available on your system"
+		echoinfo "Listing drives available in your system:"
 	else
-		echoinfo "Listing USB thumb drives available on your system:"
+		echoinfo "Listing USB devices available in your system:"
 	fi
 	if [ "${#devicesList[@]}" -gt 0 ]; then
 		$lsblkCmd | sed -n 1p | sed 's/^/         /'
@@ -672,13 +663,8 @@ parseArguments() {
 				enableUserFlag 'no-mime-check'
 				shift
 				;;
-			--no-thumb-check)
-				enableUserFlag 'no-thumb-check'
-				shift
-				;;
 			--no-usb-check)
 				enableUserFlag 'no-usb-check'
-				enableUserFlag 'no-thumb-check'
 				shift
 				;;
 			--no-size-check)
@@ -789,14 +775,6 @@ getDeviceType() {
 	typeset deviceName=/sys/block/${1#/dev/}
 	typeset deviceType=$(udevadm info --query=property --path="$deviceName" | grep -Po 'ID_BUS=\K\w+')
 	echo "$deviceType"
-}
-
-# $1 : a device block
-# Returns 1 if device is a thumb drive, 0 otherwise
-deviceIsThumb() {
-	typeset deviceName=/sys/block/${1#/dev/}
-	typeset isThumb=$(udevadm info --query=property --path="$deviceName" | grep -Po 'ID_DRIVE_THUMB=\K\d+')
-	[ "$isThumb" == "1" ] && echo "$isThumb" || echo "0"
 }
 
 deviceIsDisk() {
@@ -1377,10 +1355,8 @@ checkUserVars() {
 
 checkUserFlags() {
 	# Autoselect security
-	if [ "${userFlags['autoselect']}" == 'true' ] &&
-		{ [ "${userFlags['no-usb-check']}" == 'true' ] || [ "${userFlags['no-thumb-check']}" == 'true' ]; }; then
-		failAndExit "You cannot set '-a, --autoselect' while disabling USB check with '--no-usb-check' " \
-			"or thumb drive check with '--no-thumb-check'"
+	if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['no-usb-check']}" == 'true' ]; then
+		failAndExit "You cannot set '-a, --autoselect' while disabling USB check with '--no-usb-check'."
 	fi
 	# warnings (only with sudo)
 	if ((EUID == 0)); then
@@ -1469,7 +1445,6 @@ assignInternalVariables() {
 	localBootloader=${userFlags['local-bootloader']:-'false'}
 	disableMimeCheck=${userFlags['no-mime-check']:-'false'}
 	disableUSBCheck=${userFlags['no-usb-check']:-'false'}
-	disableThumbCheck=${userFlags['no-thumb-check']:-'false'}
 	disableSizeCheck=${userFlags['no-size-check']:-'false'}
 	disableWimsplit=${userFlags['no-wimsplit']:-'false'}
 	# Vars flags
