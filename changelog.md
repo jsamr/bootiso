@@ -1,3 +1,16 @@
+# next
+
+**Features**
+
+- check ISO hash automatically, #16
+- disable automatic ISO hash check with `--no-hash-check` flag
+- exit when hash fails with `--force-hash-check` flag
+- explicitly set a hash file with `--hash-file <file>` flag
+
+**Bugfixes**
+
+- fix a minor bug where ISO check was run twice, before and after sudo
+
 # v3.2.2
 
 - fix typos + rewording messages (@SibrenVasse)

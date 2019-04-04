@@ -77,7 +77,6 @@ If you like `bootiso`, feel free to help the community find it by **staring the 
 - [How to create a bootable Ubuntu USB flash drive from terminal?](https://goo.gl/BNRmvm)
 - [How to create a bootable USB from one ISO file securely from the shell?](https://goo.gl/YDBvFe)
 
-
 <a name="action"/>
 
 ### See it in action
@@ -143,7 +142,7 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <tr>
       <td><code>-i</code></td>
       <td><code>--inspect</code></td>
-      <td><code>[inspect]</code>: Inspect ISO file boot capabilities and how <code>bootiso</code> can handle it, then exit.</td>
+      <td><code>[inspect]</code>: Inspect ISO file boot capabilities and how <code>bootiso</code> can handle it, and check against a hash file if exists, then exit.</td>
       <td>yes</td>
     </tr>
     <tr>
@@ -247,8 +246,26 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     </tr>
     <tr>
       <td></td>
+      <td><code>--no-hash-check</code></td>
+      <td>Do not search for hash files and check ISO integrity.</td>
+      <td><code>[install-*]</code>,<br/><code>[inspect]</code>,<br/><code>[probe]</code></td>
+    </tr>
+    <tr>
+      <td></td>
       <td><code>--no-wimsplit</code></td>
       <td>Prevent splitting sources/install.wim file in Windows ISOs.</td>
+      <td><code>[install-*]</code></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><code>--hash-file &lt;file&gt;</code></td>
+      <td>Specify file containing the ISO hash. Other files will not be checked.</td>
+      <td><code>[install-*]</code>,<br/><code>[inspect]</code>,<br/><code>[probe]</code></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><code>--force-hash-check</code></td>
+      <td>Fail and exit when no valid hash is found.</td>
       <td><code>[install-*]</code></td>
     </tr>
     <tr>
@@ -275,6 +292,7 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
 ### Security checks and robustness
 
 ✔ `bootiso` inspects ISO file to find [the best strategy](#auto) resulting in a booting USB stick  
+✔ `bootiso` check the ISO file hash sum against a hash file if one found. Supported hash algorithms are md5, sha1, sha256 and sha512.
 ✔ `bootiso` asserts that selected ISO has the correct mime-type and exit if it doesn't (with [file](https://askubuntu.com/a/3397/276357) utility).  
 ✔ `bootiso` asserts that selected device is connected through USB preventing system damages and exit if it doesn't (with [udevadm](https://askubuntu.com/a/168654/276357) utility).  
 ✔ `bootiso` asserts that selected item is not a partition and exit if it doesn't (with `lsblk`).  
