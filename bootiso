@@ -148,25 +148,27 @@ typeset shouldMakePartition
 typeset noDeviceEjection
 typeset localBootloader
 
+typeset redColor="\\033[0;31m"
+typeset greenColor="\\033[0;32m"
+typeset yellowColor="\\033[0;33m"
+
 boldify() {
-  local bold=$(tput bold)
-  local normal=$(tput sgr0)
-  echo -e "$bold$1$normal"
+  echo -e "$(tput bold)$1\\033[0m"
 }
 
 # $1: The text to colorify.
 redify() {
-	echo -e "\\033[0;31m$1\\033[0m"
+	echo -e "$redColor$1\\033[0m"
 }
 
 # $1: The text to colorify.
 greenify() {
-	echo -e "\\033[0;32m$1\\033[0m"
+	echo -e "$greenColor$1\\033[0m"
 }
 
 # $1: The text to colorify.
 yellowify() {
-	echo -e "\\033[1;33m$1\\033[0m"
+	echo -e "$yellowColor$1\\033[0m"
 }
 
 typeset openTicketMessage="This is not expected: please open a ticket at $ticketsurl."
@@ -404,7 +406,7 @@ checkSudo() {
 
 failISOCheck() {
 	echoerr "Provided file '$selectedIsoFile' doesn't seem to be an ISO file (wrong mime-type: '$mimetype')."
-	echowarn "You can bypass this policy with $(boldify '-M, --no-mime-check'), but it is likely that the operation will fail."
+	echowarn "You can bypass this policy with $(boldify '-M, --no-mime-check')$yellowColor, but it is likely that the operation will fail."
 	failAndExit "Exiting..."
 }
 
@@ -589,7 +591,7 @@ configureLabel() {
 	partitionLabel=${partitionLabel:-"BOOTISO"}
 	if [ -z "${userVars['label']}" ]; then
 		echogood "Partition label automatically set to '$partitionLabel'." \
-			"You can explicitly set the label with $(boldify '-L, --label')."
+			"You can explicitly set the label with $(boldify '-L, --label')$greenColor."
 	else
 		echogood "Partition label manually set to '$partitionLabel'."
 	fi
@@ -723,7 +725,7 @@ parseArguments() {
 				;;
 			# OPTIONS
 			-b | --bootloader)
-				echowarn "$(boldify '-b, --bootloader') has been removed in v3.0.0. Bootloader installation is now automatic."
+				echowarn "$(boldify '-b, --bootloader')$yellowColor has been removed in v3.0.0. Bootloader installation is now automatic."
 				shift
 				;;
 			--local-bootloader)
@@ -982,7 +984,7 @@ assertDeviceIsUSB() {
 	deviceType=$(getDeviceType "$selectedDevice")
 	if [ "$deviceType" != "usb" ]; then
 		echoerr "The device you selected is not connected via USB (found BUS: '$deviceType') and the operation was therefore canceled."
-		echowarn "Use $(boldify '--no-usb-check') to bypass this policy at your own risk."
+		echowarn "Use $(boldify '--no-usb-check')$yellowColor to bypass this policy at your own risk."
 		echoerr "Exiting..."
 		exit 1
 	fi
@@ -998,7 +1000,7 @@ assertISOSize() {
 	fi
 	if [ "$(blockdev --getsz "$iso")" -gt "$(blockdev --getsz "$device")" ]; then
 		echoerr "The image is larger than the selected device '$device' and the operation was therefore canceled."
-		echowarn "Use $(boldify '--no-size-check') to bypass this policy at your own risk."
+		echowarn "Use $(boldify '--no-size-check')$yellowColor to bypass this policy at your own risk."
 		echoerr "Exiting..."
 		exit 1
 	fi
@@ -1010,7 +1012,7 @@ shouldWipeUSBKey() {
 	if [ "$disableConfirmation" == 'false' ]; then
 		read -r -p "         Are you sure you want to proceed? (y/n)> " answer
 	else
-		echowarn "Bypassing confirmation with $(boldify '-y, --assume-yes')."
+		echowarn "Bypassing confirmation with $(boldify '-y, --assume-yes')$yellowColor."
 	fi
 	if [ "$answer" == 'y' ]; then
 		return 0
@@ -1152,7 +1154,7 @@ copyWithRsync() {
 				rsyncOptions="--exclude sources/install.wim"
 				echogood "Detected a Windows install.wim file, which will be handled by 'wimlib-imagex' utility."
 			else
-				echowarn "Detected a Windows install.wim file but wimsplit has been disabled with $(boldify '--no-wim-split') option."
+				echowarn "Detected a Windows install.wim file but wimsplit has been disabled with $(boldify '--no-wim-split')$yellowColor option."
 			fi
 		fi
 		(
@@ -1220,7 +1222,7 @@ installSyslinuxVersion() {
 		if [ "$status" != 200 ]; then
 			if [ "$status" == 000 ]; then
 				failAndExit "You don't seem to have an internet connection." \
-					"Please try again later or use $(boldify '--local-bootloader') to force usage of the local SYSLINUX version."
+					"Please try again later or use $(boldify '--local-bootloader')$redColor to force usage of the local SYSLINUX version."
 				return 9
 			else
 				echowarn "Couldn't GET $rootURL." \
@@ -1459,7 +1461,7 @@ checkUserVars() {
 		fi
 		if ! containsElement "$action" "install-mount-rsync" "format"; then
 			failAndExit "Cannot set partition type with action [$action]." \
-				"$(boldify '-t, --type') is compatible with [format] and [install-mount-rsync] only."
+				"$(boldify '-t, --type')$redColor is compatible with [format] and [install-mount-rsync] only."
 		fi
 		if ! command -v "mkfs.$partType" &>/dev/null; then
 			failAndExit "Program 'mkfs.$partType' could not be found on your system." \
@@ -1474,7 +1476,7 @@ checkUserVars() {
 		assertDeviceIsOK "${userVars['device']}"
 	fi
 	if [ ! -z "${userVars['remote-bootloader']}" ] && [[ ! "${userVars['remote-bootloader']}" =~ ^[0-9]+\.[0-9]+$ ]]; then
-		failAndExit "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader') doesn't follow MAJOR.MINOR pattern." \
+		failAndExit "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader')$redColor doesn't follow MAJOR.MINOR pattern." \
 			"Valid examples are 4.10, 6.02"
 	fi
 }
@@ -1482,22 +1484,22 @@ checkUserVars() {
 checkUserFlags() {
 	# Autoselect security
 	if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['no-usb-check']}" == 'true' ]; then
-		failAndExit "You cannot set $(boldify '-a, --autoselect') while disabling USB check with $(boldify '--no-usb-check')"
+		failAndExit "You cannot set $(boldify '-a, --autoselect')$redColor while disabling USB check with $(boldify '--no-usb-check')$redColor"
 	fi
 	if [ "${userFlags['no-hash-check']}" == 'true' ] && [ "${userFlags['force-hash-check']}" == 'true' ]; then
-		failAndExit "You cannot combine $(boldify '--no-hash-check') and $(boldify '--force-hash-check')"
+		failAndExit "You cannot combine $(boldify '--no-hash-check')$redColor and $(boldify '--force-hash-check')$redColor"
 	elif [ "${userFlags['no-hash-check']}" == 'true' ] && [ -n "${userVars['hash-file']}" ]; then
-		failAndExit "You cannot combine $(boldify '--no-hash-check') and $(boldify '--hash-file')"
+		failAndExit "You cannot combine $(boldify '--no-hash-check')$redColor and $(boldify '--hash-file')$redColor"
 	fi
 	# warnings (only with sudo)
 	if ((EUID == 0)); then
 		# Eject format
 		if [ "${userFlags['no-eject']}" == "true" ] && [ "$action" == "format" ]; then
-			echowarn "You don't need to prevent device ejection through $(boldify '-J') flag with 'format'."
+			echowarn "You don't need to prevent device ejection through $(boldify '-J')$yellowColor flag with 'format'."
 		fi
 		# Warn autoselecting while assume yes is false
 		if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['assume-yes']}" == 'false' ]; then
-			echowarn "$(boldify '-a, --autoselect') is enabled by default when $(boldify  '-y, --asume-yes') is not set."
+			echowarn "$(boldify '-a, --autoselect')$yellowColor is enabled by default when $(boldify  '-y, --asume-yes')$yellowColor is not set."
 		fi
 	fi
 }
@@ -1511,7 +1513,7 @@ checkFlagMatrix() {
 				if [ "$key" == "iso-file" ]; then
 					failAndExit "[$action] doesn't require any arguments."
 				else
-					failAndExit "[$action] doesn't support $(boldify '--$key')." \
+					failAndExit "[$action] doesn't support $(boldify '--$key')$redColor." \
 						"See https://github.com/jsamr/bootiso#options"
 				fi
 			fi
@@ -1521,7 +1523,7 @@ checkFlagMatrix() {
 		if [ ! -z "${userFlags[$key]}" ]; then
 			#shellcheck disable=SC2086
 			if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
-				failAndExit "'$action' doesn't support $(boldify '--$key')." \
+				failAndExit "'$action' doesn't support $(boldify '--$key')$redColor." \
 					"See https://github.com/jsamr/bootiso#options"
 			fi
 		fi
@@ -1785,7 +1787,7 @@ printISOBootCapabilities() {
 			echoinfo "However, SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the minor part of local version ($localSyslinuxVersion), which should not cause any problems."
 		else
 			echowarn "SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the major part of local version ($localSyslinuxVersion)." \
-				"$scriptName will try to download and execute this version from kernel.org, unless given the option $(boldify '--local-bootloader')." \
+				"$scriptName will try to download and execute this version from kernel.org, unless given the option $(boldify '--local-bootloader')$yellowColor." \
 				"If that fails, it will attempt installation with the local version of SYSLINUX."
 		fi
 	fi
@@ -1859,6 +1861,8 @@ main() {
     assertISOIsOK
 		if [ "$disableHashCheck" == 'false' ]; then
 			checkISOHash
+    else
+      echowarn "Skipping hash check with $(boldify '-H, --no-hash-check')$yellowColor flag"
 		fi
 		inspectISO
 	fi
