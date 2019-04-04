@@ -9,7 +9,7 @@
 set -o pipefail
 set -E
 
-version="3.2.2"
+version="next"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
@@ -67,6 +67,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 )
 
 # internal variables
+typeset environementVariables="SYSLINUX_LIB_ROOT"
 typeset syslinuxLibRoot=${SYSLINUX_LIB_ROOT:-'/usr/lib/syslinux'}
 typeset ticketsurl="https://github.com/jsamr/bootiso/issues"
 typeset mountRoot=/mnt
@@ -386,10 +387,10 @@ initPckgManager() {
 checkSudo() {
 	if ((EUID != 0)); then
 		if [[ -t 1 ]]; then
-			sudo "$0" "$@"
+			sudo --preserve-env="$environementVariables" "$0" "$@"
 		else
 			exec 1>output_file
-			gksu "$0" "$@"
+			gksu --preserve-env="$environementVariables" "$0" "$@"
 		fi
 		exit
 	fi
