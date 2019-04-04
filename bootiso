@@ -423,107 +423,6 @@ assertISOIsOK() {
 			failISOCheck
 		fi
 	fi
-
-	if [ "$disableHashCheck" == 'false' ]; then
-		checkISOHash
-	fi
-}
-
-askForExit() {
-	typeset answer
-	read -r -n1 -p "Do you still want to continue? (y/n)> " answer
-	echo
-	case $answer in
-	y | Y)
-		return
-		;;
-	*)
-		failAndExit
-		;;
-	esac
-}
-
-checkISOHash() {
-	checkHash() {
-		typeset hashPath=$1 # Path to file containing hashes
-		typeset isoName=$2  # File to be checked
-		typeset hashName=$3 # Name of command of hash
-
-		# Hash from hash file
-		typeset gHash=$(awk -v pattern="$isoName$" '$0~pattern { print $1; exit }' "$hashPath")
-		if [ -z "$gHash" ]; then
-			echoerr "No matching filename found in hash file '$hashPath'"
-			return
-		elif [ -z "$hashName" ]; then
-			case ${#gHash} in
-			32)
-				hashName="md5sum"
-				;;
-			40)
-				hashName="sha1sum"
-				;;
-			64)
-				hashName="sha256sum"
-				;;
-			128)
-				hashName="sha512sum"
-				;;
-			*)
-				echowarn "Unknown hash type found in file '$hashPath'"
-				if [ "$forceHashCheck" == 'true' ]; then
-					failAndExit "Unknown hash type found found in '$hashPath'"
-				else
-					echowarn "Unknown hash type found found in '$hashPath'"
-					askForExit
-					echoinfo "Ignoring unknown hash type."
-				fi
-				;;
-			esac
-		fi
-
-		typeset lHash=$($hashName "$isoName" | awk "{print \$1; exit }") # Hash from iso
-		if [ "$gHash" != "$lHash" ]; then
-			if [ "$forceHashCheck" == 'true' ]; then
-				failAndExit "Incorrect ${hashName%sum} hash found in '$hashPath'"
-			else
-				echowarn "Incorrect hash found found in '$hashPath'"
-				askForExit
-				echoinfo "Ignoring incorrect hash."
-			fi
-		else
-			echogood "Correct ${hashName%sum} hash found in '$hashPath'"
-			numValidHashes=$((numValidHashes + 1))
-		fi
-	}
-
-	typeset numValidHashes=0
-	typeset isoDirectory=$(dirname "$selectedIsoFile")
-	typeset isoFileName=$(basename "$selectedIsoFile")
-	typeset -ar hashes=("md5sum" "sha1sum" "sha256sum" "sha512sum")
-
-	if [ -n "$hashFile" ]; then
-		if [ -a "$hashFile" ]; then
-			checkHash "$hashFile" "$selectedIsoFile"
-		else
-			failAndExit "Specified hash file '$hashFile' does not exist."
-		fi
-	else
-		shopt -s nullglob nocaseglob
-		for hash in "${hashes[@]}"; do
-			for file in "$isoDirectory/$hash"*; do
-				checkHash "$file" "$isoFileName" "$hash"
-			done
-
-			if [ -a "$selectedIsoFile.${hash%sum}" ]; then
-				checkHash "$selectedIsoFile.${hash%sum}" "$isoFileName" "$hash"
-			fi
-		done
-		shopt -u nullglob nocaseglob
-	fi
-
-	if [ "$forceHashCheck" == 'true' ] && [ $numValidHashes == 0 ]; then
-		failAndExit "No valid hashes found. Assert forced by '--force-hash-check'"
-	fi
 }
 
 checkISOHash() {
@@ -556,7 +455,6 @@ checkISOHash() {
 				;;
 			esac
 		fi
-
 		typeset lHash=$($hashName "$isoName" | awk "{print \$1; exit }") # Hash from iso
 		if [ "$gHash" != "$lHash" ]; then
 			if [ "$forceHashCheck" == 'true' ]; then
@@ -743,7 +641,7 @@ initDevicesList() {
 	mapfile -t devices < <(lsblk -o NAME,TYPE | grep --color=never -oP '^\K\w+(?=\s+disk$)')
 	devicesList=()
 	for device in "${devices[@]}"; do
-		if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
+    if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
 			devicesList+=("$device")
 		fi
 	done
@@ -1583,11 +1481,6 @@ checkUserFlags() {
 	elif [ "${userFlags['no-hash-check']}" == 'true' ] && [ -n "${userVars['hash-file']}" ]; then
 		failAndExit "You cannot combine '--no-hash-check' and '--hash-file'"
 	fi
-	if [ "${userFlags['no-hash-check']}" == 'true' ] && [ "${userFlags['force-hash-check']}" == 'true' ]; then
-		failAndExit "You cannot combine '--no-hash-check' and '--force-hash-check'"
-	elif [ "${userFlags['no-hash-check']}" == 'true' ] && [ -z "${userVars['remote-bootloader']}" ]; then
-		failAndExit "You cannot combine '--no-hash-check' and '--hash-file'"
-	fi
 	# warnings (only with sudo)
 	if ((EUID == 0)); then
 		# Eject format
@@ -1955,7 +1848,10 @@ main() {
 		configureFolders
 	fi
 	if [ "$expectingISOFile" == 'true' ]; then
-		assertISOIsOK
+    assertISOIsOK
+		if [ "$disableHashCheck" == 'false' ]; then
+			checkISOHash
+		fi
 		inspectISO
 	fi
 	case "$action" in
