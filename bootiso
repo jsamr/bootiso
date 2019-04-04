@@ -959,9 +959,9 @@ checkPackages() {
 createMountFolder() {
 	typeset tmpFileTemplate
 	if ((EUID == 0)); then
-		tmpFileTemplate="$mountRoot/$1.XXX"
+		tmpFileTemplate="$mountRoot/$1-XXX"
 	else
-		tmpFileTemplate="$tempRoot/$1.XXX"
+		tmpFileTemplate="$tempRoot/$1-XXX"
 	fi
 	mktemp -d "$tmpFileTemplate"
 	typeset status=$?
@@ -971,7 +971,7 @@ createMountFolder() {
 }
 
 createTempFile() {
-	typeset tmpFileTemplate="$tempRoot/$1.XXX"
+	typeset tmpFileTemplate="$tempRoot/$1-XXX"
 	mktemp "$tmpFileTemplate"
 	typeset status=$?
 	if [ ! $status -eq 0 ]; then
