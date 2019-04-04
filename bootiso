@@ -208,7 +208,7 @@ $(boldify 'OPTION FLAGS')
                                    You can omit the '/dev/' prefix.
 -y, --assume-yes                   $scriptName won't prompt the user for confirmation before erasing and
                                    partitioning the USB device. $(yellowify 'Use at your own risk.')
--a, --autoselect                   Enable autoselecting USB devices in combination with '-y'.
+-a, --autoselect                   Enable autoselecting USB devices in combination with $(boldify '-y').
                                    This will automatically select an USB drive device if there is
                                    exactly one connected to the system. Enabled by default when neither
                                    $(boldify '-d') nor $(boldify '--no-usb-check') options are given.
@@ -404,7 +404,7 @@ checkSudo() {
 
 failISOCheck() {
 	echoerr "Provided file '$selectedIsoFile' doesn't seem to be an ISO file (wrong mime-type: '$mimetype')."
-	echowarn "You can bypass this policy with '-M, --no-mime-check', but it is likely that the operation will fail."
+	echowarn "You can bypass this policy with $(boldify '-M, --no-mime-check'), but it is likely that the operation will fail."
 	failAndExit "Exiting..."
 }
 
@@ -589,7 +589,7 @@ configureLabel() {
 	partitionLabel=${partitionLabel:-"BOOTISO"}
 	if [ -z "${userVars['label']}" ]; then
 		echogood "Partition label automatically set to '$partitionLabel'." \
-			"You can explicitly set the label with '-L, --label'."
+			"You can explicitly set the label with $(boldify '-L, --label')."
 	else
 		echogood "Partition label manually set to '$partitionLabel'."
 	fi
@@ -1010,7 +1010,7 @@ shouldWipeUSBKey() {
 	if [ "$disableConfirmation" == 'false' ]; then
 		read -r -p "         Are you sure you want to proceed? (y/n)> " answer
 	else
-		echowarn "Bypassing confirmation with '-y, --assume-yes'."
+		echowarn "Bypassing confirmation with $(boldify '-y, --assume-yes')."
 	fi
 	if [ "$answer" == 'y' ]; then
 		return 0
@@ -1459,7 +1459,7 @@ checkUserVars() {
 		fi
 		if ! containsElement "$action" "install-mount-rsync" "format"; then
 			failAndExit "Cannot set partition type with action [$action]." \
-				"'-t, --type' is compatible with [format] and [install-mount-rsync] only."
+				"$(boldify '-t, --type') is compatible with [format] and [install-mount-rsync] only."
 		fi
 		if ! command -v "mkfs.$partType" &>/dev/null; then
 			failAndExit "Program 'mkfs.$partType' could not be found on your system." \
@@ -1482,7 +1482,7 @@ checkUserVars() {
 checkUserFlags() {
 	# Autoselect security
 	if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['no-usb-check']}" == 'true' ]; then
-		failAndExit "You cannot set '-a, --autoselect' while disabling USB check with $(boldify '--no-usb-check')"
+		failAndExit "You cannot set $(boldify '-a, --autoselect') while disabling USB check with $(boldify '--no-usb-check')"
 	fi
 	if [ "${userFlags['no-hash-check']}" == 'true' ] && [ "${userFlags['force-hash-check']}" == 'true' ]; then
 		failAndExit "You cannot combine $(boldify '--no-hash-check') and $(boldify '--force-hash-check')"
@@ -1493,11 +1493,11 @@ checkUserFlags() {
 	if ((EUID == 0)); then
 		# Eject format
 		if [ "${userFlags['no-eject']}" == "true" ] && [ "$action" == "format" ]; then
-			echowarn "You don't need to prevent device ejection through '-J' flag with 'format'."
+			echowarn "You don't need to prevent device ejection through $(boldify '-J') flag with 'format'."
 		fi
 		# Warn autoselecting while assume yes is false
 		if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['assume-yes']}" == 'false' ]; then
-			echowarn "'-a, --autoselect' is enabled by default when '-y, --asume-yes' is not set."
+			echowarn "$(boldify '-a, --autoselect') is enabled by default when $(boldify  '-y, --asume-yes') is not set."
 		fi
 	fi
 }
@@ -1552,7 +1552,7 @@ cleanup() {
 					echowarn "Failed to eject device '$selectedDevice'."
 				fi
 			else
-				echoinfo "USB device ejection skipped with '-J, --no-eject'."
+				echoinfo "USB device ejection skipped with $(boldify '-J, --no-eject')."
 			fi
 		fi
 	}
