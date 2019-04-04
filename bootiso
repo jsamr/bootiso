@@ -1195,7 +1195,7 @@ copyWithRsync() {
 			# shellcheck disable=SC2086
 			rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$isoMountPoint"/. "$usbMountPoint"
 			local status=$?
-			if [ -f "$wimFile" ] && [ "$disableWimsplit" == 'false' ]; then
+			if ((status == 0)) && [ -f "$wimFile" ] && [ "$disableWimsplit" == 'false' ]; then
 				echo
 				wimlib-imagex split "$wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
 			fi
