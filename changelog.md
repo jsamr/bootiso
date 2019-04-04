@@ -1,4 +1,4 @@
-# next
+# v3.2.2
 
 **Features**
 
@@ -9,6 +9,8 @@
 
 **Bugfixes**
 
+- fix incompatibility with wimlib <1.13 caused by a bug where wimsplit [incorectly handles dots in filnames](https://github.com/jsamr/bootiso/issues/43#issuecomment-462657587), #43
+- fix a bug where environment variables were not passed to sudo, #29
 - fix a minor bug where ISO check was run twice, before and after sudo
 
 # v3.2.2
