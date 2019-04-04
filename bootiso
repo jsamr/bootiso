@@ -4,12 +4,12 @@
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.2.2
+# Version 3.3.0
 
 set -o pipefail
 set -E
 
-version="next"
+version="3.3.0"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
