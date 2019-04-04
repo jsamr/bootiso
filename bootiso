@@ -1547,7 +1547,7 @@ checkFlagMatrix() {
 				if [ "$key" == "iso-file" ]; then
 					failAndExit "[$action] doesn't require any arguments."
 				else
-					failAndExit "[$action] doesn't support $(boldify '--$key')$redColor." \
+					failAndExit "[$action] doesn't support $(boldify --$key)$redColor." \
 						"See https://github.com/jsamr/bootiso#options"
 				fi
 			fi
@@ -1557,7 +1557,7 @@ checkFlagMatrix() {
 		if [ ! -z "${userFlags[$key]}" ]; then
 			#shellcheck disable=SC2086
 			if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
-				failAndExit "'$action' doesn't support $(boldify '--$key')$redColor." \
+				failAndExit "'$action' doesn't support $(boldify --$key)$redColor." \
 					"See https://github.com/jsamr/bootiso#options"
 			fi
 		fi
