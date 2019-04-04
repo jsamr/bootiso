@@ -3,7 +3,7 @@
 **Features**
 
 - check ISO hash automatically, #16
-- disable automatic ISO hash check with `--no-hash-check` flag
+- disable automatic ISO hash check with `-H, --no-hash-check` flag
 - exit when hash fails with `--force-hash-check` flag
 - explicitly set a hash file with `--hash-file <file>` flag
 

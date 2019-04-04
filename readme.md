@@ -206,6 +206,12 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
       <td><code>[install-*]</code></td>
     </tr>
     <tr>
+      <td><code>-H</code></td>
+      <td><code>--no-hash-check</code></td>
+      <td>Do not search for hash files and check ISO integrity.</td>
+      <td><code>[install-*]</code>,<br/><code>[inspect]</code>,<br/><code>[probe]</code></td>
+    </tr>
+    <tr>
       <td><code>-M</code></td>
       <td><code>--no-mime-check</code></td>
       <td>bootiso won&#39;t assert that selected ISO file has the right mime-type.</td>
@@ -243,12 +249,6 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
       <td><code>--no-size-check</code></td>
       <td>Prevent script from asserting that the device size is larger then the image.</td>
       <td><code>[install-*]</code></td>
-    </tr>
-    <tr>
-      <td></td>
-      <td><code>--no-hash-check</code></td>
-      <td>Do not search for hash files and check ISO integrity.</td>
-      <td><code>[install-*]</code>,<br/><code>[inspect]</code>,<br/><code>[probe]</code></td>
     </tr>
     <tr>
       <td></td>

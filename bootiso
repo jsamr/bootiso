@@ -213,6 +213,7 @@ $(boldify 'OPTION FLAGS')
                                    exactly one connected to the system. Enabled by default when neither
                                    $(boldify '-d') nor $(boldify '--no-usb-check') options are given.
 -J, --no-eject                     Do not eject device after unmounting.
+-H, --no-hash-check                Do not search for hash files and check ISO integrity.
 -M, --no-mime-check                $scriptName won't assert that the ISO file is the right mime-type.
 -t, --type <type>                  Format to '<type>' instead of default FAT32 (vfat). Supported types:
                                    ${supportedFS[*]}.
@@ -226,7 +227,6 @@ $(boldify 'OPTION FLAGS')
     --no-size-check                $scriptName won't assert that the device size is larger
                                    than the image. $(redify 'Use at your own risk.')
     --no-wimsplit                  Prevent splitting sources/install.wim file in Windows ISOs.
-    --no-hash-check                Do not search for hash files and check ISO integrity.
     --force-hash-check             Fail and exit when no valid hash is found. Cannot be used with $(boldify '--no-hash-check').
     --hash-file <file>             Specify file containing the ISO hash. Other files will not be checked.
                                    Cannot be used with $(boldify '--no-hash-check')
@@ -773,6 +773,10 @@ parseArguments() {
 				enableUserFlag 'no-eject'
 				shift
 				;;
+			-H | --no-hash-check)
+				enableUserFlag 'no-hash-check'
+				shift
+				;;
 			-a | --autoselect)
 				enableUserFlag 'autoselect'
 				shift
@@ -787,10 +791,6 @@ parseArguments() {
 				;;
 			--no-size-check)
 				enableUserFlag 'no-size-check'
-				shift
-				;;
-			--no-hash-check)
-				enableUserFlag 'no-hash-check'
 				shift
 				;;
 			--force-hash-check)
