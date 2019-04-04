@@ -148,6 +148,12 @@ typeset shouldMakePartition
 typeset noDeviceEjection
 typeset localBootloader
 
+boldify() {
+  local bold=$(tput bold)
+  local normal=$(tput sgr0)
+  echo -e "$bold$1$normal"
+}
+
 # $1: The text to colorify.
 redify() {
 	echo -e "\\033[0;31m$1\\033[0m"
@@ -176,7 +182,7 @@ In this mode, $scriptName will analyze the ISO file and select the best course o
 action to maximize the odds your USB stick will be bootable. Option and action flags can be
 stacked in their POSIX form.
 
-ACTION FLAGS
+$(boldify ACTION FLAGS)
 
 You can override the default [install-auto] action with the flags below (canonical names given in
 brackets):
@@ -194,7 +200,7 @@ brackets):
                                    mount-rsync mode with 'rsync' utility. It is recommended to run [inspect]
                                    action first.
 
-OPTION FLAGS
+$(boldify 'OPTION FLAGS')
 
 -d, --device <device>              Select <device> block file as target USB device.
                                    If <device> is not connected through USB, $scriptName will fail and
@@ -205,7 +211,7 @@ OPTION FLAGS
 -a, --autoselect                   Enable autoselecting USB devices in combination with '-y'.
                                    This will automatically select an USB drive device if there is
                                    exactly one connected to the system. Enabled by default when neither
-                                   '-d' nor '--no-usb-check' options are given.
+                                   $(boldify '-d') nor $(boldify '--no-usb-check') options are given.
 -J, --no-eject                     Do not eject device after unmounting.
 -M, --no-mime-check                $scriptName won't assert that the ISO file is the right mime-type.
 -t, --type <type>                  Format to '<type>' instead of default FAT32 (vfat). Supported types:
@@ -221,9 +227,9 @@ OPTION FLAGS
                                    than the image. $(redify 'Use at your own risk.')
     --no-wimsplit                  Prevent splitting sources/install.wim file in Windows ISOs.
     --no-hash-check                Do not search for hash files and check ISO integrity.
-    --force-hash-check             Fail and exit when no valid hash is found. Cannot be used with '--no-hash-check'.
+    --force-hash-check             Fail and exit when no valid hash is found. Cannot be used with $(boldify '--no-hash-check').
     --hash-file <file>             Specify file containing the ISO hash. Other files will not be checked.
-                                   Cannot be used with '--no-hash-check'
+                                   Cannot be used with $(boldify '--no-hash-check')
     --local-bootloader             Prevent download of remote bootloader and force local (SYSLINUX) during
                                    installation. Applicable to [install-mount-rsync] action.
     --remote-bootloader <version>  Force download of remote bootloader at version <version>.
@@ -232,11 +238,11 @@ OPTION FLAGS
     --                             POSIX end of options.
 
 
-ENVIRONMENT VARIABLES
+$(boldify ENVIRONMENT VARIABLES)
 
 - SYSLINUX_LIB_ROOT : set the root of syslinux assets, defaults to /usr/lib/syslinux
 
-INFO
+$(boldify INFO)
 
     Bootiso v$version. Author: Jules Samuel Randolph
     Bugs and new features: $ticketsurl
@@ -455,6 +461,8 @@ checkISOHash() {
 				;;
 			esac
 		fi
+    echoinfo "Checking ISO hash against '$hashName'..." \
+             "You can disable this check with $(boldify "-H, --no-hash-check") flags."
 		typeset lHash=$($hashName "$isoName" | awk "{print \$1; exit }") # Hash from iso
 		if [ "$gHash" != "$lHash" ]; then
 			if [ "$forceHashCheck" == 'true' ]; then
@@ -506,7 +514,7 @@ checkISOHash() {
 	fi
 
 	if [ "$forceHashCheck" == 'true' ] && [ $numValidHashes == 0 ]; then
-		failAndExit "No matching hashes found. Assert forced by '--force-hash-check'"
+		failAndExit "No matching hashes found. Assert forced by $(boldify '--force-hash-check')"
 	fi
 }
 
@@ -715,7 +723,7 @@ parseArguments() {
 				;;
 			# OPTIONS
 			-b | --bootloader)
-				echowarn "'-b', '--bootloader' has been removed in v3.0.0. Bootloader installation is now automatic."
+				echowarn "$(boldify '-b, --bootloader') has been removed in v3.0.0. Bootloader installation is now automatic."
 				shift
 				;;
 			--local-bootloader)
@@ -974,7 +982,7 @@ assertDeviceIsUSB() {
 	deviceType=$(getDeviceType "$selectedDevice")
 	if [ "$deviceType" != "usb" ]; then
 		echoerr "The device you selected is not connected via USB (found BUS: '$deviceType') and the operation was therefore canceled."
-		echowarn "Use '--no-usb-check' to bypass this policy at your own risk."
+		echowarn "Use $(boldify '--no-usb-check') to bypass this policy at your own risk."
 		echoerr "Exiting..."
 		exit 1
 	fi
@@ -990,7 +998,7 @@ assertISOSize() {
 	fi
 	if [ "$(blockdev --getsz "$iso")" -gt "$(blockdev --getsz "$device")" ]; then
 		echoerr "The image is larger than the selected device '$device' and the operation was therefore canceled."
-		echowarn "Use '--no-size-check' to bypass this policy at your own risk."
+		echowarn "Use $(boldify '--no-size-check') to bypass this policy at your own risk."
 		echoerr "Exiting..."
 		exit 1
 	fi
@@ -1144,7 +1152,7 @@ copyWithRsync() {
 				rsyncOptions="--exclude sources/install.wim"
 				echogood "Detected a Windows install.wim file, which will be handled by 'wimlib-imagex' utility."
 			else
-				echowarn "Detected a Windows install.wim file but wimsplit has been disabled with '--no-wim-split' option."
+				echowarn "Detected a Windows install.wim file but wimsplit has been disabled with $(boldify '--no-wim-split') option."
 			fi
 		fi
 		(
@@ -1212,7 +1220,7 @@ installSyslinuxVersion() {
 		if [ "$status" != 200 ]; then
 			if [ "$status" == 000 ]; then
 				failAndExit "You don't seem to have an internet connection." \
-					"Please try again later or use '--local-bootloader' to force usage of the local SYSLINUX version."
+					"Please try again later or use $(boldify '--local-bootloader') to force usage of the local SYSLINUX version."
 				return 9
 			else
 				echowarn "Couldn't GET $rootURL." \
@@ -1466,7 +1474,7 @@ checkUserVars() {
 		assertDeviceIsOK "${userVars['device']}"
 	fi
 	if [ ! -z "${userVars['remote-bootloader']}" ] && [[ ! "${userVars['remote-bootloader']}" =~ ^[0-9]+\.[0-9]+$ ]]; then
-		failAndExit "Remote bootloader version '${userVars['remote-bootloader']}' set with '--remote-bootloader' doesn't follow MAJOR.MINOR pattern." \
+		failAndExit "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader') doesn't follow MAJOR.MINOR pattern." \
 			"Valid examples are 4.10, 6.02"
 	fi
 }
@@ -1474,12 +1482,12 @@ checkUserVars() {
 checkUserFlags() {
 	# Autoselect security
 	if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['no-usb-check']}" == 'true' ]; then
-		failAndExit "You cannot set '-a, --autoselect' while disabling USB check with '--no-usb-check'"
+		failAndExit "You cannot set '-a, --autoselect' while disabling USB check with $(boldify '--no-usb-check')"
 	fi
 	if [ "${userFlags['no-hash-check']}" == 'true' ] && [ "${userFlags['force-hash-check']}" == 'true' ]; then
-		failAndExit "You cannot combine '--no-hash-check' and '--force-hash-check'"
+		failAndExit "You cannot combine $(boldify '--no-hash-check') and $(boldify '--force-hash-check')"
 	elif [ "${userFlags['no-hash-check']}" == 'true' ] && [ -n "${userVars['hash-file']}" ]; then
-		failAndExit "You cannot combine '--no-hash-check' and '--hash-file'"
+		failAndExit "You cannot combine $(boldify '--no-hash-check') and $(boldify '--hash-file')"
 	fi
 	# warnings (only with sudo)
 	if ((EUID == 0)); then
@@ -1503,7 +1511,7 @@ checkFlagMatrix() {
 				if [ "$key" == "iso-file" ]; then
 					failAndExit "[$action] doesn't require any arguments."
 				else
-					failAndExit "[$action] doesn't support '--$key'." \
+					failAndExit "[$action] doesn't support $(boldify '--$key')." \
 						"See https://github.com/jsamr/bootiso#options"
 				fi
 			fi
@@ -1513,7 +1521,7 @@ checkFlagMatrix() {
 		if [ ! -z "${userFlags[$key]}" ]; then
 			#shellcheck disable=SC2086
 			if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
-				failAndExit "'$action' doesn't support '--$key'." \
+				failAndExit "'$action' doesn't support $(boldify '--$key')." \
 					"See https://github.com/jsamr/bootiso#options"
 			fi
 		fi
@@ -1777,7 +1785,7 @@ printISOBootCapabilities() {
 			echoinfo "However, SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the minor part of local version ($localSyslinuxVersion), which should not cause any problems."
 		else
 			echowarn "SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the major part of local version ($localSyslinuxVersion)." \
-				"$scriptName will try to download and execute this version from kernel.org, unless given the option '--local-bootloader'." \
+				"$scriptName will try to download and execute this version from kernel.org, unless given the option $(boldify '--local-bootloader')." \
 				"If that fails, it will attempt installation with the local version of SYSLINUX."
 		fi
 	fi
