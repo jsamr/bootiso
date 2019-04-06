@@ -67,7 +67,6 @@ typeset -Ar userFlagsCompatibilityMatrix=(
 )
 
 # internal variables
-typeset environementVariables="SYSLINUX_LIB_ROOT"
 typeset syslinuxLibRoot=${SYSLINUX_LIB_ROOT:-'/usr/lib/syslinux'}
 typeset ticketsurl="https://github.com/jsamr/bootiso/issues"
 typeset mountRoot=/mnt
