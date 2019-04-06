@@ -1,11 +1,17 @@
+# v3.3.1
+
+**Bugfixes**
+
+- fix incompatibility with older `sudo` versions where `--preserve-env` doesn't support passing a list of variables, [#47](https://github.com/jsamr/bootiso/issues/47)
+
 # v3.3.0
 
 **Features**
 
-- check ISO hash automatically, #16
-- disable automatic ISO hash check with `-H, --no-hash-check` flag
-- exit when hash fails with `--force-hash-check` flag
-- explicitly set a hash file with `--hash-file <file>` flag
+- check ISO hash automatically, #16, (@SibrenVasse)
+- disable automatic ISO hash check with `-H, --no-hash-check` flag (@SibrenVasse)
+- exit when hash fails with `--force-hash-check` flag (@SibrenVasse)
+- explicitly set a hash file with `--hash-file <file>` flag (@SibrenVasse)
 
 **Bugfixes**
 

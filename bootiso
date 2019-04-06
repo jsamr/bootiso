@@ -4,12 +4,12 @@
 #
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
-# Version 3.3.0
+# Version 3.3.1
 
 set -o pipefail
 set -E
 
-version="3.3.0"
+version="3.3.1"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
@@ -395,10 +395,10 @@ initPckgManager() {
 checkSudo() {
 	if ((EUID != 0)); then
 		if [[ -t 1 ]]; then
-			sudo --preserve-env="$environementVariables" "$0" "$@"
+			sudo --preserve-env "$0" "$@"
 		else
 			exec 1>output_file
-			gksu --preserve-env="$environementVariables" "$0" "$@"
+			gksu --preserve-env "$0" "$@"
 		fi
 		exit
 	fi
