@@ -388,6 +388,10 @@ initPckgManager() {
 		pkgmgr="emerge"
 		return 0
 	fi
+	if hasPackage xbps-install; then # Void
+		pkgmgr="xbps-install"
+		return 0
+	fi
 	return 1
 }
 
