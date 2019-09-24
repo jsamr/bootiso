@@ -153,7 +153,7 @@ typeset greenColor="\\033[0;32m"
 typeset yellowColor="\\033[0;33m"
 
 boldify() {
-  echo -e "$(tput bold)$1\\033[0m"
+	echo -e "$(tput bold)$1\\033[0m"
 }
 
 # $1: The text to colorify.
@@ -438,42 +438,42 @@ assertISOIsOK() {
 }
 
 checkISOHash() {
-  typeset lHash
-  computeHashWithProgress() {
-    local hashName="$1"
-    local isoName="$2"
-    typeset hashStoreFile=$(createTempFile "bootiso-file-hash")
-    echoinfo "Checking hash for '$isoName'..."
-    printf "%s%s" \
-           "You can disable this check with $(boldify "-H, --no-hash-check") flags" \
-           "    " | indentAll
-    temporaryAssets+=("$hashStoreFile")
-    (
-      local hash
-      local -i status=0
-      hash=$($hashName "$isoName" | awk "{print \$1; exit }")
-      status=$?
-      if ((status == 0)); then
-        printf "%s" "$hash" > "$hashStoreFile"
-      else
-        printf "%s" 1 > "$hashStoreFile"
-      fi
-    ) &
-    pid=$!
+	typeset lHash
+	computeHashWithProgress() {
+		local hashName="$1"
+		local isoName="$2"
+		typeset hashStoreFile=$(createTempFile "bootiso-file-hash")
+		echoinfo "Checking hash for '$isoName'..."
+		printf "%s%s" \
+		"You can disable this check with $(boldify "-H, --no-hash-check") flags" \
+		"    " | indentAll
+		temporaryAssets+=("$hashStoreFile")
+		(
+			local hash
+			local -i status=0
+			hash=$($hashName "$isoName" | awk "{print \$1; exit }")
+			status=$?
+			if ((status == 0)); then
+				printf "%s" "$hash" > "$hashStoreFile"
+			else
+				printf "%s" 1 > "$hashStoreFile"
+			fi
+		) &
+		pid=$!
 		while [ -e "/proc/$pid" ]; do
 			updateProgress
 		done
 		cleanProgress
-    lHash=$(cat "$hashStoreFile")
-    if [ "$lHash" == "1" ]; then
-      return 1
-    fi
-  }
+		lHash=$(cat "$hashStoreFile")
+		if [ "$lHash" == "1" ]; then
+			return 1
+		fi
+	}
 	checkHash() {
 		typeset hashPath=$1 # Path to file containing hashes
 		typeset isoName=$2  # File to be checked
 		typeset hashName=$3 # Name of command of hash
-    local status
+		local status
 		# Hash from hash file
 		typeset gHash=$(awk -v pattern="$isoName$" '$0 ~ pattern { print $1; exit }' "$hashPath")
 		if [ -z "$gHash" ]; then
@@ -498,12 +498,12 @@ checkISOHash() {
 				;;
 			esac
 		fi
-    # Hash from iso
-    computeHashWithProgress $hashName "$isoName"
-    status=$?
+		# Hash from iso
+		computeHashWithProgress $hashName "$isoName"
+		status=$?
 		if ((status != 0)); then
-      failAndExit "$hashName command failed with status $status"
-    fi
+			failAndExit "$hashName command failed with status $status"
+		fi
 		if [ "$gHash" != "$lHash" ]; then
 			if [ "$forceHashCheck" == 'true' ]; then
 				failAndExit "Hash mismatch in '$hashPath' (${hashName%sum})."
@@ -689,7 +689,7 @@ initDevicesList() {
 	mapfile -t devices < <(lsblk -o NAME,TYPE | grep --color=never -oP '^\K\w+(?=\s+disk$)')
 	devicesList=()
 	for device in "${devices[@]}"; do
-    if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
+		if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
 			devicesList+=("$device")
 		fi
 	done
@@ -1896,25 +1896,25 @@ main() {
 		configureFolders
 	fi
 	if [ "$expectingISOFile" == 'true' ]; then
-    assertISOIsOK
+		assertISOIsOK
 		if [ "$disableHashCheck" == 'false' ]; then
 			checkISOHash
-    else
-      echowarn "Skipping hash check with $(boldify '-H, --no-hash-check')$yellowColor flag"
+		else
+			echowarn "Skipping hash check with $(boldify '-H, --no-hash-check')$yellowColor flag"
 		fi
 		inspectISO
 	fi
 	case "$action" in
-	'install-auto') execAuto "$@" ;;
-	'install-dd') execWithDD "$@" ;;
-	'install-mount-rsync') execWithRsync "$@" ;;
-	'format') execFormat "$@" ;;
-	'inspect') printISOBootCapabilities ;;
-	'probe') execProbe "$@" ;;
-	'list-usb-drives') listDevicesTable ;;
-	'version') echo "$version" ;;
-	'help') display_help ;;
-	*) failAndExit "Unexpected action [$action].\\n$openTicketMessage" ;;
+		'install-auto') execAuto "$@" ;;
+		'install-dd') execWithDD "$@" ;;
+		'install-mount-rsync') execWithRsync "$@" ;;
+		'format') execFormat "$@" ;;
+		'inspect') printISOBootCapabilities ;;
+		'probe') execProbe "$@" ;;
+		'list-usb-drives') listDevicesTable ;;
+		'version') echo "$version" ;;
+		'help') display_help ;;
+		*) failAndExit "Unexpected action [$action].\\n$openTicketMessage" ;;
 	esac
 	if [ "$hasActionDuration" == 'true' ]; then
 		stopTimerAndPrintLapsed
