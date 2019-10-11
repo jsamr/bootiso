@@ -70,6 +70,26 @@ Where `bin-path` is any folder in the `$PATH` environment, preferably for superu
 
 Make sure to [follow our distro-dependent tweaks](#distro-tweaks) to have bootiso settled.
 
+### Quick install - docker
+
+If your linux distro doesn't have wimlib/wimtools but you have docker installed, you can run bootiso in a container.
+
+Build the image:
+```
+docker build -t 
+```
+
+Start bootiso in a container:
+```
+docker run \
+  -it \
+  --rm \
+  --privileged  \
+  -v /your/iso/dir:/data \
+  bootiso \
+    /bootiso -d /dev/sdX /data/YOURISOFILE.iso
+```
+
 ### Help the community
 
 If you like `bootiso`, feel free to help the community find it by **staring the project** and **upvoting those SE posts**:
