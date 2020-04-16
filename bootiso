@@ -150,9 +150,17 @@ typeset localBootloader
 typeset redColor="\\033[0;31m"
 typeset greenColor="\\033[0;32m"
 typeset yellowColor="\\033[0;33m"
+typeset startUnderline=$(tput smul)
+typeset endUnderline=$(tput rmul)
+typeset startBold=$(tput bold)
+typeset endBold="\e[22m"
 
 boldify() {
-	echo -e "$(tput bold)$1\\033[0m"
+  echo -e "$startBold$1$endBold"
+}
+
+underline() {
+  echo -e "$startUnderline$1$endUnderline"
 }
 
 # $1: The text to colorify.
@@ -172,88 +180,49 @@ yellowify() {
 
 typeset openTicketMessage="This is not expected: please open a ticket at $ticketsurl."
 
-# 100 wide + no tabs
-typeset help_message="Securely create a bootable USB from any ISO.
-Usage: $scriptName [<options>...] <file.iso>
-       $scriptName <action> [<options>...] <file.iso>
-       $scriptName <action> [<options>...]
+typeset actionFlagsTable="
+--dd|Install ISOFILE in image-copy mode.
+-f, --format|Format selected USB drive and exit.
+-h, --help|Display this help message and exit.
+-i, --inspect|Inspect ISOFILE boot capabilities.
+-l, --list-usb-drives|List available USB drives and exit.
+--mrsync|Install ISOFILE in mount+rsync mode.
+-p, --probe|Equivalent to -i followed by -l actions.
+-v, --version|Display version and exit.
+"
 
-The default action [install-auto] is to install an ISO file to an USB device in automatic mode.
-In this mode, $scriptName will analyze the ISO file and select the best course of
-action to maximize the odds your USB stick will be bootable. Option and action flags can be
-stacked in their POSIX form.
+typeset modifierFlagsTable="
+-a, --autoselect|Autoselect USB drive when only one is connected.
+-d, --device DEVICE|Pick DEVICE block file as target USB drive.
+-y, --assume-yes|Don't prompt for confirmation before erasing drive.
+-J, --no-eject|Don't eject drive after unmounting.
+-H, --no-hash-check|Don't search for hash files and check ISOFILE integrity.
+-M, --no-mime-check|Don't check ISOFILE mime-type.
+-t, --type FSTYPE|Format to FSTYPE.
+-L, --label PARTLABEL|Set partition label to PARTLABEL.
+"
+typeset helpIntro="\
+$scriptName v$version - create a bootable USB drive from an ISO image."
 
-$(boldify ACTION FLAGS)
+typeset helpSynopsis="
+Usage: $(boldify "$scriptName") [$(underline MODIFIER...)] $(underline ISOFILE)
+       $(boldify "$scriptName") $(underline ACTION) [$(underline MODIFIER...)] $(underline ISOFILE)
+       $(boldify "$scriptName") $(underline ACTION)"
 
-You can override the default [install-auto] action with the flags below (canonical names given in
-brackets):
+typeset helpHint="
+Invoked with no ACTION flag, $scriptName will default to install-auto action: inspect ISOFILE \
+boot capabilities and find the best way to make a bootable USB drive. \
+Read $scriptName man page for a detailed description and advanced options."
 
--h, --help, help                   [help] Display this help message and exit.
--v, --version                      [version] Display version and exit.
--l, --list-usb-drives              [list-usb-drives] List available USB drives and exit.
--i, --inspect                      [inspect] Inspect ISO file boot capabilities and how $scriptName can handle
-                                   it, then exit.
--p, --probe                        [probe] Equivalent to [inspect] followed by [list-usb-drives] actions.
--f, --format                       [format] Format selected USB drive and exit.
-    --dd                           [install-dd] Overrides 'automatic' mode and installs the ISO in image-copy
-                                   mode with 'dd' utility. It is recommended to run [inspect] action first.
-    --mrsync                       [install-mount-rsync] Overrides 'automatic' mode and installs ISO in
-                                   mount-rsync mode with 'rsync' utility. It is recommended to run [inspect]
-                                   action first.
-
-$(boldify 'OPTION FLAGS')
-
--d, --device <device>              Select <device> block file as target USB device.
-                                   If <device> is not connected through USB, $scriptName will fail and
-                                   exit. Device block files are usually situated in '/dev/sdX' or '/dev/hdX'.
-                                   You can omit the '/dev/' prefix.
--y, --assume-yes                   $scriptName won't prompt the user for confirmation before erasing and
-                                   partitioning the USB device. $(yellowify 'Use at your own risk.')
--a, --autoselect                   Enable autoselecting USB devices in combination with $(boldify '-y').
-                                   This will automatically select an USB drive device if there is
-                                   exactly one connected to the system. Enabled by default when neither
-                                   $(boldify '-d') nor $(boldify '--no-usb-check') options are given.
--J, --no-eject                     Do not eject device after unmounting.
--H, --no-hash-check                Do not search for hash files and check ISO integrity.
--M, --no-mime-check                $scriptName won't assert that the ISO file is the right mime-type.
--t, --type <type>                  Format to '<type>' instead of default FAT32 (vfat). Supported types:
-                                   ${supportedFS[*]}.
-                                   Applicable to the [install-mount-rsync] and [format] actions.
--L, --label <label>                Set partition label as '<label>' instead of inferring.
-                                   Applicable to the [install-mount-rsync] and [format] actions. $scriptName
-                                   will cut labels which are too long regarding the selected filesystem
-                                   limitations.
-    --no-usb-check                 $scriptName won't assert that the selected device is connected
-                                   through USB. $(redify 'Use at your own risk.')
-    --no-size-check                $scriptName won't assert that the device size is larger
-                                   than the image. $(redify 'Use at your own risk.')
-    --no-wimsplit                  Prevent splitting sources/install.wim file in Windows ISOs.
-    --force-hash-check             Fail and exit when no valid hash is found. Cannot be used with $(boldify '--no-hash-check').
-    --hash-file <file>             Specify file containing the ISO hash. Other files will not be checked.
-                                   Cannot be used with $(boldify '--no-hash-check')
-    --local-bootloader             Prevent download of remote bootloader and force local (SYSLINUX) during
-                                   installation. Applicable to [install-mount-rsync] action.
-    --remote-bootloader <version>  Force download of remote bootloader at version <version>.
-                                   Version must follow the pattern MAJOR.MINOR. Examples: 4.08, 6.04.
-                                   Applicable to [install-mount-rsync] action.
-    --                             POSIX end of options.
-
-
-$(boldify ENVIRONMENT VARIABLES)
-
-- SYSLINUX_LIB_ROOT : set the root of syslinux assets, defaults to /usr/lib/syslinux
-
-$(boldify INFO)
-
-    Bootiso v$version. Author: Jules Samuel Randolph
-    Bugs and new features: $ticketsurl
-    If you like bootiso, feel free to help the community by making it visible:
-    * star the project at https://github.com/jsamr/bootiso
-    * upvote those SE post: https://goo.gl/BNRmvm
-                            https://goo.gl/YDBvFe"
-
-display_help() {
-	echo -e "$help_message"
+displayHelp() {
+  typeset termwidth=$(tput cols)
+  echo -e "$helpIntro" | fmt -g "$termwidth" -w "$termwidth"
+  echo -e "$helpSynopsis"
+  echo -e "$helpHint" | fmt -g "$termwidth" -w "$termwidth"
+  echo -e "\n$(boldify 'ACTIONS')"
+  echo -e "$actionFlagsTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "\n$(boldify 'MODIFIERS')"
+	echo -e "$modifierFlagsTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
 }
 
 indent() {
@@ -1824,7 +1793,7 @@ printISOBootCapabilities() {
 			echoinfo "However, SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the minor part of local version ($localSyslinuxVersion), which should not cause any problems."
 		else
 			echowarn "SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the major part of local version ($localSyslinuxVersion)." \
-				"$scriptName will try to download and execute this version from kernel.org, unless given the option $(boldify '--local-bootloader')$yellowColor." \
+				"$scriptName will try to download and execute this version from kernel.org, unless given the modifier $(boldify '--local-bootloader')$yellowColor." \
 				"If that fails, it will attempt installation with the local version of SYSLINUX."
 		fi
 	fi
@@ -1904,16 +1873,16 @@ main() {
 		inspectISO
 	fi
 	case "$action" in
-		'install-auto') execAuto "$@" ;;
-		'install-dd') execWithDD "$@" ;;
-		'install-mount-rsync') execWithRsync "$@" ;;
-		'format') execFormat "$@" ;;
-		'inspect') printISOBootCapabilities ;;
-		'probe') execProbe "$@" ;;
-		'list-usb-drives') listDevicesTable ;;
-		'version') echo "$version" ;;
-		'help') display_help ;;
-		*) failAndExit "Unexpected action [$action].\\n$openTicketMessage" ;;
+	'install-auto') execAuto "$@" ;;
+	'install-dd') execWithDD "$@" ;;
+	'install-mount-rsync') execWithRsync "$@" ;;
+	'format') execFormat "$@" ;;
+	'inspect') printISOBootCapabilities ;;
+	'probe') execProbe "$@" ;;
+	'list-usb-drives') listDevicesTable ;;
+	'version') echo "$version" ;;
+	'help') displayHelp ;;
+	*) failAndExit "Unexpected action [$action].\\n$openTicketMessage" ;;
 	esac
 	if [ "$hasActionDuration" == 'true' ]; then
 		stopTimerAndPrintLapsed

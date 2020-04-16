@@ -1,3 +1,8 @@
+# v4.0.0
+
+- Add linux manual `man` pages
+- Rewrite of `--help` action with text wrapping and columns for better readability
+
 # v3.3.1
 
 **Bugfixes**

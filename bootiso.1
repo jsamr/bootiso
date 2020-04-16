@@ -1,0 +1,507 @@
+.\" The following commands are required for all man pages. 
+.Dd April 19, 2020
+.Dt BOOTISO 1
+.Os bootiso 4.0.0-alpha.0
+.Sh NAME 
+.Nm bootiso 
+.Nd create a bootable USB drive from an ISO image
+.
+.
+.Sh SYNOPSIS 
+.\" Install action
+.Nm bootiso
+.Op Cm --dd | --mrsync
+.Op Fl aHJMy
+.Op Fl d Ar DEVICE
+.Op Fl L Ar PARTLABEL
+.Op Fl t Ar FSTYPE
+.Op Cm --force-hash-check
+.Op Cm --hash-file Ar HASHFILE
+.Op Cm --local-bootloader | Cm --remote-bootloader Ar VERSION
+.Op Cm --no-wimsplit
+.Op Cm --no-size-check
+.Op Cm --no-usb-check
+.Op Cm --
+.Ar ISOFILE
+.
+.\" Format action
+.Nm bootiso
+.Fl f
+.Op Fl ay
+.Op Fl d Ar DEVICE
+.Op Fl L Ar PARTLABEL
+.Op Fl t Ar FSTYPE
+.Op Cm --no-usb-check
+.
+.\" Inspect or probe action
+.Nm bootiso
+.Fl p | i
+.Op Fl H | Cm --hash-file Ar FILE
+.Op Cm --
+.Ar ISOFILE
+.
+.\" Self-contained actions
+.Nm bootiso
+.Fl l | h | v
+.
+.
+.Sh DESCRIPTION
+.Nm
+is a command-line utility aimed at simplifying the task of 
+.Dq burning
+a USB storage device with a bootable disk image.
+The program is interactive, so you can safely call it with no options. Read
+.Sx EXAMPLES
+section for a quick summary of typical invocations.
+.Ss Features
+One can use 
+.Xr dd 1
+utility for hybrid images, but not all images are
+hybrid and the operation is error-prone, especially for amateur unix users. In addition to
+offering a safety layer (see
+.Sx GUARDRAILS
+section),
+.Nm
+will handle hybrid and non-hybrid SYSLINUX or UEFI compliant ISOs such
+as any GNU-Linux ISO, Windows ISO or rescue live-cds like UltimateBootCD.
+This program also offers other features, such as quickly format a USB
+drive, inspecting an image file or listing USB-connected drives.
+.Pp
+.Nm
+can be invoked with two types of options: actions and
+modifiers.
+Actions determine the goal of the program execution, and
+modifiers define the specifics to reach that goal.
+At most one action flag can be set. In the absence
+of action flag,
+.Nm
+assumes
+.Sy install
+action in
+.Dq Automatic
+mode: inspect
+.Ar ISOFILE
+boot capabilities and find the best way to make a bootable USB drive
+(see
+.Sx "INSTALL MODES"
+bellow).
+.
+.Ss Actions
+.Bl -tag
+.It Fl h, Cm --help
+.Sy Help
+displays a concise list of options then exits.
+.It Fl i, Cm --inspect
+.Sy Inspect
+.Ar ISOFILE
+boot capabilities and how
+.Nm
+can handle it. In addition, validate this file
+against a hash file if one is found, then exit.
+.It Fl l, Cm --list-usb-drives
+.Sy List USB drives
+then exits. Diverse information will be printed such as model,
+vendor, size, serial number and device file name which can be later
+used with
+.Fl d, Cm --device
+modifier.
+.It Fl p, Cm --probe
+.Sy Probe
+is equivalent to
+.Sy inspect
+followed by 
+.Sy list USB drives
+actions.
+.It Fl v, Cm --version
+.Sy Version
+displays
+.Nm
+version then exits.
+.El
+.Ss Generic Modifiers
+Use generic modifiers knowingly as some might override default safe behaviors.
+.Bl -tag
+.It Fl a, Cm --autoselect
+Enable
+.Dq autoselect
+behavior in combination with 
+.Cm --assume-yes
+modifier.
+Autoselect will automatically select a USB drive device if there is exactly one connected
+to the system.
+.Pp
+.Sy Notice:
+The
+.Dq autoselect
+behavior is the default behavior when
+.Dq assume yes
+is not enabled, unless either
+.Cm --device
+or
+.Cm --no-usb-check
+modifiers are set.
+.It Fl d Ar DEVICE
+Select
+.Ar DEVICE
+block file as the action target.
+When
+.Ar DEVICE
+is not connected through a USB bus,
+.Nm
+will fail and exit, unless
+.Cm --no-usb-check
+is set.
+.Pp
+.Sy Notice:
+Device block files are usually located in 
+.Pa /dev/sXX
+or
+.Pa "/dev/hXX".
+.Pa /dev/
+prefix can be omitted.
+You will be prompted to select a device when not using this modifier.
+.It Cm --force-hash-check
+Fail and exit when no valid hash is found.
+The default behavior is to prompt user when hash check
+fails.
+.It Cm --local-bootloader
+Prevent download of remote bootloader and force local syslinux during installation.
+This might work, but could also lower the chances of successful legacy BIOS boot, especially
+when the major versions mismatch.
+.It Cm --hash-file Ar HASHFILE
+Explicitly set the
+.Ar HASHFILE
+containing the ISO hash. The default behavior is to look for files
+matching those conditions:
+.Bl -enum
+.It
+Located in the same folder as
+.Ar "ISOFILE".
+.It
+Which name is the concatenation of
+.Ar "ISOFILE",
+"." and the hash function name.
+.El
+.Pp
+Supported hash functions are md5, sha1, sha256 and sha512.
+.It Fl J, Cm --no-eject
+Do not eject device after unmounting after install.
+This is the default behavior with
+.Sy format
+action.
+.It Fl M, Cm --no-mime-check
+Don't assert that
+.Ar ISOFILE
+has the right mime-type.
+.It Cm --no-size-check
+Don't assert that selected device size is larger then
+.Ar "ISOFILE".
+.It Cm --no-usb-check
+Don't assert that selected device is connected through USB bus.
+.It Cm --no-wimsplit
+Prevent splitting
+.Pa /sources/install.wim
+file in Windows ISOs.
+.It Cm --remote-bootloader Ar VERSION
+Force download of
+.Xr syslinux
+remote bootloader at version
+.Ar "VERSION".
+Version must follow the pattern MAJOR.MINOR.
+Examples: 4.10, 6.04.
+That will only work with x64 system architecture.
+.It Fl t Ar "FSTYPE", Cm --type Ar FSTYPE
+Format to
+.Ar FSTYPE
+instead of default FAT32 (vfat).
+Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs.
+.Pp
+.Sy Important Notice:
+usage with
+.Sy install
+action is discouraged: it cannot work in
+.Dq Image-Copy
+mode, and it could prevent UEFI boot in
+.Dq Mount-Rsync
+mode since the UEFI standard mandates a FAT32 partition.
+.It Fl L Ar "LABEL", Cm --label LABEL
+Set partition label as
+.Ar LABEL
+instead of inferring.
+.Nm
+will cut labels which
+are too long regarding the selected filesystem limitations.
+.Pp
+.Sy Note:
+It cannot work in
+.Dq Image-Copy
+install mode.
+.It Fl y, Cm --assume-yes
+Don't prompt for confirmation before erasing and partitioning USB
+device.
+.It Cm --
+Posix end of options.
+.Nm
+will not process any option after this flag
+and treat the upcoming item as
+.Ar "ISOFILE".
+.El
+.
+.Ss Install mode modifiers
+These modifiers only apply to default
+.Sy install
+action, and override
+.Dq Automatic
+mode (see
+.Sx "INSTALL MODES"
+bellow).
+.Bl -tag
+.It Cm "--icopy", Cm --dd
+Override
+.Dq Automatic
+mode and install
+.Ar ISOFILE
+in
+.Dq Image-Copy
+mode. 
+.It Cm --mrsync
+Override
+.Dq Automatic
+mode and install
+.Ar ISOFILE
+in
+.Dq Mount-Rsync
+mode.
+.El
+.
+.
+.Sh INSTALL MODES
+.Pp
+.Nm
+has three way of performing the
+.Sy install 
+action.
+.Bl -tag
+.It Em Automatic
+In the default 
+.Dq Automatic
+mode,
+.Nm
+will inspect
+.Ar ISOFILE
+and choose the best strategy to end up with a
+bootable USB stick. These strategies are described in the bellow two modes.
+It is advised no to enforce any strategy and let
+.Nm
+choose.
+Invoke
+.Cm --inspect
+action flag to print identified boot capabilities and the strategy picked up by
+.Nm "."
+.It Em Image-Copy
+In 
+.Dq Image-Copy
+mode enforcable with 
+.Cm --icopy
+install modifier,
+.Nm
+uses
+.Xr dd 1
+utility to make a raw copy of the ISO.
+This is perfectly appropriate when the ISO file is aimed both at disk drives and CDs.
+These are special ISOs which have been generated with 
+.Xr isohybrid 1 .
+A vast majority of GNU-Linux images are shipped with this feature.
+.It Em Mount-Rsync
+In
+.Dq Mount-Rsync
+mode enforcable with
+.Cm --mrsync
+install modifier,
+.Nm
+creates one partition and a MBR table in the USB drive and copy files
+from mounted ISO. The behavior will change depending on the presence of special files to
+identify wether legacy BIOS boot or UEFI boot should be preferred.
+.Nm
+will check conditions to figure out which one to choose:
+.Bl -enum
+.It
+If 
+.Pa /efi/boot/*
+boot files exist, choose UEFI boot and FAT32 filesystem
+mandated by the standard. In which case, if a Windows
+.Pa /sources/install.wim
+file is found, 
+.Xr wimlib-imagex 1
+will be used to circumvent FAT32 filesystem size limitations.
+You can prevent this behavior with 
+.Cm --no-wimsplit
+modifier flag.
+.It
+If  
+.Xr syslinux 1
+configuration files are found, it will install the
+.Xr syslinux
+bootloader to allow legacy BIOS boot.
+When the local version of
+.Xr syslinux
+doesn't match ISO version, it will attempt to download the
+closest version available in
+.UR https://www.kernel.org
+https://www.kernel.org
+.UE
+unless
+.Cm --local-bootloader
+flag is set.
+When invoked with
+.Cm --remote-bootloader Ar VERSION
+modifier,
+.Nm
+will ignore local version check and forces download of the
+kernel.org version at
+.Ar "VERSION".
+.It
+If none of the above conditions are met,
+.Nm
+will fail and exit.
+.El
+.El
+.
+.
+.Sh GUARDRAILS
+.Nm
+performs a set of tests with user safety and confidence in mind:
+.Bl -bullet
+.It
+Checks
+.Ar ISOFILE
+hash sum against a hash file if one found. Supported hash algorithms
+are md5, sha1, sha256 and sha512.
+.It
+Checks 
+.Ar ISOFILE
+mime-type with 
+.Xr file 1
+utility.
+.It
+Asserts selected device is connected through USB preventing system damages and exit
+if it doesn't, with
+.Xr udevadm 1
+utility.
+.It
+Asserts that selected item is not a partition and exit if it doesn't, with
+.Xr lsblk 1 .
+.It
+Asserts that selected image is not larger than selected device.
+.It
+Prompts for confirmation before erasing and paritioning USB device.
+.El
+.
+.
+.Sh ENVIRONMENT
+.Bl -tag
+.It Ev SYSLINUX_LIB_ROOT
+Set syslinux assets root, where MBR program file will be searched. Defaults to
+.Pa /usr/lib/syslinux .
+.El
+.
+.
+.Sh EXAMPLES
+.Bl -tag
+.It Sy Probe
+To have a quick feedback, probe around to check
+.Nm
+capabilities with given
+.Dq file.iso
+and list USB drives candidates:
+.Pp
+.D1 Nm Fl p No file.iso
+.Pp
+Alternatively, you can use
+.Fl i
+action flag to solely inspect
+.Dq file.iso
+or
+.Fl l
+action flag to solely list USB drives.
+.It Sy Install
+With the default
+.Sy install
+action in
+.Dq Automatic
+mode, give 
+.Dq file.iso
+as sole argument and you'll be prompted to select from available USB drives.
+If there is only one USB device connected,
+.Nm
+will automatically select it:
+.Pp
+.D1 Nm No file.iso
+.Pp
+You can also explicitly set the target USB device:
+.Pp
+.D1 Nm Fl d No /dev/sde file.iso
+.Pp
+Avoid being prompted before writting to USB drive and autoselect device when there is
+exactly one connected:
+.Pp
+.D1 Nm Fl ay No file.iso
+.It Sy Format
+Format the USB drive to NTFS and label it 
+.Dq "SONY JOE".
+Be careful with the label name, which size and character set is limited by the
+target filesystem:
+.Pp
+.D1 Nm Fl ft No ntfs Fl L No 'SONY JOE'
+.El
+.Sh DIAGNOSTICS
+.Ex -std
+.
+.
+.Sh COPYRIGHT
+Copyright Jules Sam. Randolph.
+License MIT
+.UR https://opensource.org/licenses/MIT
+\%https://opensource.org/licenses/MIT
+.ER
+.BR
+This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
+.Sh SEE ALSO
+.\" Should be sorted by section and alphabetically
+.Xr dd 1 ,
+.Xr isohybrid 1 ,
+.Xr syslinux 1 ,
+.Xr wimlib-imagex 1
+.
+.
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.Sh AUTHORS
+.An "Jules Sam. Randolph" Aq "jules.sam.randolph@gmail.com"
+.
+.
+.Sh CAVEATS
+.Nm
+logic becomes fuzzy when not in
+.Dq Image-Copy
+mode. It leads to limitations:
+.Bl -bullet
+.It
+.Nm
+cannot handle partition tables mapping more than one partition in
+.Dq Mount-Rsync
+mode.
+.It
+When we refer to 
+.Dq UEFI
+or
+.Dq legacy BIOS
+boot capabilities in this manual, the user is expected to confirm that the computer on which to USB-boot has such capabilities.
+.It
+Remote booloader
+.Xr syslinux
+feature only work in x64 systems.
+.El
+.
+.
+.\" .Sh BUGS

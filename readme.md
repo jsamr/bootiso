@@ -15,14 +15,14 @@ You don't have to tweak anything: `bootiso` inspects the ISO file and [chooses t
 
 ### Synopsis
 
-    bootiso [<options>...] <file.iso>
-    bootiso <action> [<options>...] <file.iso>
-    bootiso <action> [<options>...]
+    bootiso [<modifiers>...] <file.iso>
+    bootiso <action> [<modifiers>...] <file.iso>
+    bootiso <action> [<modifiers>...]
 
 The default action `[install-auto]` as per first synopsis is to install an ISO file to a USB device in
 automatic mode. In such mode, bootiso will analyze the ISO file and select the best course of
 actions to maximize the odds your USB stick be proven bootable (see [automatic mode behavior](#auto)).  
-Other [`<options>` and `<actions>` are listed in this bellow section](#flags).
+Other [`<modifiers>` and `<actions>` are listed in this bellow section](#flags).
 
 ### Examples
 
@@ -55,7 +55,7 @@ Quick-`[format]` the USB drive to NTFS and label it 'SAMUEL_SONY':
     bootiso -f -t ntfs -L 'SAMUEL_SONY'
 
 
-Go to the [flags](#flags) section to see the full list of actions and options.
+Go to the [flags](#flags) section to see the full list of actions and modifiers.
 
 ### Quick install
 
@@ -171,20 +171,20 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     </tr>
 </table>
 
-#### Options
+#### Modifiers
 
 <a name="options"/>
 <table>
   <tr>
-    <th>Option<br/>(POSIX&nbsp;short)&nbsp;<br/></th>
-    <th><br/>Option<br/>(GNU,&nbsp;long)<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+    <th>Modifier<br/>(POSIX&nbsp;short)&nbsp;<br/></th>
+    <th><br/>Modifier<br/>(GNU,&nbsp;long)<br/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
     <th>Description</th>
     <th>Applicable actions<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
   </tr>
     <tr>
       <td><code>-d &lt;device&gt;</code></td>
       <td><code>--device &lt;device&gt;</code></td>
-      <td>Select <code>&lt;device&gt;</code> block file as USB device. If <code>&lt;device&gt;</code> is not connected through a USB bus, bootiso will fail and exit. Device block files are usually situated in <code>/dev/sXX</code> or <code>/dev/hXX</code>. You will be prompted to select a device if you don&#39;t use this option. You can omit `/dev/` prefix.</td>
+      <td>Select <code>&lt;device&gt;</code> block file as USB device. If <code>&lt;device&gt;</code> is not connected through a USB bus, bootiso will fail and exit. Device block files are usually located in <code>/dev/sXX</code> or <code>/dev/hXX</code>. You will be prompted to select a device if you don&#39;t use this option. You can omit `/dev/` prefix.</td>
       <td><code>[install-*]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
@@ -196,7 +196,7 @@ Note that **short POSIX flags can be stacked** as of **v2.4.0**, like so: `booti
     <tr>
       <td><code>-a</code></td>
       <td><code>--autoselect</code></td>
-      <td>Enable autoselecting USB devices in combination with <code>-y</code> option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither <code>-d</code> nor <code>--no-usb-check</code> options are given.</td>
+      <td>Enable autoselecting USB devices in combination with <code>-y</code> option. Autoselect will automatically select a USB drive device if there is exactly one connected to the system. Enabled by default when neither <code>-d</code> nor <code>--no-usb-check</code> modifiers are given.</td>
       <td><code>[install-*]</code>,<br/><code>[format]</code></td>
     </tr>
     <tr>
