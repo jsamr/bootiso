@@ -181,12 +181,10 @@ yellowify() {
 typeset openTicketMessage="This is not expected: please open a ticket at $ticketsurl."
 
 typeset actionFlagsTable="
---dd|Install ISOFILE in image-copy mode.
 -f, --format|Format selected USB drive and exit.
 -h, --help|Display this help message and exit.
 -i, --inspect|Inspect ISOFILE boot capabilities.
 -l, --list-usb-drives|List available USB drives and exit.
---mrsync|Install ISOFILE in mount+rsync mode.
 -p, --probe|Equivalent to -i followed by -l actions.
 -v, --version|Display version and exit.
 "
@@ -201,6 +199,11 @@ typeset modifierFlagsTable="
 -t, --type FSTYPE|Format to FSTYPE.
 -L, --label PARTLABEL|Set partition label to PARTLABEL.
 "
+
+typeset installModeModifiersTable="
+--icopy, --dd|Install ISOFILE in \"Image-Copy\" mode.
+--mrsync|Install ISOFILE in \"Mount-Rsync\" mode.
+"
 typeset helpIntro="\
 $scriptName v$version - create a bootable USB drive from an ISO image."
 
@@ -210,7 +213,7 @@ Usage: $(boldify "$scriptName") [$(underline MODIFIER...)] $(underline ISOFILE)
        $(boldify "$scriptName") $(underline ACTION)"
 
 typeset helpHint="
-Invoked with no ACTION flag, $scriptName will default to install-auto action: inspect ISOFILE \
+Invoked with no ACTION flag, $scriptName will default to Install action: inspect ISOFILE \
 boot capabilities and find the best way to make a bootable USB drive. \
 Read $scriptName man page for a detailed description and advanced options."
 
@@ -221,8 +224,10 @@ displayHelp() {
   echo -e "$helpHint" | fmt -g "$termwidth" -w "$termwidth"
   echo -e "\n$(boldify 'ACTIONS')"
   echo -e "$actionFlagsTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
-  echo -e "\n$(boldify 'MODIFIERS')"
+  echo -e "\n$(boldify 'GENERIC MODIFIERS')"
 	echo -e "$modifierFlagsTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "\n$(boldify 'INSTALL MODE MODIFIERS')"
+	echo -e "$installModeModifiersTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
 }
 
 indent() {
@@ -721,7 +726,7 @@ parseArguments() {
 				enableUserFlag 'inspect'
 				shift
 				;;
-			--dd)
+			--dd | --icopy)
 				enableUserFlag 'install-dd'
 				shift
 				;;
