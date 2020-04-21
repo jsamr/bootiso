@@ -19,7 +19,7 @@ if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
 fi
 
 # program constrains definitions
-typeset -ar commandDependencies=('lsblk' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'blockdev' 'grep' 'file' 'awk' 'mlabel' 'syslinux' 'rsync'
+typeset -ar commandDependencies=('lsblk' 'column' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'blockdev' 'grep' 'file' 'awk' 'mlabel' 'syslinux' 'rsync'
 	'partprobe' 'curl' 'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum' 'sha256sum' 'sha512sum' 'cut')
 typeset -Ar commandPackages=(
 	['lsblk']='util-linux'
@@ -28,6 +28,7 @@ typeset -Ar commandPackages=(
 	['blkid']='util-linux'
 	['wipefs']='util-linux'
 	['blockdev']='util-linux'
+  ['column']='util-linux'
 	['grep']='grep'
 	['file']='file'
 	['awk']='gawk'
