@@ -214,7 +214,7 @@ Usage: $(boldify "$scriptName") [$(underline MODIFIER...)] $(underline ISOFILE)
        $(boldify "$scriptName") $(underline ACTION)"
 
 typeset helpHint="
-Invoked with no ACTION flag, $scriptName will default to Install action: inspect ISOFILE \
+Invoked with no ACTION flag, $scriptName will default to install action in automatic mode: inspect ISOFILE \
 boot capabilities and find the best way to make a bootable USB drive. \
 Read $scriptName man page for a detailed description and advanced options."
 
@@ -1472,7 +1472,7 @@ checkUserVars() {
 				"Supported FS types: $(joinBy "," "${supportedFS[*]}")."
 		fi
 		if ! containsElement "$action" "install-mount-rsync" "format"; then
-			failAndExit "Cannot set partition type with action [$action]." \
+			failAndExit "Cannot set partition type with action $(boldify "$action")." \
 				"$(boldify '-t, --type')$redColor is compatible with [format] and [install-mount-rsync] only."
 		fi
 		if ! command -v "mkfs.$partType" &>/dev/null; then
@@ -1523,10 +1523,10 @@ checkFlagMatrix() {
 			#shellcheck disable=SC2086
 			if ! containsElement "$action" ${userVarsCompatibilityMatrix[$key]}; then
 				if [ "$key" == "iso-file" ]; then
-					failAndExit "[$action] doesn't require any arguments."
+					failAndExit "$(boldify $action) doesn't require any arguments."
 				else
-					failAndExit "[$action] doesn't support $(boldify --$key)$redColor." \
-						"See https://github.com/jsamr/bootiso#options"
+					failAndExit "$(boldify "$action") action doesn't support $(boldify --$key)$redColor modifier." \
+						"Read the manual page synopsis: $(boldify "man $scriptName")"
 				fi
 			fi
 		fi
@@ -1535,8 +1535,8 @@ checkFlagMatrix() {
 		if [ ! -z "${userFlags[$key]}" ]; then
 			#shellcheck disable=SC2086
 			if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
-				failAndExit "'$action' doesn't support $(boldify --$key)$redColor." \
-					"See https://github.com/jsamr/bootiso#options"
+				failAndExit "$(boldify $action) action doesn't support $(boldify --$key)$redColor modifier." \
+					"Read the manual page synopsis: $(boldify "man $scriptName")"
 			fi
 		fi
 	done
@@ -1629,7 +1629,7 @@ assignInternalVariables() {
 		requiresRoot='true'
 		;;
 	*)
-		failAndExit "Unhandled action '$action'." \
+		failAndExit "Unhandled action $(boldify "$action")." \
 			"$openTicketMessage"
 		;;
 	esac
@@ -1641,7 +1641,7 @@ startTimer() {
 
 stopTimerAndPrintLapsed() {
 	endTime=$(date +%s)
-	echogood "Took $((endTime - startTime)) seconds to perform [$action] action."
+	echogood "Took $((endTime - startTime)) seconds to perform $(boldify "$action") action."
 }
 
 runSecurityAssessments() {
@@ -1888,7 +1888,7 @@ main() {
 	'list-usb-drives') listDevicesTable ;;
 	'version') echo "$version" ;;
 	'help') displayHelp ;;
-	*) failAndExit "Unexpected action [$action].\\n$openTicketMessage" ;;
+	*) failAndExit "Unexpected action $(boldify "$action").\\n$openTicketMessage" ;;
 	esac
 	if [ "$hasActionDuration" == 'true' ]; then
 		stopTimerAndPrintLapsed
