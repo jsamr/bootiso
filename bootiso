@@ -190,7 +190,7 @@ typeset actionFlagsTable="
 "
 
 typeset modifierFlagsTable="
--a, --autoselect|Autoselect USB drive when only one is connected.
+-a, --autoselect|In combination with -y, autoselect USB drive when only one is connected.
 -d, --device DEVICE|Pick DEVICE block file as target USB drive.
 -y, --assume-yes|Don't prompt for confirmation before erasing drive.
 -J, --no-eject|Don't eject drive after unmounting.
