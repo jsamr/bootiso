@@ -1473,7 +1473,7 @@ checkUserVars() {
     fi
     if ! containsElement "$action" "install-mount-rsync" "format"; then
       failAndExit "Cannot set partition type with action $(boldify "$action")." \
-        "$(boldify '-t, --type')$redColor is compatible with [format] and [install-mount-rsync] only."
+        "$(boldify '-t, --type')$redColor is compatible with $(boldify format) and $(boldify install) 'Mount-Rsync' only."
     fi
     if ! command -v "mkfs.$partType" &>/dev/null; then
       failAndExit "Program 'mkfs.$partType' could not be found on your system." \
@@ -1771,25 +1771,25 @@ printISOBootCapabilities() {
       "It cannot result in any successful booting with $scriptName."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == false ]; then
     echogood "The selected ISO is not hybrid, but supports legacy BIOS booting with $syslinux." \
-      "It should boot with $scriptName in [install-auto] and [install-mount-rsync] modes with any PC BIOS."
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with any PC BIOS."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == true ]; then
     echogood "The selected ISO is not hybrid, but supports UEFI boot." \
-      "It will boot with $scriptName in [install-auto] and [install-mount-rsync] modes with modern UEFI-enabled PC BIOS."
+      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with modern UEFI-enabled PC BIOS."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == true ]; then
     echogood "The selected ISO is not hybrid, but supports legacy BIOS booting with $syslinux and UEFI boot." \
-      "It will boot with $scriptName in [install-auto] and [install-mount-rsync] modes with any PC BIOS."
+      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with any PC BIOS."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
     echowarn "The selected ISO is hybrid, but doesn't support UEFI or SYSLINUX legacy BIOS bootloader." \
-      "It should boot with $scriptName in [install-auto] and [install-dd] modes, but $scriptName is not aware of its booting scheme."
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes, but $scriptName is not aware of its booting scheme."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == false ]; then
     echogood "The selected ISO is hybrid and supports legacy BIOS booting with $syslinux." \
-      "It will boot with $scriptName in [install-auto] and [install-dd] modes with any PC BIOS."
+      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PC BIOS."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == true ]; then
     echogood "The selected ISO is hybrid and supports UEFI boot." \
-      "It will boot with $scriptName in [install-auto] and [install-dd] modes with modern UEFI-enabled PC BIOS."
+      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with modern UEFI-enabled PC BIOS."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == true ]; then
     echogood "The selected ISO is hybrid and supports legacy BIOS booting with $syslinux along with UEFI boot." \
-      "It will boot with $scriptName in [install-auto] and [install-dd] modes with any PC BIOS."
+      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PC BIOS."
   fi
   typeset localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
   if [ "$syslinuxCompatible" == true ] && [ ! -z "${isoInspection['syslinuxVer']}" ] && [ "$isHybrid" == false ]; then
