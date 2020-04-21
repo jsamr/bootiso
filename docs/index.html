@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<!-- This is an automatically generated file.  Do not edit.
+   The following commands are required for all man pages.
+ -->
+<head>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="mandoc.css" type="text/css" media="all"/>
+  <title>BOOTISO(1)</title>
+</head>
+<body>
+<table class="head">
+  <tr>
+    <td class="head-ltitle">BOOTISO(1)</td>
+    <td class="head-vol">General Commands Manual</td>
+    <td class="head-rtitle">BOOTISO(1)</td>
+  </tr>
+</table>
+<div class="manual-text">
+<section class="Sh">
+<h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
+<code class="Nm">bootiso</code> &#x2014;
+<div class="Nd">create a bootable USB drive from an ISO image</div>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td>[<code class="Cm">--dd</code> | <code class="Cm">--mrsync</code>]
+      [<code class="Fl">-aHJMy</code>] [<code class="Fl">-d</code>
+      <var class="Ar">DEVICE</var>] [<code class="Fl">-L</code>
+      <var class="Ar">PARTLABEL</var>] [<code class="Fl">-t</code>
+      <var class="Ar">FSTYPE</var>] [<code class="Cm">--force-hash-check</code>]
+      [<code class="Cm">--hash-file</code> <var class="Ar">HASHFILE</var>]
+      [<code class="Cm">--local-bootloader</code> |
+      <code class="Cm">--remote-bootloader</code> <var class="Ar">VERSION</var>]
+      [<code class="Cm">--no-wimsplit</code>]
+      [<code class="Cm">--no-size-check</code>]
+      [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--</code>]
+      <var class="Ar">ISOFILE</var></td>
+  </tr>
+</table>
+<br/>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td><code class="Fl">-f</code> [<code class="Fl">-ay</code>]
+      [<code class="Fl">-d</code> <var class="Ar">DEVICE</var>]
+      [<code class="Fl">-L</code> <var class="Ar">PARTLABEL</var>]
+      [<code class="Fl">-t</code> <var class="Ar">FSTYPE</var>]
+      [<code class="Cm">--no-usb-check</code>]</td>
+  </tr>
+</table>
+<br/>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td><code class="Fl">-p</code> | <code class="Fl">-i</code>
+      [<code class="Fl">-H</code> | <code class="Cm">--hash-file</code>
+      <var class="Ar">FILE</var>] [<code class="Cm">--</code>]
+      <var class="Ar">ISOFILE</var></td>
+  </tr>
+</table>
+<br/>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td><code class="Fl">-l</code> | <code class="Fl">-h</code> |
+      <code class="Fl">-v</code></td>
+  </tr>
+</table>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+<code class="Nm">bootiso</code> is a command-line utility aimed at simplifying
+  the task of &#x201C;burning&#x201D; a USB storage device with a bootable disk
+  image. The program is interactive, so you can safely call it with no options.
+  Read <a class="Sx" href="#EXAMPLES">EXAMPLES</a> section for a quick summary
+  of typical invocations.
+<section class="Ss">
+<h2 class="Ss" id="Features"><a class="permalink" href="#Features">Features</a></h2>
+One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
+  images are hybrid and the operation is error-prone, especially for amateur
+  unix users. In addition to offering a safety layer (see
+  <a class="Sx" href="#GUARDRAILS">GUARDRAILS</a> section),
+  <code class="Nm">bootiso</code> will handle hybrid and non-hybrid SYSLINUX or
+  UEFI compliant ISOs such as any GNU-Linux ISO, Windows ISO or rescue live-cds
+  like UltimateBootCD. This program also offers other features, such as quickly
+  format a USB drive, inspecting an image file or listing USB-connected drives.
+<p class="Pp"><code class="Nm">bootiso</code> can be invoked with two types of
+    options: actions and modifiers. Actions determine the goal of the program
+    execution, and modifiers define the specifics to reach that goal. At most
+    one action flag can be set. In the absence of action flag,
+    <code class="Nm">bootiso</code> assumes <b class="Sy">install</b> action in
+    &#x201C;Automatic&#x201D; mode: inspect <var class="Ar">ISOFILE</var> boot
+    capabilities and find the best way to make a bootable USB drive (see
+    <a class="Sx" href="#INSTALL_MODES">INSTALL MODES</a> bellow).</p>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Actions"><a class="permalink" href="#Actions">Actions</a></h2>
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#h,"><code class="Fl" id="h,">-h,</code></a>
+    <code class="Cm">--help</code></dt>
+  <dd><b class="Sy">Help</b> displays a concise list of options then exits.</dd>
+  <dt><a class="permalink" href="#i,"><code class="Fl" id="i,">-i,</code></a>
+    <code class="Cm">--inspect</code></dt>
+  <dd><b class="Sy">Inspect</b> <var class="Ar">ISOFILE</var> boot capabilities
+      and how <code class="Nm">bootiso</code> can handle it. In addition,
+      validate this file against a hash file if one is found, then exit.</dd>
+  <dt><a class="permalink" href="#l,"><code class="Fl" id="l,">-l,</code></a>
+    <code class="Cm">--list-usb-drives</code></dt>
+  <dd><b class="Sy">List USB drives</b> then exits. Diverse information will be
+      printed such as model, vendor, size, serial number and device file name
+      which can be later used with <code class="Fl">-d,</code>
+      <code class="Cm">--device</code> modifier.</dd>
+  <dt><a class="permalink" href="#p,"><code class="Fl" id="p,">-p,</code></a>
+    <code class="Cm">--probe</code></dt>
+  <dd><b class="Sy">Probe</b> is equivalent to <b class="Sy">inspect</b>
+      followed by <b class="Sy">list USB drives</b> actions.</dd>
+  <dt><a class="permalink" href="#v,"><code class="Fl" id="v,">-v,</code></a>
+    <code class="Cm">--version</code></dt>
+  <dd><b class="Sy">Version</b> displays <code class="Nm">bootiso</code> version
+      then exits.</dd>
+</dl>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Generic_Modifiers"><a class="permalink" href="#Generic_Modifiers">Generic
+  Modifiers</a></h2>
+Use generic modifiers knowingly as some might override default safe behaviors.
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#a,"><code class="Fl" id="a,">-a,</code></a>
+    <code class="Cm">--autoselect</code></dt>
+  <dd>Enable &#x201C;autoselect&#x201D; behavior in combination with
+      <code class="Cm">--assume-yes</code> modifier. Autoselect will
+      automatically select a USB drive device if there is exactly one connected
+      to the system.
+    <p class="Pp"><b class="Sy">Notice:</b> The &#x201C;autoselect&#x201D;
+        behavior is the default behavior when &#x201C;assume yes&#x201D; is not
+        enabled, unless either <code class="Cm">--device</code> or
+        <code class="Cm">--no-usb-check</code> modifiers are set.</p>
+  </dd>
+  <dt><a class="permalink" href="#d"><code class="Fl" id="d">-d</code></a>
+    <var class="Ar">DEVICE</var></dt>
+  <dd>Select <var class="Ar">DEVICE</var> block file as the action target. When
+      <var class="Ar">DEVICE</var> is not connected through a USB bus,
+      <code class="Nm">bootiso</code> will fail and exit, unless
+      <code class="Cm">--no-usb-check</code> is set.
+    <p class="Pp"><b class="Sy">Notice:</b> Device block files are usually
+        located in <span class="Pa">/dev/sXX</span> or
+        <span class="Pa">/dev/hXX</span>. <span class="Pa">/dev/</span> prefix
+        can be omitted. You will be prompted to select a device when not using
+        this modifier.</p>
+  </dd>
+  <dt><a class="permalink" href="#--force-hash-check"><code class="Cm" id="--force-hash-check">--force-hash-check</code></a></dt>
+  <dd>Fail and exit when no valid hash is found. The default behavior is to
+      prompt user when hash check fails.</dd>
+  <dt><a class="permalink" href="#--local-bootloader"><code class="Cm" id="--local-bootloader">--local-bootloader</code></a></dt>
+  <dd>Prevent download of remote bootloader and force local syslinux during
+      installation. This might work, but could also lower the chances of
+      successful legacy BIOS boot, especially when the major versions
+    mismatch.</dd>
+  <dt><a class="permalink" href="#--hash-file"><code class="Cm" id="--hash-file">--hash-file</code></a>
+    <var class="Ar">HASHFILE</var></dt>
+  <dd>Explicitly set the <var class="Ar">HASHFILE</var> containing the ISO hash.
+      The default behavior is to look for files matching those conditions:
+    <ol class="Bl-enum">
+      <li>Located in the same folder as <var class="Ar">ISOFILE</var>.</li>
+      <li>Which name is the concatenation of <var class="Ar">ISOFILE</var>,
+          &quot;.&quot; and the hash function name.</li>
+    </ol>
+    <p class="Pp">Supported hash functions are md5, sha1, sha256 and sha512.</p>
+  </dd>
+  <dt><a class="permalink" href="#J,"><code class="Fl" id="J,">-J,</code></a>
+    <code class="Cm">--no-eject</code></dt>
+  <dd>Do not eject device after unmounting after install. This is the default
+      behavior with <b class="Sy">format</b> action.</dd>
+  <dt><a class="permalink" href="#M,"><code class="Fl" id="M,">-M,</code></a>
+    <code class="Cm">--no-mime-check</code></dt>
+  <dd>Don't assert that <var class="Ar">ISOFILE</var> has the right
+    mime-type.</dd>
+  <dt><a class="permalink" href="#--no-size-check"><code class="Cm" id="--no-size-check">--no-size-check</code></a></dt>
+  <dd>Don't assert that selected device size is larger then
+      <var class="Ar">ISOFILE</var>.</dd>
+  <dt><a class="permalink" href="#--no-usb-check"><code class="Cm" id="--no-usb-check">--no-usb-check</code></a></dt>
+  <dd>Don't assert that selected device is connected through USB bus.</dd>
+  <dt><a class="permalink" href="#--no-wimsplit"><code class="Cm" id="--no-wimsplit">--no-wimsplit</code></a></dt>
+  <dd>Prevent splitting <span class="Pa">/sources/install.wim</span> file in
+      Windows ISOs.</dd>
+  <dt><a class="permalink" href="#--remote-bootloader"><code class="Cm" id="--remote-bootloader">--remote-bootloader</code></a>
+    <var class="Ar">VERSION</var></dt>
+  <dd>Force download of <a class="Xr">syslinux</a> remote bootloader at version
+      <var class="Ar">VERSION</var>. Version must follow the pattern
+      MAJOR.MINOR. Examples: 4.10, 6.04. That will only work with x64 system
+      architecture.</dd>
+  <dt><a class="permalink" href="#t"><code class="Fl" id="t">-t</code></a>
+    <var class="Ar">FSTYPE</var>, <code class="Cm">--type</code>
+    <var class="Ar">FSTYPE</var></dt>
+  <dd>Format to <var class="Ar">FSTYPE</var> instead of default FAT32 (vfat).
+      Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs.
+    <p class="Pp"><b class="Sy">Important Notice:</b> usage with
+        <b class="Sy">install</b> action is discouraged: it cannot work in
+        &#x201C;Image-Copy&#x201D; mode, and it could prevent UEFI boot in
+        &#x201C;Mount-Rsync&#x201D; mode since the UEFI standard mandates a
+        FAT32 partition.</p>
+  </dd>
+  <dt><a class="permalink" href="#L"><code class="Fl" id="L">-L</code></a>
+    <var class="Ar">LABEL</var>, <code class="Cm">--label LABEL</code></dt>
+  <dd>Set partition label as <var class="Ar">LABEL</var> instead of inferring.
+      <code class="Nm">bootiso</code> will cut labels which are too long
+      regarding the selected filesystem limitations.
+    <p class="Pp"><b class="Sy">Note:</b> It cannot work in
+        &#x201C;Image-Copy&#x201D; install mode.</p>
+  </dd>
+  <dt><a class="permalink" href="#y,"><code class="Fl" id="y,">-y,</code></a>
+    <code class="Cm">--assume-yes</code></dt>
+  <dd>Don't prompt for confirmation before erasing and partitioning USB
+    device.</dd>
+  <dt><a class="permalink" href="#--"><code class="Cm" id="--">--</code></a></dt>
+  <dd>Posix end of options. <code class="Nm">bootiso</code> will not process any
+      option after this flag and treat the upcoming item as
+      <var class="Ar">ISOFILE</var>.</dd>
+</dl>
+</section>
+<section class="Ss">
+<h2 class="Ss" id="Install_mode_modifiers"><a class="permalink" href="#Install_mode_modifiers">Install
+  mode modifiers</a></h2>
+These modifiers only apply to default <b class="Sy">install</b> action, and
+  override &#x201C;Automatic&#x201D; mode (see
+  <a class="Sx" href="#INSTALL_MODES">INSTALL MODES</a> bellow).
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#--icopy"><code class="Cm" id="--icopy">--icopy</code></a>,
+    <code class="Cm">--dd</code></dt>
+  <dd>Override &#x201C;Automatic&#x201D; mode and install
+      <var class="Ar">ISOFILE</var> in &#x201C;Image-Copy&#x201D; mode.</dd>
+  <dt><a class="permalink" href="#--mrsync"><code class="Cm" id="--mrsync">--mrsync</code></a></dt>
+  <dd>Override &#x201C;Automatic&#x201D; mode and install
+      <var class="Ar">ISOFILE</var> in &#x201C;Mount-Rsync&#x201D; mode.</dd>
+</dl>
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="INSTALL_MODES"><a class="permalink" href="#INSTALL_MODES">INSTALL
+  MODES</a></h1>
+<code class="Nm">bootiso</code> has three way of performing the
+  <b class="Sy">install</b> action.
+<dl class="Bl-tag">
+  <dt><i class="Em">Automatic</i></dt>
+  <dd>In the default &#x201C;Automatic&#x201D; mode,
+      <code class="Nm">bootiso</code> will inspect <var class="Ar">ISOFILE</var>
+      and choose the best strategy to end up with a bootable USB stick. These
+      strategies are described in the bellow two modes. It is advised no to
+      enforce any strategy and let <code class="Nm">bootiso</code> choose.
+      Invoke <code class="Cm">--inspect</code> action flag to print identified
+      boot capabilities and the strategy picked up by
+      <code class="Nm">bootiso</code>.</dd>
+  <dt><i class="Em">Image-Copy</i></dt>
+  <dd>In &#x201C;Image-Copy&#x201D; mode enforcable with
+      <code class="Cm">--icopy</code> install modifier,
+      <code class="Nm">bootiso</code> uses <a class="Xr">dd(1)</a> utility to
+      make a raw copy of the ISO. This is perfectly appropriate when the ISO
+      file is aimed both at disk drives and CDs. These are special ISOs which
+      have been generated with <a class="Xr">isohybrid(1)</a>. A vast majority
+      of GNU-Linux images are shipped with this feature.</dd>
+  <dt><i class="Em">Mount-Rsync</i></dt>
+  <dd>In &#x201C;Mount-Rsync&#x201D; mode enforcable with
+      <code class="Cm">--mrsync</code> install modifier,
+      <code class="Nm">bootiso</code> creates one partition and a MBR table in
+      the USB drive and copy files from mounted ISO. The behavior will change
+      depending on the presence of special files to identify wether legacy BIOS
+      boot or UEFI boot should be preferred. <code class="Nm">bootiso</code>
+      will check conditions to figure out which one to choose:
+    <ol class="Bl-enum">
+      <li>If <span class="Pa">/efi/boot/*</span> boot files exist, choose UEFI
+          boot and FAT32 filesystem mandated by the standard. In which case, if
+          a Windows <span class="Pa">/sources/install.wim</span> file is found,
+          <a class="Xr">wimlib-imagex(1)</a> will be used to circumvent FAT32
+          filesystem size limitations. You can prevent this behavior with
+          <code class="Cm">--no-wimsplit</code> modifier flag.</li>
+      <li>If <a class="Xr">syslinux(1)</a> configuration files are found, it
+          will install the <a class="Xr">syslinux</a> bootloader to allow legacy
+          BIOS boot. When the local version of <a class="Xr">syslinux</a>
+          doesn't match ISO version, it will attempt to download the closest
+          version available in https://www.kernel.org unless
+          <code class="Cm">--local-bootloader</code> flag is set. When invoked
+          with <code class="Cm">--remote-bootloader</code>
+          <var class="Ar">VERSION</var> modifier,
+          <code class="Nm">bootiso</code> will ignore local version check and
+          forces download of the kernel.org version at
+          <var class="Ar">VERSION</var>.</li>
+      <li>If none of the above conditions are met,
+          <code class="Nm">bootiso</code> will fail and exit.</li>
+    </ol>
+  </dd>
+</dl>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="GUARDRAILS"><a class="permalink" href="#GUARDRAILS">GUARDRAILS</a></h1>
+<code class="Nm">bootiso</code> performs a set of tests with user safety and
+  confidence in mind:
+<ul class="Bl-bullet">
+  <li>Checks <var class="Ar">ISOFILE</var> hash sum against a hash file if one
+      found. Supported hash algorithms are md5, sha1, sha256 and sha512.</li>
+  <li>Checks <var class="Ar">ISOFILE</var> mime-type with
+      <a class="Xr">file(1)</a> utility.</li>
+  <li>Asserts selected device is connected through USB preventing system damages
+      and exit if it doesn't, with <a class="Xr">udevadm(1)</a> utility.</li>
+  <li>Asserts that selected item is not a partition and exit if it doesn't, with
+      <a class="Xr">lsblk(1)</a>.</li>
+  <li>Asserts that selected image is not larger than selected device.</li>
+  <li>Prompts for confirmation before erasing and paritioning USB device.</li>
+</ul>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#SYSLINUX_LIB_ROOT"><code class="Ev" id="SYSLINUX_LIB_ROOT">SYSLINUX_LIB_ROOT</code></a></dt>
+  <dd>Set syslinux assets root, where MBR program file will be searched.
+      Defaults to <span class="Pa">/usr/lib/syslinux</span>.</dd>
+</dl>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+<dl class="Bl-tag">
+  <dt><b class="Sy">Probe</b></dt>
+  <dd>To have a quick feedback, probe around to check
+      <code class="Nm">bootiso</code> capabilities with given
+      &#x201C;file.iso&#x201D; and list USB drives candidates:
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Fl">-p</code> <span class="No">file.iso</span></div>
+    <p class="Pp">Alternatively, you can use <code class="Fl">-i</code> action
+        flag to solely inspect &#x201C;file.iso&#x201D; or
+        <code class="Fl">-l</code> action flag to solely list USB drives.</p>
+  </dd>
+  <dt><b class="Sy">Install</b></dt>
+  <dd>With the default <b class="Sy">install</b> action in
+      &#x201C;Automatic&#x201D; mode, give &#x201C;file.iso&#x201D; as sole
+      argument and you'll be prompted to select from available USB drives. If
+      there is only one USB device connected, <code class="Nm">bootiso</code>
+      will automatically select it:
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <span class="No">file.iso</span></div>
+    <p class="Pp">You can also explicitly set the target USB device:</p>
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Fl">-d</code> <span class="No">/dev/sde file.iso</span></div>
+    <p class="Pp">Avoid being prompted before writting to USB drive and
+        autoselect device when there is exactly one connected:</p>
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Fl">-ay</code> <span class="No">file.iso</span></div>
+  </dd>
+  <dt><b class="Sy">Format</b></dt>
+  <dd>Format the USB drive to NTFS and label it &#x201C;SONY JOE&#x201D;. Be
+      careful with the label name, which size and character set is limited by
+      the target filesystem:
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Fl">-ft</code> <span class="No">ntfs</span>
+      <code class="Fl">-L</code> <span class="No">'SONY JOE'</span></div>
+  </dd>
+</dl>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="DIAGNOSTICS"><a class="permalink" href="#DIAGNOSTICS">DIAGNOSTICS</a></h1>
+The <code class="Nm">bootiso</code> utility exits&#x00A0;0 on success,
+  and&#x00A0;&gt;0 if an error occurs.
+</section>
+<section class="Sh">
+<h1 class="Sh" id="COPYRIGHT"><a class="permalink" href="#COPYRIGHT">COPYRIGHT</a></h1>
+Copyright Jules Sam. Randolph. License MIT https://opensource.org/licenses/MIT
+  This is free software: you are free to change and redistribute it. There is NO
+  WARRANTY, to the extent permitted by law.
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+  ALSO</a></h1>
+<a class="Xr">dd(1)</a>, <a class="Xr">isohybrid(1)</a>,
+  <a class="Xr">syslinux(1)</a>, <a class="Xr">wimlib-imagex(1)</a>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
+<span class="An">Jules Sam. Randolph</span>
+  &#x27E8;jules.sam.randolph@gmail.com&#x27E9;
+</section>
+<section class="Sh">
+<h1 class="Sh" id="CAVEATS"><a class="permalink" href="#CAVEATS">CAVEATS</a></h1>
+<code class="Nm">bootiso</code> logic becomes fuzzy when not in
+  &#x201C;Image-Copy&#x201D; mode. It leads to limitations:
+<ul class="Bl-bullet">
+  <li><code class="Nm">bootiso</code> cannot handle partition tables mapping
+      more than one partition in &#x201C;Mount-Rsync&#x201D; mode.</li>
+  <li>When we refer to &#x201C;UEFI&#x201D; or &#x201C;legacy BIOS&#x201D; boot
+      capabilities in this manual, the user is expected to confirm that the
+      computer on which to USB-boot has such capabilities.</li>
+  <li>Remote booloader <a class="Xr">syslinux</a> feature only work in x64
+      systems.</li>
+</ul>
+</section>
+</div>
+<table class="foot">
+  <tr>
+    <td class="foot-date">April 19, 2020</td>
+    <td class="foot-os">bootiso 4.0.0-alpha.0</td>
+  </tr>
+</table>
+</body>
+</html>
