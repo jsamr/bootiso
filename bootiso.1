@@ -474,7 +474,28 @@ This is free software: you are free to change and redistribute it.  There is NO 
 .Xr wimlib-imagex 1
 .
 .
-.\" .Sh STANDARDS
+.Sh COMPATIBILITY
+.Nm
+should work with any terminal emulator and the linux console. More specifically, the output device should
+support the following features:
+.Bl -bullet
+.It
+ASCII character set.
+.It
+ECMA-48 SGR sequences to feature color, bold and underline
+text attributes as documented in
+.Xr console_codes "4".
+.El
+.
+.
+.Sh STANDARDS
+.Nm
+is compliant with
+.St "-p1003.1-2008",
+Ch. 12,
+.Dq "Utility Conventions".
+.
+.
 .\" .Sh HISTORY
 .Sh AUTHORS
 .An "Jules Sam. Randolph" Aq "jules.sam.randolph@gmail.com"
