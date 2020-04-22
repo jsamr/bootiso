@@ -49,22 +49,22 @@ typeset -Ar commandPackages=(
 typeset shortOptions='bydJahlMftLp'
 typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
 typeset -Ar userVarsCompatibilityMatrix=(
-  ['iso-file']='install-auto install-mount-rsync install-dd inspect probe'
-  ['device']='install-auto install-mount-rsync install-dd format'
+  ['iso-file']='install-auto install-mount-rsync install-image-copy inspect probe'
+  ['device']='install-auto install-mount-rsync install-image-copy format'
   ['type']='install-mount-rsync format'
   ['label']='install-mount-rsync format'
   ['remote-bootloader']='install-auto install-mount-rsync'
 )
 typeset -Ar userFlagsCompatibilityMatrix=(
   ['local-bootloader']='install-auto install-mount-rsync'
-  ['assume-yes']='install-auto install-mount-rsync install-dd format'
-  ['no-eject']='install-auto install-mount-rsync install-dd format'
-  ['autoselect']='install-auto install-mount-rsync install-dd format'
-  ['no-mime-check']='install-auto install-mount-rsync install-dd'
-  ['no-hash-check']='install-auto install-mount-rsync install-dd probe inspect'
-  ['force-hash-check']='install-auto install-mount-rsync install-dd probe inspect'
-  ['no-usb-check']='install-auto install-mount-rsync install-dd list-usb-drives probe format'
-  ['no-size-check']='install-auto install-mount-rsync install-dd'
+  ['assume-yes']='install-auto install-mount-rsync install-image-copy format'
+  ['no-eject']='install-auto install-mount-rsync install-image-copy format'
+  ['autoselect']='install-auto install-mount-rsync install-image-copy format'
+  ['no-mime-check']='install-auto install-mount-rsync install-image-copy'
+  ['no-hash-check']='install-auto install-mount-rsync install-image-copy probe inspect'
+  ['force-hash-check']='install-auto install-mount-rsync install-image-copy probe inspect'
+  ['no-usb-check']='install-auto install-mount-rsync install-image-copy list-usb-drives probe format'
+  ['no-size-check']='install-auto install-mount-rsync install-image-copy'
 )
 
 # internal variables
@@ -102,7 +102,7 @@ typeset -A userFlags=(
   ['version']=''
   ['list-usb-drives']=''
   ['format']=''
-  ['install-dd']=''
+  ['install-image-copy']=''
   ['install-mr']=''
   ['inspect']=''
   ['probe']=''
@@ -763,7 +763,7 @@ parseArguments() {
         shift
         ;;
       --dd | --icopy)
-        enableUserFlag 'install-dd'
+        enableUserFlag 'install-image-copy'
         shift
         ;;
       --mrsync)
@@ -1478,7 +1478,7 @@ installBootloader() {
 }
 
 checkAction() {
-  typeset -ra actions=('help' 'version' 'format' 'install-dd' 'install-mount-rsync' 'list-usb-drives' 'inspect' 'probe')
+  typeset -ra actions=('help' 'version' 'format' 'install-image-copy' 'install-mount-rsync' 'list-usb-drives' 'inspect' 'probe')
   typeset -a enabledActions=()
   typeset act
   for act in "${actions[@]}"; do
@@ -1915,7 +1915,7 @@ main() {
   fi
   case "$action" in
   'install-auto') execAuto "$@" ;;
-  'install-dd') execWithDD "$@" ;;
+  'install-image-copy') execWithDD "$@" ;;
   'install-mount-rsync') execWithRsync "$@" ;;
   'format') execFormat "$@" ;;
   'inspect') printISOBootCapabilities ;;
