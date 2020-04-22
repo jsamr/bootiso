@@ -2,6 +2,7 @@
 
 - Add linux manual `man` pages
 - Rewrite of `--help` action with text wrapping and columns for better readability
+- Explicit compliance with ECMA-48 SGR sequences
 - Add `--icopy` alias for `--dd`
 
 # v3.3.1
