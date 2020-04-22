@@ -150,7 +150,6 @@ h2.Ss {
 code.Nm,
 .Fl {
   font-family: var(--mono);
-  font-size: 1.0em;
 }
 
 .Bd {
