@@ -103,7 +103,7 @@ typeset -A userFlags=(
   ['list-usb-drives']=''
   ['format']=''
   ['install-image-copy']=''
-  ['install-mr']=''
+  ['install-mount-rsync']=''
   ['inspect']=''
   ['probe']=''
   # Options
