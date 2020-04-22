@@ -1,6 +1,7 @@
 sudo: required
 
 language: bash
+dist: bionic
 
 script:
  - shellcheck -s bash bootiso
