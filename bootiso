@@ -85,6 +85,8 @@ typeset operationSuccess
 typeset expectingISOFile
 typeset foundSyslinuxMbrBinary
 typeset foundSyslinuxBiosFolder
+typeset logPrefix="$scriptName: "
+typeset logPrefixLength="${#logPrefix}"
 typeset -A syslinuxInstall
 typeset -a temporaryAssets=()
 typeset -A isoInspection=(
@@ -148,35 +150,37 @@ typeset shouldMakePartition
 typeset noDeviceEjection
 typeset localBootloader
 
-typeset redColor="\\033[0;31m"
-typeset greenColor="\\033[0;32m"
-typeset yellowColor="\\033[0;33m"
-typeset startUnderline=$(tput smul)
-typeset endUnderline=$(tput rmul)
-typeset startBold=$(tput bold)
-typeset endBold="\e[22m"
+# See console_codes GNU-Linux man page
+typeset setRed="\e[31m"
+typeset setGreen="\e[32m"
+typeset setYellow="\e[33m"
+typeset unsetColor="\e[39m"
+typeset setUnderline="\e[4m"
+typeset unsetUnderline="\e[24m"
+typeset setBold="\e[1m"
+typeset unsetBold="\e[22m"
 
 boldify() {
-  echo -e "$startBold$1$endBold"
+  echo -e "$setBold$1$unsetBold"
 }
 
 underline() {
-  echo -e "$startUnderline$1$endUnderline"
+  echo -e "$setUnderline$1$unsetUnderline"
 }
 
 # $1: The text to colorify.
 redify() {
-  echo -e "$redColor$1\\033[0m"
+  echo -e "$setRed$1$unsetColor"
 }
 
 # $1: The text to colorify.
 greenify() {
-  echo -e "$greenColor$1\\033[0m"
+  echo -e "$setGreen$1$unsetColor"
 }
 
 # $1: The text to colorify.
 yellowify() {
-  echo -e "$yellowColor$1\\033[0m"
+  echo -e "$setYellow$1$unsetColor"
 }
 
 typeset openTicketMessage="This is not expected: please open a ticket at $ticketsurl."
@@ -231,39 +235,70 @@ displayHelp() {
   echo -e "$installModeModifiersTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
 }
 
-indent() {
-  sed -e ':a;N;$!ba;s/\n/\n         /g'
+printColumn() {
+  local prefix=$1
+  local prefixLength=$2
+  local cols
+  local sep='\t'
+  cols="$(tput cols)"
+  shift 2
+  local rawInput="$*"
+  echo -n -e "$prefix$sep$prefixLength$sep$cols$sep$rawInput" | awk -F $sep '
+{
+  prefix = $1
+  prefixlen = $2
+  termwidth = $3
+  len = prefixlen
+  printargfill = sprintf("%s%s%s", "%-", prefixlen, "s")
+  printf printargfill, prefix
+  for(j=4;j<=NF;j++) {
+    n = split($j,x," ")
+    for(i=1;i<=n;i++){
+      if(len+length(x[i])>=termwidth){
+        print ""
+        printf printargfill, " "
+        len = prefixlen
+      }
+      printf "%s ",x[i]
+      len += 1+length(x[i])
+    }
+  }
+  print ""
+}'
 }
 
+printLog() {
+  printColumn "$logPrefix" "$logPrefixLength" "$*"
+}
+
+# shellcheck disable=SC2120
 indentAll() {
-  sed -e 's/^/         /'
+  while read -r line; do
+    printColumn " " "$logPrefixLength" "$line"
+  done <"${1:-/dev/stdin}"
 }
 
-# $1: The message to print.
+# $*: The message to print.
 echoerr() {
-  local IFS=$'\n'
-  redify "$scriptName: $*" | indent >&2
+  redify "$(printLog "$*")"
 }
 
-# $1: The message to print.
+# $*: The message to print.
 echowarn() {
-  local IFS=$'\n'
-  yellowify "$scriptName: $*" | indent
+  yellowify "$(printLog "$*")"
 }
 
-# $1: The message to print.
+# $*: The message to print.
 echogood() {
-  local IFS=$'\n'
-  greenify "$scriptName: $*" | indent
+  greenify "$(printLog "$*")"
 }
 
-# $1: The message to print.
+# $*: The message to print.
 echoinfo() {
-  local IFS=$'\n'
-  echo -e "$scriptName: $*" | indent
+  printLog "$*"
 }
 
-# $1: The message to print.
+# $*: The message to print.
 failAndExit() {
   echoerr "$@" "Exiting..."
   exit 1
@@ -384,7 +419,7 @@ checkSudo() {
 
 failISOCheck() {
   echoerr "Provided file '$selectedIsoFile' doesn't seem to be an ISO file (wrong mime-type: '$mimetype')."
-  echowarn "You can bypass this policy with $(boldify '-M, --no-mime-check')$yellowColor, but it is likely that the operation will fail."
+  echowarn "You can bypass this policy with $(boldify '-M, --no-mime-check'), but the operation will likely fail."
   failAndExit "Exiting..."
 }
 
@@ -603,7 +638,7 @@ configureLabel() {
   partitionLabel=${partitionLabel:-"BOOTISO"}
   if [ -z "${userVars['label']}" ]; then
     echogood "Partition label automatically set to '$partitionLabel'." \
-      "You can explicitly set the label with $(boldify '-L, --label')$greenColor."
+      "You can explicitly set the label with $(boldify '-L, --label')."
   else
     echogood "Partition label manually set to '$partitionLabel'."
   fi
@@ -737,7 +772,7 @@ parseArguments() {
         ;;
       # OPTIONS
       -b | --bootloader)
-        echowarn "$(boldify '-b, --bootloader')$yellowColor has been removed in v3.0.0. Bootloader installation is now automatic."
+        echowarn "$(boldify '-b, --bootloader') has been removed in v3.0.0. Bootloader installation is now automatic."
         shift
         ;;
       --local-bootloader)
@@ -996,7 +1031,7 @@ assertDeviceIsUSB() {
   deviceType=$(getDeviceType "$selectedDevice")
   if [ "$deviceType" != "usb" ]; then
     echoerr "The device you selected is not connected via USB (found BUS: '$deviceType') and the operation was therefore canceled."
-    echowarn "Use $(boldify '--no-usb-check')$yellowColor to bypass this policy at your own risk."
+    echowarn "Use $(boldify '--no-usb-check') to bypass this policy at your own risk."
     echoerr "Exiting..."
     exit 1
   fi
@@ -1012,7 +1047,7 @@ assertISOSize() {
   fi
   if [ "$(blockdev --getsz "$iso")" -gt "$(blockdev --getsz "$device")" ]; then
     echoerr "The image is larger than the selected device '$device' and the operation was therefore canceled."
-    echowarn "Use $(boldify '--no-size-check')$yellowColor to bypass this policy at your own risk."
+    echowarn "Use $(boldify '--no-size-check') to bypass this policy at your own risk."
     echoerr "Exiting..."
     exit 1
   fi
@@ -1024,7 +1059,7 @@ shouldWipeUSBKey() {
   if [ "$disableConfirmation" == 'false' ]; then
     read -r -p "         Are you sure you want to proceed? (y/n)> " answer
   else
-    echowarn "Bypassing confirmation with $(boldify '-y, --assume-yes')$yellowColor."
+    echowarn "Bypassing confirmation with $(boldify '-y, --assume-yes')."
   fi
   if [ "$answer" == 'y' ]; then
     return 0
@@ -1166,7 +1201,7 @@ copyWithRsync() {
         rsyncOptions="--exclude sources/install.wim"
         echogood "Detected a Windows install.wim file, which will be handled by 'wimlib-imagex' utility."
       else
-        echowarn "Detected a Windows install.wim file but wimsplit has been disabled with $(boldify '--no-wim-split')$yellowColor option."
+        echowarn "Detected a Windows install.wim file but wimsplit has been disabled with $(boldify '--no-wim-split') option."
       fi
     fi
     (
@@ -1234,7 +1269,7 @@ installSyslinuxVersion() {
     if [ "$status" != 200 ]; then
       if [ "$status" == 000 ]; then
         failAndExit "You don't seem to have an internet connection." \
-          "Please try again later or use $(boldify '--local-bootloader')$redColor to force usage of the local SYSLINUX version."
+          "Please try again later or use $(boldify '--local-bootloader') to force usage of the local SYSLINUX version."
         return 9
       else
         echowarn "Couldn't GET $rootURL." \
@@ -1473,7 +1508,7 @@ checkUserVars() {
     fi
     if ! containsElement "$action" "install-mount-rsync" "format"; then
       failAndExit "Cannot set partition type with action $(boldify "$action")." \
-        "$(boldify '-t, --type')$redColor is compatible with $(boldify format) and $(boldify install) 'Mount-Rsync' only."
+        "$(boldify '-t, --type') is compatible with $(boldify format) and $(boldify install) 'Mount-Rsync' only."
     fi
     if ! command -v "mkfs.$partType" &>/dev/null; then
       failAndExit "Program 'mkfs.$partType' could not be found on your system." \
@@ -1488,7 +1523,7 @@ checkUserVars() {
     assertDeviceIsOK "${userVars['device']}"
   fi
   if [ ! -z "${userVars['remote-bootloader']}" ] && [[ ! "${userVars['remote-bootloader']}" =~ ^[0-9]+\.[0-9]+$ ]]; then
-    failAndExit "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader')$redColor doesn't follow MAJOR.MINOR pattern." \
+    failAndExit "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader') doesn't follow MAJOR.MINOR pattern." \
       "Valid examples are 4.10, 6.02"
   fi
 }
@@ -1496,22 +1531,22 @@ checkUserVars() {
 checkUserFlags() {
   # Autoselect security
   if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['no-usb-check']}" == 'true' ]; then
-    failAndExit "You cannot set $(boldify '-a, --autoselect')$redColor while disabling USB check with $(boldify '--no-usb-check')$redColor"
+    failAndExit "You cannot set $(boldify '-a, --autoselect') while disabling USB check with $(boldify '--no-usb-check')"
   fi
   if [ "${userFlags['no-hash-check']}" == 'true' ] && [ "${userFlags['force-hash-check']}" == 'true' ]; then
-    failAndExit "You cannot combine $(boldify '--no-hash-check')$redColor and $(boldify '--force-hash-check')$redColor"
+    failAndExit "You cannot combine $(boldify '--no-hash-check')$ and $(boldify '--force-hash-check')$"
   elif [ "${userFlags['no-hash-check']}" == 'true' ] && [ -n "${userVars['hash-file']}" ]; then
-    failAndExit "You cannot combine $(boldify '--no-hash-check')$redColor and $(boldify '--hash-file')$redColor"
+    failAndExit "You cannot combine $(boldify '--no-hash-check')$ and $(boldify '--hash-file')$"
   fi
   # warnings (only with sudo)
   if ((EUID == 0)); then
     # Eject format
     if [ "${userFlags['no-eject']}" == "true" ] && [ "$action" == "format" ]; then
-      echowarn "You don't need to prevent device ejection through $(boldify '-J')$yellowColor flag with 'format'."
+      echowarn "You don't need to prevent device ejection through $(boldify '-J') flag with 'format'."
     fi
     # Warn autoselecting while assume yes is false
     if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['assume-yes']}" == 'false' ]; then
-      echowarn "$(boldify '-a, --autoselect')$yellowColor is enabled by default when $(boldify '-y, --asume-yes')$yellowColor is not set."
+      echowarn "$(boldify '-a, --autoselect') is enabled by default when $(boldify '-y, --asume-yes') is not set."
     fi
   fi
 }
@@ -1525,7 +1560,7 @@ checkFlagMatrix() {
         if [ "$key" == "iso-file" ]; then
           failAndExit "$(boldify $action) doesn't require any arguments."
         else
-          failAndExit "$(boldify "$action") action doesn't support $(boldify --$key)$redColor modifier." \
+          failAndExit "$(boldify "$action") action doesn't support $(boldify --$key) modifier." \
             "Read the manual page synopsis: $(boldify "man $scriptName")"
         fi
       fi
@@ -1535,7 +1570,7 @@ checkFlagMatrix() {
     if [ ! -z "${userFlags[$key]}" ]; then
       #shellcheck disable=SC2086
       if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
-        failAndExit "$(boldify $action) action doesn't support $(boldify --$key)$redColor modifier." \
+        failAndExit "$(boldify $action) action doesn't support $(boldify --$key)$ modifier." \
           "Read the manual page synopsis: $(boldify "man $scriptName")"
       fi
     fi
@@ -1799,7 +1834,7 @@ printISOBootCapabilities() {
       echoinfo "However, SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the minor part of local version ($localSyslinuxVersion), which should not cause any problems."
     else
       echowarn "SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the major part of local version ($localSyslinuxVersion)." \
-        "$scriptName will try to download and execute this version from kernel.org, unless given the modifier $(boldify '--local-bootloader')$yellowColor." \
+        "$scriptName will try to download and execute this version from kernel.org, unless given the modifier $(boldify '--local-bootloader')." \
         "If that fails, it will attempt installation with the local version of SYSLINUX."
     fi
   fi
@@ -1874,7 +1909,7 @@ main() {
     if [ "$disableHashCheck" == 'false' ]; then
       checkISOHash
     else
-      echowarn "Skipping hash check with $(boldify '-H, --no-hash-check')$yellowColor flag"
+      echowarn "Skipping hash check with $(boldify '-H, --no-hash-check') flag"
     fi
     inspectISO
   fi
