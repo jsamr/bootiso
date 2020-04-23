@@ -197,12 +197,12 @@ typeset actionFlagsTable="
 typeset modifierFlagsTable="
 -a, --autoselect|In combination with -y, autoselect USB drive when only one is connected.
 -d, --device DEVICE|Pick DEVICE block file as target USB drive.
--y, --assume-yes|Don't prompt for confirmation before erasing drive.
--J, --no-eject|Don't eject drive after unmounting.
 -H, --no-hash-check|Don't search for hash files and check ISOFILE integrity.
+-J, --no-eject|Don't eject drive after unmounting.
+-L, --label PARTLABEL|Set partition label to PARTLABEL.
 -M, --no-mime-check|Don't check ISOFILE mime-type.
 -t, --type FSTYPE|Format to FSTYPE.
--L, --label PARTLABEL|Set partition label to PARTLABEL.
+-y, --assume-yes|Don't prompt for confirmation before erasing drive.
 "
 
 typeset installModeModifiersTable="
