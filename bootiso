@@ -20,16 +20,20 @@ fi
 
 # program constrains definitions
 typeset -ar commandDependencies=('lsblk' 'column' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'blockdev' 'grep' 'file' 'awk' 'mlabel' 'syslinux' 'rsync'
-  'partprobe' 'curl' 'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum' 'sha256sum' 'sha512sum' 'cut')
+  'partprobe' 'curl' 'cat' 'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum' 'sha256sum' 'sha512sum' 'cut')
 typeset -Ar commandPackages=(
   ['lsblk']='util-linux'
+  ['mount']='util-linux'
+  ['umount']='util-linux'
   ['sfdisk']='util-linux'
   ['mkfs']='util-linux'
   ['blkid']='util-linux'
   ['wipefs']='util-linux'
   ['blockdev']='util-linux'
   ['column']='util-linux'
+  ['blockdev']='util-linux'
   ['grep']='grep'
+  ['sed']=['sed']
   ['file']='file'
   ['awk']='gawk'
   ['mlabel']='mtools'
@@ -40,11 +44,20 @@ typeset -Ar commandPackages=(
   ['tar']='tar'
   ['bc']='bc'
   ['wimlib-imagex']='wimlib'
+  ['find']='findutils'
+  ['find']='findutils'
   ['md5sum']='coreutils'
   ['sha1sum']='coreutils'
   ['sha256sum']='coreutils'
   ['sha512sum']='coreutils'
   ['cut']='coreutils'
+  ['cat']='coreutils'
+  ['mkdir']='coreutils'
+  ['chmod']='coreutils'
+  ['dirname']='coreutils'
+  ['basename']='coreutils'
+  ['date']='coreutils'
+  ['tr']='coreutils'
 )
 typeset shortOptions='bydJahlMftLp'
 typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
