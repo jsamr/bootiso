@@ -141,6 +141,25 @@ typeset -A userVars=(
   ['remote-bootloader']=''
 )
 
+typeset -A exitStatus=(
+  # Exceptions
+  [ASSERTFAIL]=1
+  [SYNOPSISNC]=2
+  [MISBOOTCAP]=3
+  [MISFILE]=4
+  [BADFILE]=5
+  [MISDEV]=6
+  [BADDEV]=7
+  [NODEV]=8
+  [MISDEP]=9
+  [HOSTUNR]=10
+  [USERABORT]=11
+  # Errors
+  [INTERNALIO]=64
+  [INTERNALST]=65
+  [INTERNALTP]=66
+)
+
 # user defined variables
 typeset selectedIsoFile # no default
 typeset hashFile
@@ -313,8 +332,20 @@ echoinfo() {
 
 # $*: The message to print.
 failAndExit() {
-  echoerr "$@" "Exiting..."
-  exit 1
+  local status=$1
+  if ! [[ $status =~ ^[0-9]+$ ]] ; then
+    echoerr "(failAndExit) Internal state error."
+    status="${exitStatus[INTERNALST]}"
+  else
+    shift
+    if [ "$status" -eq "${exitStatus[SYNOPSISNC]}" ]; then
+      [ $# -ne 0 ] && echoerr "$@"
+      echoerr "Check $(boldify 'man 1 bootiso')."
+    else
+      echoerr "$@" "Exiting..."
+    fi
+  fi
+  exit "$status"
 }
 
 compute() {
@@ -339,7 +370,7 @@ configureFolders() {
   elif [ -d "$tempRoot" ]; then
     chmod -R $defaultMode "$tempRoot"
   else
-    failAndExit "Unexpected state: '$tempRoot' is not a folder." \
+    failAndExit "${exitStatus[INTERNALST]}" "(configureFolders) '$tempRoot' is not a folder." \
       "Remove this file and try again."
   fi
   if [ ! -e "$cacheRoot" ]; then
@@ -347,13 +378,13 @@ configureFolders() {
   elif [ -d "$cacheRoot" ]; then
     chmod -R $defaultMode "$cacheRoot"
   else
-    failAndExit "Unexpected state: '$cacheRoot' is not a folder." \
+    failAndExit "${exitStatus[INTERNALST]}" "(configureFolders) '$cacheRoot' is not a folder." \
       "Remove this file and try again."
   fi
   if [ ! -e "$mountRoot" ]; then
     mkdir "$mountRoot"
   elif [ ! -d "$mountRoot" ]; then
-    failAndExit "Unexpected state: '$mountRoot' is not a folder." \
+    failAndExit "${exitStatus[INTERNALST]}" "(configureFolders) '$mountRoot' is not a folder." \
       "Remove this file and try again."
   fi
 }
@@ -433,7 +464,7 @@ checkSudo() {
 failISOCheck() {
   echoerr "Provided file '$selectedIsoFile' doesn't seem to be an ISO file (wrong mime-type: '$mimetype')."
   echowarn "You can bypass this policy with $(boldify '-M, --no-mime-check'), but the operation will likely fail."
-  failAndExit "Exiting..."
+  failAndExit "${exitStatus[BADFILE]}"
 }
 
 assertISOIsOK() {
@@ -444,10 +475,10 @@ assertISOIsOK() {
     exit 2
   fi
   if [ -d "$selectedIsoFile" ]; then
-    failAndExit "Provided file '$selectedIsoFile' is a directory."
+    failAndExit "${exitStatus[BADFILE]}" "Provided file '$selectedIsoFile' is a directory."
   fi
   if [ ! -f "$selectedIsoFile" ]; then
-    failAndExit "Provided iso file '$selectedIsoFile' does not exist."
+    failAndExit "${exitStatus[MISFILE]}" "Provided iso file '$selectedIsoFile' does not exist."
   fi
   if [ "$disableMimeCheck" == 'false' ]; then
     mimetype=$(file --mime-type -b -- "$selectedIsoFile")
@@ -516,7 +547,7 @@ checkISOHash() {
         hashName="sha512sum"
         ;;
       *)
-        failAndExit "Matching line in '$hashPath' has an unexpected hash format."
+        failAndExit "${exitStatus[BADFILE]}" "Matching line in '$hashPath' has an unexpected hash format."
         ;;
       esac
     fi
@@ -524,11 +555,11 @@ checkISOHash() {
     computeHashWithProgress $hashName "$isoName"
     status=$?
     if ((status != 0)); then
-      failAndExit "$hashName command failed with status $status"
+      failAndExit "${exitStatus[INTERNALTP]}" "$hashName command failed with status $status"
     fi
     if [ "$gHash" != "$lHash" ]; then
       if [ "$forceHashCheck" == 'true' ]; then
-        failAndExit "Hash mismatch in '$hashPath' (${hashName%sum})."
+        failAndExit "${exitStatus[ASSERTFAIL]}" "Hash mismatch in '$hashPath' (${hashName%sum})."
       else
         echowarn "Hash mismatch in '$hashPath' (${hashName%sum})."
         typeset answer
@@ -539,7 +570,7 @@ checkISOHash() {
           return
           ;;
         *)
-          failAndExit
+          failAndExit "${exitStatus[USERABORT]}"
           ;;
         esac
         echoinfo "Ignoring mismatching hash."
@@ -559,7 +590,7 @@ checkISOHash() {
     if [ -f "$hashFile" ]; then
       checkHash "$hashFile" "$isoFileName"
     else
-      failAndExit "Specified hash file '$hashFile' does not exist."
+      failAndExit "${exitStatus[MISFILE]}" "Specified hash file '$hashFile' does not exist."
     fi
   else
     shopt -s nullglob nocaseglob
@@ -576,7 +607,7 @@ checkISOHash() {
   fi
 
   if [ "$forceHashCheck" == 'true' ] && [ $numValidHashes == 0 ]; then
-    failAndExit "No matching hashes found. Assert forced by $(boldify '--force-hash-check')"
+    failAndExit "${exitStatus[ASSERTFAIL]}" "No matching hashes found. Assert forced by $(boldify '--force-hash-check')"
   fi
 }
 
@@ -669,21 +700,21 @@ checkpkg() {
       case $answer in
       y | Y)
         if ! $pkgmgr "${commandPackages["$1"]}"; then
-          failAndExit "Installation of dependency '$1' failed." \
+          failAndExit "${exitStatus[MISDEP]}" "Installation of dependency '$1' failed." \
             "Perhaps this dependency has a slightly different name on your distribution." \
             "Find it and install manually."
         else
           if ! hasPackage "$1"; then
-            failAndExit "Program '$1' is not accessible in the \$PATH environment even though the package ${commandPackages["$1"]} has just been installed."
+            failAndExit "${exitStatus[MISDEP]}" "Program '$1' is not accessible in the \$PATH environment even though the package ${commandPackages["$1"]} has just been installed."
           fi
         fi
         ;;
       *)
-        failAndExit "Missing dependency '$1'."
+        failAndExit "${exitStatus[MISDEP]}" "Missing dependency '$1'."
         ;;
       esac
     else
-      failAndExit "Missing dependency '$1'."
+      failAndExit "${exitStatus[MISDEP]}" "Missing dependency '$1'."
     fi
   fi
 }
@@ -732,7 +763,7 @@ listDevicesTable() {
   else
     echowarn "Couldn't find any USB drives on your system." \
       "If one is physically plugged in, it's likely that it has been ejected and should be reconnected." \
-      "You can check the availability of USB drives with '$scriptName -l'."
+      "You can check the availability of USB drives with $(boldify "$scriptName -l")."
     return 1
   fi
 }
@@ -794,7 +825,8 @@ parseArguments() {
         ;;
       --remote-bootloader)
         if (($# < 2)); then
-          failAndExit "Missing value for '$1' flag. Please provide a version following MAJOR.MINOR pattern. ex: '4.10'."
+          failAndExit "${exitStatus[SYNOPSISNC]}" \
+            "Missing value for '$1' flag. Please provide a version following MAJOR.MINOR pattern. ex: '4.10'."
         fi
         setUserVar 'remote-bootloader' "$2"
         shift 2
@@ -805,28 +837,28 @@ parseArguments() {
         ;;
       -d | --device)
         if (($# < 2)); then
-          failAndExit "Missing value for '$1' flag. Please provide a device."
+          failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a device."
         fi
         setUserVar 'device' "$2"
         shift 2
         ;;
       -t | --type)
         if (($# < 2)); then
-          failAndExit "Missing value for '$1' flag. Please provide a filesystem type."
+          failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a filesystem type."
         fi
         setUserVar 'type' "${2,,}" #lowercased
         shift 2
         ;;
       -L | --label)
         if (($# < 2)); then
-          failAndExit "Missing value for '$1' flag. Please provide a label."
+          failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a label."
         fi
         setUserVar 'label' "$2"
         shift 2
         ;;
       --hash-file)
         if (($# < 2)); then
-          failAndExit "Missing value for '$1' flag. Please provide a hash file."
+          failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a hash file."
         fi
         setUserVar 'hash-file' "$2"
         shift 2
@@ -878,21 +910,20 @@ parseArguments() {
             mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
             set -- "${extractedOptions[@]}" "$@"
           elif [[ "$key" =~ ^--[a-zA-Z0-9]{2,}$ ]]; then
-            failAndExit "Unknown option: '$key'"
+            failAndExit "${exitStatus[SYNOPSISNC]}" "Unknown option: $(boldify "$key")."
           else
             printf "\\e[0;31m%s\\e[m" "$scriptName: Unknown option: "
             printf '%s' "$key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
             if [[ "$key" =~ ^-[a-zA-Z0-9]+$ ]]; then
               typeset wrongOptions=$(printf '%s' "${key#*-}" | grep -Po "[^$shortOptions]" | tr -d '\n')
               if [ ${#key} -eq 2 ]; then
-                yellowify "flag: \\033[0;31m'$wrongOptions'\\033[0m."
+                yellowify "$(boldify "$wrongOptions") flag."
               else
-                yellowify "stacked flags: \\033[0;31m'$wrongOptions'\\033[0m."
+                yellowify "$(boldify "$wrongOptions") stacked flags."
               fi
 
             fi
-            echoerr "Exiting..."
-            exit 2
+            failAndExit "${exitStatus[SYNOPSISNC]}"
           fi
         else
           # Happened to be a file.
@@ -919,7 +950,8 @@ checkPackages() {
   done
   # test grep supports -P option
   if ! echo 1 | grep -P '1' &>/dev/null; then
-    failAndExit "You're using an old version of grep which does not support perl regular expression (-P option)."
+    failAndExit "${exitStatus[MISDEP]}" \
+      "You're using an old version of grep which does not support perl regular expression (-P option)."
   fi
 }
 
@@ -935,7 +967,7 @@ createMountFolder() {
   mktemp -d "$tmpFileTemplate"
   typeset status=$?
   if [ ! $status -eq 0 ]; then
-    failAndExit "Failed to create temporary mount point with pattern '$tmpFileTemplate'."
+    failAndExit "${exitStatus[INTERNALIO]}" "Failed to create temporary mount point with pattern '$tmpFileTemplate'."
   fi
 }
 
@@ -944,7 +976,7 @@ createTempFile() {
   mktemp "$tmpFileTemplate"
   typeset status=$?
   if [ ! $status -eq 0 ]; then
-    failAndExit "Failed to create temporary file."
+    failAndExit "${exitStatus[INTERNALIO]}" "Failed to create temporary file."
   fi
 }
 
@@ -953,7 +985,7 @@ mountISOFile() {
   temporaryAssets+=("$isoMountPoint")
   echogood "Created ISO mount point at '$isoMountPoint'."
   if ! mount -r -o loop -- "$selectedIsoFile" "$isoMountPoint" >/dev/null; then
-    failAndExit "Could not mount ISO file."
+    failAndExit "${exitStatus[INTERNALIO]}" "Could not mount ISO file."
   fi
 }
 
@@ -984,7 +1016,7 @@ selectDevice() {
         echoinfo "Exiting on user request."
         exit 0
       else
-        failAndExit "The drive $_selectedDevice does not exist."
+        failAndExit "${exitStatus[MISDEV]}" "The drive $_selectedDevice does not exist."
       fi
     fi
   }
@@ -1007,8 +1039,7 @@ selectDevice() {
     if listDevicesTable; then
       handleDeviceSelection
     else
-      echoerr "Exiting..."
-      exit 1
+      failAndExit "${exitStatus[NODEV]}"
     fi
   fi
   selectedPartition="${selectedDevice}1"
@@ -1029,9 +1060,10 @@ assertDeviceIsOK() {
     failDevice "The selected device '$device' is not a valid block file."
   fi
   if [ ! -d "/sys/block/$(basename "$device")" ] || ! deviceIsDisk "$device"; then
-    failAndExit "The selected device '$device' is either unmounted or not a disk (might be a partition or loop)." \
+    failAndExit "${exitStatus[BADDEV]}" \
+      "The selected device '$device' is either unmounted or not a disk (might be a partition or loop)." \
       "Select a disk instead or reconnect the USB device." \
-      "You can check the availability of USB drives with '$scriptName -l'."
+      "You can check the availability of USB drives with $(boldify "$scriptName -l")."
   fi
 }
 
@@ -1100,7 +1132,8 @@ createMBRPartitionTable() {
   fi
   echogood "Creating MBR partition table with 'sfdisk' v$sfdiskVersion..."
   # Create partition table
-  echo "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "Failed to write USB device partition table."
+  echo "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "${exitStatus[INTERNALIO]}" \
+    "Failed to write USB device partition table."
   partprobe "$selectedDevice" # Refresh partition table
   sync
 }
@@ -1124,7 +1157,8 @@ partitionUSB() {
     mapfile -t devicePartitions < <(grep -oP "^\\K$selectedDevice\\S*" /proc/mounts)
     for partition in "${devicePartitions[@]}"; do
       if ! umount "$partition" >/dev/null; then
-        failAndExit "Failed to unmount $partition. It's likely that the partition is busy."
+        failAndExit "${exitStatus[INTERNALIO]}" \
+          "Failed to unmount $partition. It's likely that the partition is busy."
       fi
     done
   }
@@ -1135,9 +1169,9 @@ partitionUSB() {
     # erase drive
     dd if=/dev/zero of="$selectedDevice" bs=512 count=1 conv=notrunc status=none |&
       indentAll ||
-      failAndExit "Failed to erase USB device." \
+      failAndExit "${exitStatus[INTERNALIO]}" "Failed to erase USB device." \
         "It's likely that the device has been ejected and needs to be reconnected." \
-        "You can check the availability of USB drives with '$scriptName -l'."
+        "You can check the availability of USB drives with $(boldify "$scriptName -l")."
     sync
   }
   formatPartition() {
@@ -1146,8 +1180,7 @@ partitionUSB() {
     # shellcheck disable=SC2086
     mkfs -V -t "$partitionType" ${mkfsOpts[$partitionType]} "$partitionLabel" "$selectedPartition" |&
       indentAll ||
-      failAndExit "Failed to create $partitionType partition on USB device." \
-        "Make sure you have mkfs.$partitionType installed on your system."
+      failAndExit "${exitStatus[INTERNALIO]}" "Failed to create $partitionType partition on USB device."
   }
   if shouldWipeUSBKey; then
     unmountPartitions
@@ -1157,7 +1190,7 @@ partitionUSB() {
       formatPartition
     fi
   else
-    failAndExit "Canceling operation."
+    failAndExit "${exitStatus[USERABORT]}" "Canceling operation."
   fi
 }
 
@@ -1167,7 +1200,7 @@ mountUSB() {
   temporaryAssets+=("$usbMountPoint")
   echoinfo "Created USB device mount point at '$usbMountPoint'"
   if ! mount -t "$type" "$selectedPartition" "$usbMountPoint" >/dev/null; then
-    failAndExit "Could not mount USB device."
+    failAndExit "${exitStatus[INTERNALIO]}" "Could not mount USB device."
   fi
 }
 
@@ -1235,7 +1268,7 @@ copyWithRsync() {
     cleanProgress
     typeset status=$(cat "$statusFile")
     if [ ! "$status" -eq 0 ]; then
-      failAndExit "Copy command with 'rsync' failed."
+      failAndExit "${exitStatus[INTERNALIO]}" "Copy command with 'rsync' failed."
     fi
   }
   checkpkg 'rsync'
@@ -1260,7 +1293,7 @@ copyWithDD() {
     cleanProgress
     typeset status=$(cat "$statusFile")
     if [ ! "$status" -eq 0 ]; then
-      failAndExit "Copy command with 'dd' failed."
+      failAndExit "${exitStatus[INTERNALIO]}" "Copy command with 'dd' failed."
     fi
   }
   ddWithProgress
@@ -1281,7 +1314,7 @@ installSyslinuxVersion() {
     status=$(curl -sLIo /dev/null -w "%{http_code}" "$rootURL")
     if [ "$status" != 200 ]; then
       if [ "$status" == 000 ]; then
-        failAndExit "You don't seem to have an internet connection." \
+        failAndExit "${exitStatus[HOSTUNR]}" "kernel.org is unreachable. You don't seem to have an internet connection." \
           "Please try again later or use $(boldify '--local-bootloader') to force usage of the local SYSLINUX version."
         return 9
       else
@@ -1460,7 +1493,8 @@ installBootloader() {
       echowarn "SYSLINUX could not install C32 BIOS modules."
     sync
     echogood "C32 BIOS modules successfully installed."
-    ${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll || failAndExit "SYSLINUX bootloader could not be installed."
+    ${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll || failAndExit "${exitStatus[INTERNALTP]}" \
+      "SYSLINUX bootloader could not be installed."
     sync
   }
   installWtKernelOrgExtlinux() {
@@ -1475,7 +1509,7 @@ installBootloader() {
   installMasterBootRecordProg() {
     dd bs=440 count=1 conv=notrunc status=none if="${syslinuxInstall['mbrBin']}" of="$selectedDevice" |&
       indentAll ||
-      failAndExit "Failed to install Master Boot Record program."
+      failAndExit "${exitStatus[INTERNALIO]}" "Failed to install Master Boot Record program."
     sync
     echogood "Succesfully installed Master Boot Record program."
   }
@@ -1504,7 +1538,8 @@ checkAction() {
   elif ((${#enabledActions[@]} == 1)); then
     action=${enabledActions[0]}
   else
-    failAndExit "You cannot invoke multiple actions at once: $(joinBy '+' "${enabledActions[@]}")."
+    failAndExit "${exitStatus[SYNOPSISNC]}" \
+      "You cannot invoke multiple actions at once: $(joinBy '+' "${enabledActions[@]}")."
   fi
 }
 
@@ -1516,15 +1551,16 @@ checkUserVars() {
     fi
     typeset partType=${vfat:-${userVars['type']}}
     if ! containsElement "$partType" "${supportedFS[@]}"; then
-      failAndExit "FS type '$partType' not supported." \
+      failAndExit "${exitStatus[SYNOPSISNC]}" "FS type '$partType' not supported." \
         "Supported FS types: $(joinBy "," "${supportedFS[*]}")."
     fi
     if ! containsElement "$action" "install-mount-rsync" "format"; then
-      failAndExit "Cannot set partition type with action $(boldify "$action")." \
+      failAndExit "${exitStatus[SYNOPSISNC]}" "Cannot set partition type with action $(boldify "$action")." \
         "$(boldify '-t, --type') is compatible with $(boldify format) and $(boldify install) 'Mount-Rsync' only."
     fi
     if ! command -v "mkfs.$partType" &>/dev/null; then
-      failAndExit "Program 'mkfs.$partType' could not be found on your system." \
+      failAndExit "${exitStatus[MISDEP]}" \
+        "Program 'mkfs.$partType' could not be found on your system." \
         "Please install it and retry."
     fi
   fi
@@ -1536,7 +1572,8 @@ checkUserVars() {
     assertDeviceIsOK "${userVars['device']}"
   fi
   if [ ! -z "${userVars['remote-bootloader']}" ] && [[ ! "${userVars['remote-bootloader']}" =~ ^[0-9]+\.[0-9]+$ ]]; then
-    failAndExit "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader') doesn't follow MAJOR.MINOR pattern." \
+    failAndExit "${exitStatus[SYNOPSISNC]}" \
+      "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader') doesn't follow MAJOR.MINOR pattern." \
       "Valid examples are 4.10, 6.02"
   fi
 }
@@ -1544,12 +1581,15 @@ checkUserVars() {
 checkUserFlags() {
   # Autoselect security
   if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['no-usb-check']}" == 'true' ]; then
-    failAndExit "You cannot set $(boldify '-a, --autoselect') while disabling USB check with $(boldify '--no-usb-check')"
+    failAndExit "${exitStatus[MISDEP]}" \
+      "You cannot set $(boldify '-a, --autoselect') while disabling USB check with $(boldify '--no-usb-check')"
   fi
   if [ "${userFlags['no-hash-check']}" == 'true' ] && [ "${userFlags['force-hash-check']}" == 'true' ]; then
-    failAndExit "You cannot combine $(boldify '--no-hash-check')$ and $(boldify '--force-hash-check')$"
+    failAndExit "${exitStatus[SYNOPSISNC]}" \
+      "You cannot combine $(boldify '--no-hash-check')$ and $(boldify '--force-hash-check')$"
   elif [ "${userFlags['no-hash-check']}" == 'true' ] && [ -n "${userVars['hash-file']}" ]; then
-    failAndExit "You cannot combine $(boldify '--no-hash-check')$ and $(boldify '--hash-file')$"
+    failAndExit "${exitStatus[SYNOPSISNC]}" \
+      "You cannot combine $(boldify '--no-hash-check')$ and $(boldify '--hash-file')$"
   fi
   # warnings (only with sudo)
   if ((EUID == 0)); then
@@ -1571,10 +1611,11 @@ checkFlagMatrix() {
       #shellcheck disable=SC2086
       if ! containsElement "$action" ${userVarsCompatibilityMatrix[$key]}; then
         if [ "$key" == "iso-file" ]; then
-          failAndExit "$(boldify $action) doesn't require any arguments."
+          failAndExit "${exitStatus[SYNOPSISNC]}" \
+            "$(boldify $action) doesn't require any arguments."
         else
-          failAndExit "$(boldify "$action") action doesn't support $(boldify --$key) modifier." \
-            "Read the manual page synopsis: $(boldify "man $scriptName")"
+          failAndExit "${exitStatus[SYNOPSISNC]}" \
+            "$(boldify "$action") action doesn't support $(boldify --$key) modifier."
         fi
       fi
     fi
@@ -1583,8 +1624,8 @@ checkFlagMatrix() {
     if [ ! -z "${userFlags[$key]}" ]; then
       #shellcheck disable=SC2086
       if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
-        failAndExit "$(boldify $action) action doesn't support $(boldify --$key)$ modifier." \
-          "Read the manual page synopsis: $(boldify "man $scriptName")"
+        failAndExit "${exitStatus[SYNOPSISNC]}" \
+          "$(boldify $action) action doesn't support $(boldify --$key)$ modifier."
       fi
     fi
   done
@@ -1677,8 +1718,7 @@ assignInternalVariables() {
     requiresRoot='true'
     ;;
   *)
-    failAndExit "Unhandled action $(boldify "$action")." \
-      "$openTicketMessage"
+    failAndExit "${exitStatus[INTERNALST]}" "Unhandled action $(boldify "$action")."
     ;;
   esac
 }
@@ -1780,7 +1820,8 @@ inspectISOBootCapabilities() {
     echogood "A SYSLINUX booloader will be installed on your USB."
   fi
   if [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
-    failAndExit "The selected ISO is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
+    failAndExit "${exitStatus[MISBOOTCAP]}" \
+      "The selected ISO is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
       "Therefore, it cannot result in any successful booting with $scriptName." \
       "Consider following the documentation provided with this ISO file."
   fi
@@ -1789,16 +1830,18 @@ inspectISOBootCapabilities() {
 checkSyslinuxInstall() {
   checkpkg 'syslinux'
   if ! command -v extlinux >/dev/null; then
-    failAndExit "Your distribution doesn't ship 'extlinux' with the 'syslinux' package." \
+    failAndExit "${exitStatus[MISDEP]}" \
+      "Your distribution doesn't ship 'extlinux' with the 'syslinux' package." \
       "Please install 'extlinux' and try again."
   fi
   foundSyslinuxBiosFolder=$(find "$syslinuxLibRoot" -type d -path '*/bios' -print -quit)
   foundSyslinuxMbrBinary=$(findFileFromPatterns "$syslinuxLibRoot" 'bios/mbr.bin' 'mbr.bin')
   if [ -z "$foundSyslinuxBiosFolder" ]; then
-    failAndExit "Could not find a SYSLINUX bios folder containing c32 bios module files on this system."
+    failAndExit "${exitStatus[MISDEP]}" \
+      "Could not find a SYSLINUX bios folder containing c32 bios module files on this system."
   fi
   if [ -z "$foundSyslinuxMbrBinary" ]; then
-    failAndExit "Could not find a SYSLINUX MBR binary on this system."
+    failAndExit "${exitStatus[MISDEP]}" "Could not find a SYSLINUX MBR binary on this system."
   fi
 }
 
@@ -1936,7 +1979,7 @@ main() {
   'list-usb-drives') listDevicesTable ;;
   'version') echo "$version" ;;
   'help') displayHelp ;;
-  *) failAndExit "Unexpected action $(boldify "$action").\\n$openTicketMessage" ;;
+  *) failAndExit "${exitStatus[INTERNALST]}" "(main) unexpected action $(boldify "$action")." ;;
   esac
   if [ "$hasActionDuration" == 'true' ]; then
     stopTimerAndPrintLapsed
