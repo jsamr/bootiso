@@ -1,7 +1,12 @@
 ## Dependencies
 
 **bootiso** relies mainly on classic GNU and POSIX command line utilities,
-with the exception of the more rencent **systemd** and **wimlib**. 
+with the exception of the more rencent **systemd** and **wimlib**.
+
+**bootiso** should also have a soft dependency on `mkfs.xxx` creation commands for
+each supported filesystem. User will be invited to install the appropriate utility when the requested FS has no matching creation command.
+However, fo the sake of user comfort, it is recommanded that package maintainers define a hard dependency on **mke2fs**, **dosfstools** and **ntfs-3g**.
+
 
 <table>
   <thead>
