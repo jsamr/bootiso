@@ -4,7 +4,7 @@
 
 **Create a USB bootable device from an ISO image easily and securely.**
 
-Because of its reliance on GNU tools, **bootiso** target platform is GNU/Linux.
+Because of its reliance on GNU tools, **bootiso** target system is GNU/Linux.
 
 ## Install
 
@@ -29,6 +29,7 @@ The official manual is available at [jsamr.github.io/bootiso](https://jsamr.gith
 | [GUARDRAILS](https://jsamr.github.io/bootiso/#GUARDRAILS)   |
 | [ENVIRONMENT](https://jsamr.github.io/bootiso/#ENVIRONMENT) |
 | [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES)       |
+| [DIAGNOSTICS](https://jsamr.github.io/bootiso/#DIAGNOSTICS) |
 
 <a name="action"/>
 
