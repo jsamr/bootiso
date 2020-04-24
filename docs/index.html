@@ -304,9 +304,9 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
   <li>Checks <var class="Ar">ISOFILE</var> mime-type with
       <a class="Xr">file(1)</a> utility.</li>
   <li>Asserts selected device is connected through USB preventing system damages
-      and exit if it doesn't, with <a class="Xr">udevadm(1)</a> utility.</li>
+      and exit if it doesn't, with <a class="Xr">udevadm(8)</a> utility.</li>
   <li>Asserts that selected item is not a partition and exit if it doesn't, with
-      <a class="Xr">lsblk(1)</a>.</li>
+      <a class="Xr">lsblk(8)</a>.</li>
   <li>Asserts that selected image is not larger than selected device.</li>
   <li>Prompts for confirmation before erasing and paritioning USB device.</li>
 </ul>
@@ -365,8 +365,50 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
 </section>
 <section class="Sh">
 <h1 class="Sh" id="DIAGNOSTICS"><a class="permalink" href="#DIAGNOSTICS">DIAGNOSTICS</a></h1>
-The <code class="Nm">bootiso</code> utility exits&#x00A0;0 on success,
-  and&#x00A0;&gt;0 if an error occurs.
+The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
+  Error exit status &lt; 64 depict unfavorable conditions external to the
+  program such as a missing file. On the other hand, exit status superior or
+  equal to 64 depict an execution failure.
+<dl class="Bl-tag">
+  <dt><b class="Sy">0</b></dt>
+  <dd>Success.</dd>
+  <dt><b class="Sy">1</b></dt>
+  <dd>Assertion failed: a safety check has not passed. See
+      <a class="Sx" href="#GUARDRAILS">GUARDRAILS</a>.</dd>
+  <dt><b class="Sy">2</b></dt>
+  <dd>Synopsis noncompliance: program invocation does not match any known
+      combination of options and operands.</dd>
+  <dt><b class="Sy">3</b></dt>
+  <dd>Missing boot capabilities: <var class="Ar">ISOFILE</var> does not have
+      boot capabilities <code class="Nm">bootiso</code> knows of.</dd>
+  <dt><b class="Sy">4</b></dt>
+  <dd>Missing file: a file provided as option argument or operand does not
+      exist.</dd>
+  <dt><b class="Sy">5</b></dt>
+  <dd>Bad file: a file provided as option argument or operand exist, but is not
+      of the expected format.</dd>
+  <dt><b class="Sy">6</b></dt>
+  <dd>Missing device: a device provided as option argument does not exist.</dd>
+  <dt><b class="Sy">7</b></dt>
+  <dd>Bad device: a device provided as option argument exists in filesystem, but
+      is not a device node.</dd>
+  <dt><b class="Sy">8</b></dt>
+  <dd>No device: there are no drives matching criterion.</dd>
+  <dt><b class="Sy">9</b></dt>
+  <dd>Missing dependency: <code class="Nm">bootiso</code> is missing a
+    program.</dd>
+  <dt><b class="Sy">10</b></dt>
+  <dd>Host unreachable: an operation involving network access could not be
+      performed with host.</dd>
+  <dt><b class="Sy">11</b></dt>
+  <dd>User aborted: the action was cancelled by user.</dd>
+  <dt><b class="Sy">64</b></dt>
+  <dd>Internal I/O error.</dd>
+  <dt><b class="Sy">65</b></dt>
+  <dd>Internal state error.</dd>
+  <dt><b class="Sy">66</b></dt>
+  <dd>Internal third party error.</dd>
+</dl>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="COPYRIGHT"><a class="permalink" href="#COPYRIGHT">COPYRIGHT</a></h1>

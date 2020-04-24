@@ -386,11 +386,11 @@ utility.
 .It
 Asserts selected device is connected through USB preventing system damages and exit
 if it doesn't, with
-.Xr udevadm 1
+.Xr udevadm 8
 utility.
 .It
 Asserts that selected item is not a partition and exit if it doesn't, with
-.Xr lsblk 1 .
+.Xr lsblk 8 .
 .It
 Asserts that selected image is not larger than selected device.
 .It
@@ -455,7 +455,51 @@ target filesystem:
 .D1 Nm Fl ft No ntfs Fl L No 'SONY JOE'
 .El
 .Sh DIAGNOSTICS
-.Ex -std
+The
+.Nm
+utility exits 0 on success, >0 on error. Error exit status < 64 depict
+unfavorable conditions external to the program such as a missing file.
+On the other hand, exit status superior or equal to 64 depict an execution failure.
+.
+.Bl -tag
+.It Sy 0
+Success.
+.It Sy 1
+Assertion failed: a safety check has not passed. See
+.Sx "GUARDRAILS".
+.It Sy 2
+Synopsis noncompliance: program invocation does not match any known combination of options and operands.
+.It Sy 3
+Missing boot capabilities:
+.Ar ISOFILE
+does not have boot capabilities
+.Nm
+knows of.
+.It Sy 4
+Missing file: a file provided as option argument or operand does not exist.
+.It Sy 5
+Bad file: a file provided as option argument or operand exist, but is not of the expected format.
+.It Sy 6
+Missing device: a device provided as option argument does not exist.
+.It Sy 7
+Bad device: a device provided as option argument exists in filesystem, but is not a device node.
+.It Sy 8
+No device: there are no drives matching criterion.
+.It Sy 9
+Missing dependency:
+.Nm
+is missing a program.
+.It Sy 10
+Host unreachable: an operation involving network access could not be performed with host.
+.It Sy 11
+User aborted: the action was cancelled by user.
+.It Sy 64
+Internal I/O error.
+.It Sy 65
+Internal state error.
+.It Sy 66
+Internal third party error.
+.El
 .
 .
 .Sh COPYRIGHT
