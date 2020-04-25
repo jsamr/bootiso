@@ -5,6 +5,8 @@
 - Explicit compliance with ECMA-48 SGR sequences
 - Add `--icopy` alias for `--dd`
 - Semantic exit status
+- Support `eopkg` package manager (Solus)
+- Makefile and generic install instructions
 
 # v3.3.1
 
