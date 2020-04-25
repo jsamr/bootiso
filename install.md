@@ -1,3 +1,16 @@
+## Manual install from git
+
+Assuming you have git and sudo:
+
+```bash
+git clone --branch latest https://github.com/jsamr/bootiso.git
+cd bootiso
+sudo make
+```
+
+**bootiso** will warn you for any missing depency and prompt to install.
+Check the section bellow for a full reference.
+
 ## Dependencies
 
 **bootiso** relies mainly on classic GNU and POSIX command line utilities,
@@ -98,6 +111,3 @@ However, fo the sake of user comfort, it is recommanded that package maintainers
     </tr>
   </tbody>
 </table>
-
-
-## Files
