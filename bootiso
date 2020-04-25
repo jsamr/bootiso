@@ -446,6 +446,10 @@ initPckgManager() {
     pkgmgr="xbps-install"
     return 0
   fi
+  if hasPackage eopkg; then # Solus
+    pkgmgr="eopkg install"
+    return 0
+  fi
   return 1
 }
 
