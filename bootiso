@@ -743,7 +743,7 @@ containsElement() {
 initDevicesList() {
   typeset -a devices
   typeset device
-  mapfile -t devices < <(lsblk -o NAME,TYPE | grep --color=never -oP '^\K\w+(?=\s+disk$)')
+  mapfile -t devices < <(lsblk -dno NAME)
   devicesList=()
   for device in "${devices[@]}"; do
     if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
@@ -753,7 +753,8 @@ initDevicesList() {
 }
 
 listDevicesTable() {
-  typeset lsblkCmd='lsblk -o NAME,MODEL,VENDOR,SIZE,TRAN,HOTPLUG,SERIAL'
+  # Run udevadm settle
+  typeset lsblkCmd='lsblk -d -l -o NAME,MODEL,VENDOR,SIZE,TRAN,HOTPLUG'
   initDevicesList
   if [ "$disableUSBCheck" == 'true' ]; then
     echoinfo "Listing drives available in your system:"
@@ -761,8 +762,7 @@ listDevicesTable() {
     echoinfo "Listing USB devices available in your system:"
   fi
   if [ "${#devicesList[@]}" -gt 0 ]; then
-    $lsblkCmd | sed -n 1p | sed 's/^/         /'
-    $lsblkCmd | grep --color=never -P "^($(joinBy '|' "${devicesList[@]}"))" | sed 's/^/         /'
+    $lsblkCmd "${devicesList[@]/#/\/dev\/}" | sed 's/^/         /'
     return 0
   else
     echowarn "Couldn't find any USB drives on your system." \
