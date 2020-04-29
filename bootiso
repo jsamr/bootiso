@@ -154,6 +154,7 @@ typeset -A exitStatus=(
   [MISDEP]=9
   [HOSTUNR]=10
   [USERABORT]=11
+  [MISPRIVILEGE]=12
   # Errors
   [INTERNALIO]=64
   [INTERNALST]=65
@@ -455,11 +456,13 @@ initPckgManager() {
 
 checkSudo() {
   if ((EUID != 0)); then
-    if [[ -t 1 ]]; then
+    if [[ -t 1 ]] && command -v sudo &>/dev/null; then
       sudo --preserve-env "$0" "$@"
-    else
+    elif command -v gksu &>/dev/null; then
       exec 1>output_file
       gksu --preserve-env "$0" "$@"
+    else
+      failAndExit "${exitStatus[MISPRIVILEGE]}" "You must run $scriptName as root."
     fi
     exit
   fi
