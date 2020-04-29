@@ -349,6 +349,10 @@ failAndExit() {
   exit "$status"
 }
 
+syncdev() {
+  sync "$selectedDevice"
+}
+
 compute() {
   answer=$(echo "$@" | bc)
   if ((answer == 0)); then
@@ -1142,7 +1146,7 @@ createMBRPartitionTable() {
   echo "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "${exitStatus[INTERNALIO]}" \
     "Failed to write USB device partition table."
   partprobe "$selectedDevice" # Refresh partition table
-  sync
+  syncdev
 }
 
 # $1: not-bootable, default false. When true, the partition will not be bootable.
@@ -1179,7 +1183,7 @@ partitionUSB() {
       failAndExit "${exitStatus[INTERNALIO]}" "Failed to erase USB device." \
         "It's likely that the device has been ejected and needs to be reconnected." \
         "You can check the availability of USB drives with $(boldify "$scriptName -l")."
-    sync
+    syncdev
   }
   formatPartition() {
     # format
@@ -1238,8 +1242,8 @@ syncWithProgress() {
     done
     cleanProgress
   }
-  sync &
   printProgress
+  syncdev
 }
 
 copyWithRsync() {
@@ -1498,11 +1502,11 @@ installBootloader() {
     rsync --no-links --no-perms --no-owner --no-group -I "$foundSyslinuxBiosFolder"/*.c32 "$syslinuxFolder" |&
       indentAll ||
       echowarn "SYSLINUX could not install C32 BIOS modules."
-    sync
+    syncdev
     echogood "C32 BIOS modules successfully installed."
     ${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll || failAndExit "${exitStatus[INTERNALTP]}" \
       "SYSLINUX bootloader could not be installed."
-    sync
+    syncdev
   }
   installWtKernelOrgExtlinux() {
     echoinfo "Installing SYSLINUX bootloader in '$syslinuxFolder' with kernel.org version '$syslinuxVersion'..."
@@ -1511,13 +1515,13 @@ installBootloader() {
         "Attempting with local SYSLINUX install..."
       installWtLocalExtlinux >/dev/null
     fi
-    sync
+    syncdev
   }
   installMasterBootRecordProg() {
     dd bs=440 count=1 conv=notrunc status=none if="${syslinuxInstall['mbrBin']}" of="$selectedDevice" |&
       indentAll ||
       failAndExit "${exitStatus[INTERNALIO]}" "Failed to install Master Boot Record program."
-    sync
+    syncdev
     echogood "Succesfully installed Master Boot Record program."
   }
   inferSyslinuxVersion
