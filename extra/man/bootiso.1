@@ -9,14 +9,20 @@
 .
 .Sh SYNOPSIS 
 .\" Install action
+Each line depicts an action. When both short and long options exist,
+only the short version is displayed for readability.
+.Pp
 .Nm bootiso
 .Op Cm --dd | --mrsync
-.Op Fl aHJMy
+.Op Fl aJMy
 .Op Fl d Ar DEVICE
 .Op Fl L Ar PARTLABEL
 .Op Fl t Ar FSTYPE
-.Op Cm --force-hash-check
+.Oo
+.Cm --no-hash-check | 
 .Op Cm --hash-file Ar HASHFILE
+.Op Cm --force-hash-check
+.Oc
 .Op Cm --local-bootloader | Cm --remote-bootloader Ar VERSION
 .Op Cm --no-wimsplit
 .Op Cm --no-size-check
@@ -33,16 +39,41 @@
 .Op Fl t Ar FSTYPE
 .Op Cm --no-usb-check
 .
-.\" Inspect or probe action
+.\" Inspect action
 .Nm bootiso
-.Fl p | i
-.Op Fl H | Cm --hash-file Ar FILE
+.Fl i
+.Oo
+.Cm --no-hash-check | 
+.Op Cm --hash-file Ar HASHFILE
+.Op Cm --force-hash-check
+.Oc
 .Op Cm --
 .Ar ISOFILE
 .
-.\" Self-contained actions
+.\" List usb drives action
 .Nm bootiso
-.Fl l | h | v
+.Fl l
+.Op Cm --no-usb-check
+.
+.\" Probe action
+.Nm bootiso
+.Fl p
+.Oo
+.Cm --no-hash-check | 
+.Op Cm --hash-file Ar HASHFILE
+.Op Cm --force-hash-check
+.Oc
+.Op Cm --no-usb-check
+.Op Cm --
+.Ar ISOFILE
+.
+.\" Help action
+.Nm bootiso
+.Fl h
+.
+.\" Version action
+.Nm bootiso
+.Fl v
 .
 .
 .Sh DESCRIPTION
@@ -140,7 +171,7 @@ is not enabled, unless either
 or
 .Cm --no-usb-check
 modifiers are set.
-.It Fl d Ar DEVICE
+.It Fl d Ar DEVICE, Cm --device Ar DEVICE
 Select
 .Ar DEVICE
 block file as the action target.
@@ -164,10 +195,12 @@ You will be prompted to select a device when not using this modifier.
 Fail and exit when no valid hash is found.
 The default behavior is to prompt user when hash check
 fails.
-.It Cm --local-bootloader
-Prevent download of remote bootloader and force local syslinux during installation.
-This might work, but could also lower the chances of successful legacy BIOS boot, especially
-when the major versions mismatch.
+.It Fl H, Cm --no-hash-check
+Skip the lookup for hash sum-files in the same folder as
+.Ar "ISOFILE".
+See
+.Cm --hash-file
+definition for a description of the lookup mechanism.
 .It Cm --hash-file Ar HASHFILE
 Explicitly set the
 .Ar HASHFILE
@@ -180,7 +213,8 @@ Located in the same folder as
 .It
 Which name is the concatenation of
 .Ar "ISOFILE",
-"." and the hash function name.
+"." and the hash function name suffixed with
+.Ql "sum".
 .El
 .Pp
 Supported hash functions are md5, sha1, sha256 and sha512.
@@ -189,6 +223,10 @@ Do not eject device after unmounting after install.
 This is the default behavior with
 .Sy format
 action.
+.It Cm --local-bootloader
+Prevent download of remote bootloader and force local syslinux during installation.
+This might work, but could also lower the chances of successful legacy BIOS boot, especially
+when the major versions mismatch.
 .It Fl M, Cm --no-mime-check
 Don't assert that
 .Ar ISOFILE

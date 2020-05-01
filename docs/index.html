@@ -24,15 +24,20 @@
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
+Each line depicts an action. When both short and long options exist, only the
+  short version is displayed for readability.
+<p class="Pp"></p>
+<br/>
 <table class="Nm">
   <tr>
     <td><code class="Nm">bootiso</code></td>
     <td>[<code class="Cm">--dd</code> | <code class="Cm">--mrsync</code>]
-      [<code class="Fl">-aHJMy</code>] [<code class="Fl">-d</code>
+      [<code class="Fl">-aJMy</code>] [<code class="Fl">-d</code>
       <var class="Ar">DEVICE</var>] [<code class="Fl">-L</code>
       <var class="Ar">PARTLABEL</var>] [<code class="Fl">-t</code>
-      <var class="Ar">FSTYPE</var>] [<code class="Cm">--force-hash-check</code>]
+      <var class="Ar">FSTYPE</var>] [<code class="Cm">--no-hash-check</code> |
       [<code class="Cm">--hash-file</code> <var class="Ar">HASHFILE</var>]
+      [<code class="Cm">--force-hash-check</code>]]
       [<code class="Cm">--local-bootloader</code> |
       <code class="Cm">--remote-bootloader</code> <var class="Ar">VERSION</var>]
       [<code class="Cm">--no-wimsplit</code>]
@@ -56,9 +61,9 @@
 <table class="Nm">
   <tr>
     <td><code class="Nm">bootiso</code></td>
-    <td><code class="Fl">-p</code> | <code class="Fl">-i</code>
-      [<code class="Fl">-H</code> | <code class="Cm">--hash-file</code>
-      <var class="Ar">FILE</var>] [<code class="Cm">--</code>]
+    <td><code class="Fl">-i</code> [<code class="Cm">--no-hash-check</code> |
+      [<code class="Cm">--hash-file</code> <var class="Ar">HASHFILE</var>]
+      [<code class="Cm">--force-hash-check</code>]] [<code class="Cm">--</code>]
       <var class="Ar">ISOFILE</var></td>
   </tr>
 </table>
@@ -66,8 +71,32 @@
 <table class="Nm">
   <tr>
     <td><code class="Nm">bootiso</code></td>
-    <td><code class="Fl">-l</code> | <code class="Fl">-h</code> |
-      <code class="Fl">-v</code></td>
+    <td><code class="Fl">-l</code> [<code class="Cm">--no-usb-check</code>]</td>
+  </tr>
+</table>
+<br/>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td><code class="Fl">-p</code> [<code class="Cm">--no-hash-check</code> |
+      [<code class="Cm">--hash-file</code> <var class="Ar">HASHFILE</var>]
+      [<code class="Cm">--force-hash-check</code>]]
+      [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--</code>]
+      <var class="Ar">ISOFILE</var></td>
+  </tr>
+</table>
+<br/>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td><code class="Fl">-h</code></td>
+  </tr>
+</table>
+<br/>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td><code class="Fl">-v</code></td>
   </tr>
 </table>
 </section>
@@ -141,6 +170,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
         <code class="Cm">--no-usb-check</code> modifiers are set.</p>
   </dd>
   <dt><a class="permalink" href="#d"><code class="Fl" id="d">-d</code></a>
+    <var class="Ar">DEVICE,</var> <code class="Cm">--device</code>
     <var class="Ar">DEVICE</var></dt>
   <dd>Select <var class="Ar">DEVICE</var> block file as the action target. When
       <var class="Ar">DEVICE</var> is not connected through a USB bus,
@@ -155,11 +185,11 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dt><a class="permalink" href="#--force-hash-check"><code class="Cm" id="--force-hash-check">--force-hash-check</code></a></dt>
   <dd>Fail and exit when no valid hash is found. The default behavior is to
       prompt user when hash check fails.</dd>
-  <dt><a class="permalink" href="#--local-bootloader"><code class="Cm" id="--local-bootloader">--local-bootloader</code></a></dt>
-  <dd>Prevent download of remote bootloader and force local syslinux during
-      installation. This might work, but could also lower the chances of
-      successful legacy BIOS boot, especially when the major versions
-    mismatch.</dd>
+  <dt><a class="permalink" href="#H,"><code class="Fl" id="H,">-H,</code></a>
+    <code class="Cm">--no-hash-check</code></dt>
+  <dd>Skip the lookup for hash sum-files in the same folder as
+      <var class="Ar">ISOFILE</var>. See <code class="Cm">--hash-file</code>
+      definition for a description of the lookup mechanism.</dd>
   <dt><a class="permalink" href="#--hash-file"><code class="Cm" id="--hash-file">--hash-file</code></a>
     <var class="Ar">HASHFILE</var></dt>
   <dd>Explicitly set the <var class="Ar">HASHFILE</var> containing the ISO hash.
@@ -167,7 +197,8 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     <ol class="Bl-enum">
       <li>Located in the same folder as <var class="Ar">ISOFILE</var>.</li>
       <li>Which name is the concatenation of <var class="Ar">ISOFILE</var>,
-          &quot;.&quot; and the hash function name.</li>
+          &quot;.&quot; and the hash function name suffixed with
+          &#x2018;<code class="Li">sum</code>&#x2019;.</li>
     </ol>
     <p class="Pp">Supported hash functions are md5, sha1, sha256 and sha512.</p>
   </dd>
@@ -175,6 +206,11 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     <code class="Cm">--no-eject</code></dt>
   <dd>Do not eject device after unmounting after install. This is the default
       behavior with <b class="Sy">format</b> action.</dd>
+  <dt><a class="permalink" href="#--local-bootloader"><code class="Cm" id="--local-bootloader">--local-bootloader</code></a></dt>
+  <dd>Prevent download of remote bootloader and force local syslinux during
+      installation. This might work, but could also lower the chances of
+      successful legacy BIOS boot, especially when the major versions
+    mismatch.</dd>
   <dt><a class="permalink" href="#M,"><code class="Fl" id="M,">-M,</code></a>
     <code class="Cm">--no-mime-check</code></dt>
   <dd>Don't assert that <var class="Ar">ISOFILE</var> has the right
