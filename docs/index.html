@@ -216,7 +216,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dd>Don't assert that <var class="Ar">ISOFILE</var> has the right
     mime-type.</dd>
   <dt><a class="permalink" href="#--no-size-check"><code class="Cm" id="--no-size-check">--no-size-check</code></a></dt>
-  <dd>Don't assert that selected device size is larger then
+  <dd>Don't assert that selected device size is larger than
       <var class="Ar">ISOFILE</var>.</dd>
   <dt><a class="permalink" href="#--no-usb-check"><code class="Cm" id="--no-usb-check">--no-usb-check</code></a></dt>
   <dd>Don't assert that selected device is connected through USB bus.</dd>
@@ -241,7 +241,8 @@ Use generic modifiers knowingly as some might override default safe behaviors.
         FAT32 partition.</p>
   </dd>
   <dt><a class="permalink" href="#L"><code class="Fl" id="L">-L</code></a>
-    <var class="Ar">LABEL</var>, <code class="Cm">--label LABEL</code></dt>
+    <var class="Ar">LABEL</var>, <code class="Cm">--label</code>
+    <var class="Ar">LABEL</var></dt>
   <dd>Set partition label as <var class="Ar">LABEL</var> instead of inferring.
       <code class="Nm">bootiso</code> will cut labels which are too long
       regarding the selected filesystem limitations.
