@@ -8,18 +8,16 @@ cd bootiso
 sudo make
 ```
 
-**bootiso** will warn you for any missing depency and prompt to install.
+**bootiso** will warn you for any missing dependency and prompt to install.
 Check the section bellow for a full reference.
 
 ## Dependencies
 
-**bootiso** relies mainly on classic GNU and POSIX command line utilities,
-with the exception of the more rencent **systemd** and **wimlib**.
+**bootiso** relies mainly on classic GNU and POSIX command line utilities, with the exception of the more rencent **wimlib**.
 
 **bootiso** should also have a soft dependency on `mkfs.xxx` creation commands for
 each supported filesystem. User will be invited to install the appropriate utility when the requested FS has no matching creation command.
-However, fo the sake of user comfort, it is recommanded that package maintainers define a hard dependency on **mke2fs**, **dosfstools** and **ntfs-3g**.
-
+However, fo the sake of user comfort, it is recommanded that package maintainers define a hard dependency on the most useful filesystems in the program context, that is **mke2fs**, **dosfstools** and **ntfs-3g**.
 
 <table>
   <thead>
@@ -44,10 +42,6 @@ However, fo the sake of user comfort, it is recommanded that package maintainers
       <tr>
         <td style="text-align: left;">bash</td>
         <td colspan="3" align="center">bash &ge; 4.0</td>
-      </tr>
-      <tr>
-        <td style="text-align: left;">udevadm</td>
-        <td colspan="3" align="center">systemd</td>
       </tr>
       <td style="text-align: left;">
         md5sum, sha1sum, sha256sum, sha512sum, cut, cat, mkdir, chmod, dirname, basename, date, tr
