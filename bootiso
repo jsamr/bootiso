@@ -1001,11 +1001,10 @@ mountISOFile() {
 }
 
 # $1 : a device block
-# Returns "usb" if device is USB, "ata" for SATA
+# Returns "usb" if device is USB, "ata" for SATA and "other" otherwise
 getDeviceType() {
-  typeset deviceName=/sys/block/${1#/dev/}
-  typeset deviceType=$(udevadm info --query=property --path="$deviceName" | grep -Po 'ID_BUS=\K\w+')
-  echo "$deviceType"
+  typeset deviceType=$(lsblk --nodeps -nlo TRAN "$1")
+  echo "${deviceType:-other}"
 }
 
 deviceIsDisk() {
@@ -1086,7 +1085,7 @@ assertDeviceIsUSB() {
   fi
   deviceType=$(getDeviceType "$selectedDevice")
   if [ "$deviceType" != "usb" ]; then
-    echoerr "The device you selected is not connected via USB (found BUS: '$deviceType') and the operation was therefore canceled."
+    echoerr "The device you selected is not connected via USB (found TRAN: '$deviceType') and the operation was therefore canceled."
     echowarn "Use $(boldify '--no-usb-check') to bypass this policy at your own risk."
     echoerr "Exiting..."
     exit 1
