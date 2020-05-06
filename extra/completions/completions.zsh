@@ -2,23 +2,32 @@
 
 setopt extended_glob
 
-typeset action imagesspec hashpattern imagepattern
-typeset -a filesystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs)
+typeset action imagesspec hashpattern imagepattern hasimage=false expectsimage=false
+typeset -a filesystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs) arguments
 hashpattern="*.(md5sum|sha1sum|sha256sum|sha512sum)"
 imagepattern="*.iso"
+
+function _args_contain_image_file() {
+  for word in "$words[@]"; do
+    eval "case '$word' in; $imagepattern) return 0; esac"
+  done
+  return 1
+}
 
 # $1: pattern, $2: label
 function _find_generic_files() {
   local -a expl currdirfiles dwnldirfiles
   local iso_pattern="$1"
   local downloads="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
-  _description -1V tag expl "$2"
-  currdirfiles=$(find "$PWD" -maxdepth 1 -type f -iname "$iso_pattern")
-  dwnldirfiles=$(find "$downloads" -maxdepth 1 -type f -iname "$iso_pattern")
-  if [[ -z $words[CURRENT] && ${#currdirfiles} -eq 0 && ${#dwnldirfiles} -gt 0 ]]; then
-    _files "$expl[@]" -g "$downloads/$iso_pattern"
-  else
-    _files "$expl[@]" -g "$iso_pattern"
+  if ! _args_contain_image_file; then
+    _description -1V tag expl "$2"
+    currdirfiles=$(find "$PWD" -maxdepth 1 -type f -iname "$iso_pattern")
+    dwnldirfiles=$(find "$downloads" -maxdepth 1 -type f -iname "$iso_pattern")
+    if [[ -z $words[CURRENT] && ${#currdirfiles} -eq 0 && ${#dwnldirfiles} -gt 0 ]]; then
+      _files "$expl[@]" -g "$downloads/$iso_pattern"
+    else
+      _files "$expl[@]" -g "$iso_pattern"
+    fi
   fi
 }
 
@@ -68,32 +77,32 @@ function _find_action() {
       break
       ;;
     *)
-        case "$word" in
-        -[^-]#f[^-]#)
-          res=format
-          break
-          ;;
-        -[^-]#i[^-]#)
-          res=inspect
-          break
-          ;;
-        -[^-]#p[^-]#)
-          res=probe
-          break
-          ;;
-        -[^-]#l[^-]#)
-          res='list-usb-drives'
-          break
-          ;;
-        -[^-]#h[^-]#)
-          res=help
-          break
-          ;;
-        -[^-]#v[^-]#)
-          res=version
-          break
-          ;;
-        esac
+      case "$word" in
+      -[^-]#f[^-]#)
+        res=format
+        break
+        ;;
+      -[^-]#i[^-]#)
+        res=inspect
+        break
+        ;;
+      -[^-]#p[^-]#)
+        res=probe
+        break
+        ;;
+      -[^-]#l[^-]#)
+        res='list-usb-drives'
+        break
+        ;;
+      -[^-]#h[^-]#)
+        res=help
+        break
+        ;;
+      -[^-]#v[^-]#)
+        res=version
+        break
+        ;;
+      esac
       ;;
     esac
   done
@@ -162,28 +171,50 @@ typeset _bootiso_actions=(
   "$_bootiso_version_action[@]"
 )
 
-action=$(_find_action "$words[@]")
 imagesspec="*: :_image_files"
+action=$(_find_action "$words[@]")
 case "$action" in
 format)
-  _arguments -s "$_bootiso_format_action[@]" "$_bootiso_format_opts[@]"
+  arguments+=("$_bootiso_format_action[@]" "$_bootiso_format_opts[@]")
   ;;
 inspect)
-  _arguments -s -S "$_bootiso_inspect_action[@]" "$_bootiso_inspect_opts[@]" "$imagesspec"
+  expectsimage=true
+  arguments+=("$_bootiso_inspect_action[@]" "$_bootiso_inspect_opts[@]")
   ;;
 'list-usb-drives')
-  _arguments "$_bootiso_list_usb_action[@]" "$_bootiso_list_usb_opts[@]"
+  arguments+=("$_bootiso_list_usb_action[@]" "$_bootiso_list_usb_opts[@]")
   ;;
 probe)
-  _arguments -s -S  "$_bootiso_probe_action[@]""$_bootiso_inspect_opts[@]" "$_bootiso_list_usb_opts[@]" "$imagesspec"
+  expectsimage=true
+  arguments+=("$_bootiso_probe_action[@]" "$_bootiso_inspect_opts[@]" "$_bootiso_list_usb_opts[@]" "$imagesspec")
   ;;
 default)
-  _arguments -s -S "$_bootiso_install_opts[@]" \
-    "$_bootiso_format_opts[@]" \
-    "$_bootiso_inspect_opts[@]" \
-    "$_bootiso_list_usb_opts[@]" \
-    "$imagesspec" \
-    "$_bootiso_actions[@]"
+  expectsimage=true
+  arguments+=(
+    # options
+    "$_bootiso_install_opts[@]"
+    "$_bootiso_inspect_opts[@]"
+    # actions
+    "$_bootiso_inspect_action[@]"
+    "$_bootiso_probe_action[@]"
+  )
+  if [[ ! _args_contain_image_file ]]; then
+    arguments+=(
+      # options
+      "$_bootiso_format_opts[@]"
+      "$_bootiso_list_usb_opts[@]"
+      # actions
+      "$_bootiso_format_action[@]"
+      "$_bootiso_list_usb_action[@]"
+      "$_bootiso_help_action[@]"
+      "$_bootiso_version_action[@]"
+    )
+  fi
   ;;
 esac
+if ! _args_contain_image_file && [[ $expectsimage == true ]]; then
+  _arguments -s -S "$arguments[@]" "$imagesspec"
+else
+  _arguments -s "$arguments[@]"
+fi
 return 0
