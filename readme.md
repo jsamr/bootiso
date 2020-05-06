@@ -31,7 +31,7 @@ The official manual is available at [jsamr.github.io/bootiso](https://jsamr.gith
 | [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES)       |
 | [DIAGNOSTICS](https://jsamr.github.io/bootiso/#DIAGNOSTICS) |
 
-<a name="action"/>
+<a name="action"></a>
 
 ## See it in action
 
@@ -59,7 +59,7 @@ In the bellow example, the selected device with `--device` (shorten `-d`) flag i
 <img src="images/bootiso-d-no-usb.png" width="500">
 </a>
 
-<a name="distro-tweaks">
+<a name="distro-tweaks"></a>
 
 ## Distros tweaks
 
