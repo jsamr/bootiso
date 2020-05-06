@@ -49,7 +49,17 @@ __bootiso_clean_flags() {
   two_word_flags=("$(__bootiso_clean_flaggroup_array "${two_word_flags[*]}")")
 }
 
-__check_action_bootiso() {
+__bootiso_expects_image() {
+  for arg in "${COMP_WORDS[@]}"; do
+    if echo "$arg" | grep -P "$imagefileregex" > /dev/null; then
+      echo false
+      return 0
+    fi
+  done
+  echo true
+}
+
+__bootiso_check_action() {
   if [[ $act == default ]]; then
     for arg in "${COMP_WORDS[@]}"; do
       if [[ -n "$arg" ]]; then
@@ -171,7 +181,7 @@ __bootiso_start() {
   )
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD - 1]}"
-  __check_action_bootiso
+  __bootiso_check_action
   if [[ "$prev" != "--" ]]; then
     case "$cur" in
     -- | --*)
@@ -189,7 +199,7 @@ __bootiso_start() {
   fi
   case "$act" in
   default)
-    expectsoperand=true
+    expectsoperand=$(__bootiso_expects_image)
     one_word_flags=("--dd,--icopy" "--mrsync" "-a,--autoselect" "-H,--no-hash-check" "-J,--no-eject" "-M,--no-mime-check" "-y,--asume-yes" "--force-hash-check" "--local-bootloader" "--no-wimsplit" "--no-size-check" "--no-usb-check")
     two_word_flags=("-d,--device" "-L,--label" "-t,--type" "-H,--hash-file" "--remote-bootloader")
     ;;
@@ -199,12 +209,12 @@ __bootiso_start() {
     two_word_flags=("-d,--device" "-L,--label" "-t,--type")
     ;;
   inspect)
-    expectsoperand=true
+    expectsoperand=$(__bootiso_expects_image)
     one_word_flags=("--no-hash-check" "--force-hash-check")
     two_word_flags=("--hash-file")
     ;;
   probe)
-    expectsoperand=true
+    expectsoperand=$(__bootiso_expects_image)
     one_word_flags=("--no-usb-check" "--no-hash-check" "--force-hash-check")
     two_word_flags=("--hash-file")
     ;;
