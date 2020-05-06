@@ -70,11 +70,24 @@ __check_action_bootiso() {
   fi
 }
 
+_bootiso_suggest_files_from_list() {
+  local IFS=$'\n'
+  mapfile -t COMPREPLY < <(compgen -o filenames -W "$*" -- "${cur}")
+}
+
 __bootiso_handle_files() {
+  local downloads="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
+  local -a dwnldirfiles currdirfiles
+  mapfile -t dwnldirfiles < <(find "$downloads" -maxdepth 1 -type f -regextype posix-extended -regex ".*$imagefileregex")
+  mapfile -t currdirfiles < <(find "$PWD" -maxdepth 1 -type f -regextype posix-extended -regex ".*$imagefileregex")
   mapfile -t COMPREPLY < <(compgen -f -- "${cur}" | command grep -E "$1")
-  if [[ ${#COMPREPLY} -eq 0 && ${cur} == '' ]]; then
-    mapfile -t COMPREPLY < <(compgen -A directory -- "${cur}")
-    compopt -o nospace
+  if [[ ${#currdirfiles[@]} -eq 0 && ${cur} == '' ]]; then
+    if [[ ${#dwnldirfiles[@]} -eq 0 ]]; then
+      mapfile -t COMPREPLY < <(compgen -A directory -- "${cur}")
+      compopt -o nospace
+    else
+      _bootiso_suggest_files_from_list "${dwnldirfiles[@]}"
+    fi
   fi
 }
 
@@ -220,4 +233,4 @@ __bootiso_start() {
   fi
 }
 
-complete -o default -F __bootiso_start bootiso
+complete -o default -o filenames -F __bootiso_start bootiso
