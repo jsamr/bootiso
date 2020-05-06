@@ -1,12 +1,23 @@
 # v4.0.0
 
+**Features**
+
 - Add linux manual `man` pages
-- Rewrite of `--help` action with text wrapping and columns for better readability
-- Explicit compliance with ECMA-48 SGR sequences
+- Add `bash` and `zsh` completion scripts with image files completions in current and ~/Downloads folder or `$XDG_DOWNLOAD_DIR`
+
+**Enhancements**
+
 - Add `--icopy` alias for `--dd`
 - Semantic exit status
 - Support `eopkg` package manager (Solus)
-- Makefile and generic install instructions
+- Rewrite of `--help` action with text wrapping and columns for better readability
+- Explicit compliance with ECMA-48 SGR sequences
+- `Makefile` and generic install instructions
+- Don't assume `sudo` or `gksu` are installed when privilege escalation is required
+
+**Bugfixes**
+
+- Fix a `sync` call in background which lead to corrupted image installs, [#48](https://github.com/jsamr/bootiso/issues/48)
 
 # v3.3.1
 
