@@ -100,6 +100,7 @@ typeset foundSyslinuxMbrBinary
 typeset foundSyslinuxBiosFolder
 typeset logPrefix="$scriptName: "
 typeset logPrefixLength="${#logPrefix}"
+typeset logPrefixEmpty="$(printf "%${logPrefixLength}s")"
 typeset -A syslinuxInstall
 typeset -a temporaryAssets=()
 typeset -A isoInspection=(
@@ -574,7 +575,7 @@ checkISOHash() {
       else
         echowarn "Hash mismatch in '$hashPath' (${hashName%sum})."
         typeset answer
-        read -r -n1 -p "Do you still want to continue? (y/n)> " answer
+        read -r -n1 -p "${logPrefixEmpty}Do you still want to continue? (y/n)> " answer
         echo
         case $answer in
         y | Y)
@@ -706,7 +707,7 @@ checkpkg() {
   if ! hasPackage "$1"; then
     echowarn "Command '$1' not found! Should be in package '${commandPackages["$1"]}'."
     if [ ! -z "$pkgmgr" ]; then
-      read -r -n1 -p "Attempt installation? (y/n)> " answer
+      read -r -n1 -p "${logPrefixEmpty}Attempt installation? (y/n)> " answer
       echo
       case $answer in
       y | Y)
@@ -1016,8 +1017,8 @@ selectDevice() {
   typeset _selectedDevice
   chooseDevice() {
     echoinfo "Select the device corresponding to the USB device you want to make bootable: $(joinBy ',' "${devicesList[@]}")" \
-      "Type CTRL+D to quit."
-    read -r -p "Select device id> " _selectedDevice
+      "\n${logPrefixEmpty}Type CTRL+D to quit."
+    read -r -p "${logPrefixEmpty}Select device id> " _selectedDevice
     echo
     if containsElement "$_selectedDevice" "${devicesList[@]}"; then
       selectedDevice="/dev/$_selectedDevice"
@@ -1112,7 +1113,7 @@ shouldWipeUSBKey() {
   typeset answer='y'
   echowarn "About to wipe the content of device '$selectedDevice'."
   if [ "$disableConfirmation" == 'false' ]; then
-    read -r -p "         Are you sure you want to proceed? (y/n)> " answer
+    read -r -p "${logPrefixEmpty}Are you sure you want to proceed? (y/n)> " answer
   else
     echowarn "Bypassing confirmation with $(boldify '-y, --assume-yes')."
   fi
