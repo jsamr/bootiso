@@ -1,15 +1,22 @@
 ## Manual install from git
 
-Assuming you have git and sudo:
+Assuming you have git and root privileges:
 
 ```bash
 git clone --branch latest https://github.com/jsamr/bootiso.git
 cd bootiso
-sudo make
+make install
 ```
 
-**bootiso** will warn you for any missing dependency and prompt to install.
-Check the section bellow for a full reference.
+Check the [dependencies](#deps) section for a list of packages to install.
+The Makefile install target installs bootiso, its man page and shell completions.
+You can uninstall from the same directory as the install step with the following:
+
+```bash
+make uninstall
+```
+
+<a name="deps"></a>
 
 ## Dependencies
 
@@ -17,7 +24,7 @@ Check the section bellow for a full reference.
 
 **bootiso** should also have a soft dependency on `mkfs.xxx` creation commands for
 each supported filesystem. User will be invited to install the appropriate utility when the requested FS has no matching creation command.
-However, fo the sake of user comfort, it is recommanded that package maintainers define a hard dependency on the most useful filesystems in the program context, that is **mke2fs**, **dosfstools** and **ntfs-3g**.
+However, fo the sake of user comfort, it is recommanded that package maintainers define a hard dependency on the most useful filesystems in the program context, that is for Arch Linux **mke2fs**, **dosfstools** and **ntfs-3g**.
 
 <table>
   <thead>
@@ -37,6 +44,16 @@ However, fo the sake of user comfort, it is recommanded that package maintainers
       <td>wimlib</td>
       <td>wimtools</td>
       <td>wimlib</td>
+    </tr>
+    <tr>
+      <td style="text-align: left;">extlinux</td>
+      <td rowspan="2">syslinux</td>
+      <td>extlinux</td>
+      <td rowspan="2">syslinux</td>
+    </tr>
+    <tr>
+      <td style="text-align: left;">syslinux</td>
+      <td>syslinux</td>
     </tr>
     <tr>
       <tr>
@@ -78,10 +95,6 @@ However, fo the sake of user comfort, it is recommanded that package maintainers
     <tr>
       <td style="text-align: left;">mlabel</td>
       <td colspan="3" align="center">mtools</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">syslinux, extlinux</td>
-      <td colspan="3" align="center">syslinux</td>
     </tr>
     <tr>
       <td style="text-align: left;">rsync</td>
