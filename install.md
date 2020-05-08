@@ -20,7 +20,7 @@ make uninstall
 
 ## Dependencies
 
-**bootiso** relies mainly on classic GNU and POSIX command line utilities, with the exception of the more rencent **wimlib**.
+**bootiso** relies mainly on classic GNU and POSIX command line utilities, with the exception of the more rencents **wimlib** and **jq**.
 
 **bootiso** should also have a soft dependency on `mkfs.xxx` creation commands for
 each supported filesystem. User will be invited to install the appropriate utility when the requested FS has no matching creation command.
@@ -75,6 +75,10 @@ However, fo the sake of user comfort, it is recommanded that package maintainers
     <tr>
       <td style="text-align: left;">find, xargs</td>
       <td colspan="3" align="center">findutils</td>
+    </tr>
+    <tr>
+      <td style="text-align: left;">jq</td>
+      <td colspan="3" align="center">jq</td>
     </tr>
     <tr>
       <td style="text-align: left;">sed</td>
