@@ -20,7 +20,7 @@ fi
 
 # program constrains definitions
 typeset -ar commandDependencies=('lsblk' 'column' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'blockdev' 'grep' 'file' 'awk' 'mlabel' 'syslinux' 'rsync'
-  'partprobe' 'curl' 'cat' 'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum' 'sha256sum' 'sha512sum' 'cut')
+  'partprobe' 'curl' 'cat' 'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum' 'sha256sum' 'sha512sum' 'cut' 'jq')
 typeset -Ar commandPackages=(
   ['lsblk']='util-linux'
   ['mount']='util-linux'
@@ -44,6 +44,7 @@ typeset -Ar commandPackages=(
   ['tar']='tar'
   ['bc']='bc'
   ['wimlib-imagex']='wimlib'
+  ['jq']='jq'
   ['find']='findutils'
   ['find']='findutils'
   ['md5sum']='coreutils'
@@ -992,10 +993,27 @@ createTempFile() {
 }
 
 mountISOFile() {
+  local diskReport startSector=0 sectorSize=512
+  diskReport=$(sfdisk -lJ "$selectedIsoFile" 2> /dev/null)
   isoMountPoint=$(createMountFolder iso) || exit "$?"
   temporaryAssets+=("$isoMountPoint")
   echogood "Created ISO mount point at '$isoMountPoint'."
-  if ! mount -r -o loop -- "$selectedIsoFile" "$isoMountPoint" >/dev/null; then
+  # If the image has no partition (iso9660 filesystem), diskReport will be empty
+  # and this step skipped.
+  # Mount the first bootable partition.
+  # In some hybrid ISO or 'img' files, the first partition might not start at sector 0.
+  # So we first check the first bootable partition offset
+  # with a combination of sfdisk and jq.
+  if [[ -n "$diskReport" ]]; then
+    sectorSize=$(echo "$diskReport" | jq '.partitiontable.sectorsize?')
+    startSector=$(echo "$diskReport" | jq '.partitiontable.partitions | map(select(.bootable==true))[0].start | select (.!=null)')
+    if [[ -z "$sectorSize" ]]; then
+      echowarn "Unexpected output from sfdisk utility: ${diskReport}"
+    fi
+  fi
+  startSector=${startSector:-0}
+  sectorSize=${sectorSize:-0}
+  if ! mount -r -o loop,offset=$((sectorSize * startSector)) -- "$selectedIsoFile" "$isoMountPoint" >/dev/null; then
     failAndExit "${exitStatus[INTERNALIO]}" "Could not mount ISO file."
   fi
 }
