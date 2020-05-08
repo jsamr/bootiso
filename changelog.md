@@ -3,7 +3,8 @@
 **Features**
 
 - Add linux manual `man` pages
-- Add `bash` and `zsh` completion scripts with image files completions in current and ~/Downloads folder or `$XDG_DOWNLOAD_DIR`
+- (*experimental*) Add `bash` and `zsh` completion scripts with image files completions in current and ~/Downloads folder or `$XDG_DOWNLOAD_DIR`
+- (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
 
 **Enhancements**
 
