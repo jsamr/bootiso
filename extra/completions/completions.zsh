@@ -5,7 +5,7 @@ setopt extended_glob
 typeset action imagesspec hashpattern imagepattern hasimage=false expectsimage=false
 typeset -a filesystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs) arguments
 hashpattern="*.(md5sum|sha1sum|sha256sum|sha512sum)"
-imagepattern="*.iso"
+imagepattern="*.(iso|img)"
 
 function _args_contain_image_file() {
   for word in "$words[@]"; do

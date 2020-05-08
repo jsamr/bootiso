@@ -162,7 +162,7 @@ __bootiso_start() {
   expectsoperand=false
   filsystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs)
   hashfileregex='\.(md5sum|sha1sum|sha256sum|sha512sum)$'
-  imagefileregex='\.iso$'
+  imagefileregex='\.(iso|img)$'
   short_actions=(
     [-f]=format
     [-p]=probe
