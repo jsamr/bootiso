@@ -15,28 +15,28 @@ only the short version is displayed for readability.
 .Nm bootiso
 .Op Cm --dd | --mrsync
 .Op Fl aJMy
-.Op Fl d Ar DEVICE
-.Op Fl L Ar PARTLABEL
-.Op Fl t Ar FSTYPE
+.Op Fl d Ar device
+.Op Fl L Ar label
+.Op Fl t Ar fstype
 .Oo
 .Cm --no-hash-check | 
-.Op Cm --hash-file Ar HASHFILE
+.Op Cm --hash-file Ar hashfile
 .Op Cm --force-hash-check
 .Oc
-.Op Cm --local-bootloader | Cm --remote-bootloader Ar VERSION
+.Op Cm --local-bootloader | Cm --remote-bootloader Ar version
 .Op Cm --no-wimsplit
 .Op Cm --no-size-check
 .Op Cm --no-usb-check
 .Op Cm --
-.Ar ISOFILE
+.Ar imagefile
 .
 .\" Format action
 .Nm bootiso
 .Fl f
 .Op Fl ay
-.Op Fl d Ar DEVICE
-.Op Fl L Ar PARTLABEL
-.Op Fl t Ar FSTYPE
+.Op Fl d Ar device
+.Op Fl L Ar label
+.Op Fl t Ar fstype
 .Op Cm --no-usb-check
 .
 .\" Inspect action
@@ -44,11 +44,11 @@ only the short version is displayed for readability.
 .Fl i
 .Oo
 .Cm --no-hash-check | 
-.Op Cm --hash-file Ar HASHFILE
+.Op Cm --hash-file Ar hashfile
 .Op Cm --force-hash-check
 .Oc
 .Op Cm --
-.Ar ISOFILE
+.Ar imagefile
 .
 .\" List usb drives action
 .Nm bootiso
@@ -60,12 +60,12 @@ only the short version is displayed for readability.
 .Fl p
 .Oo
 .Cm --no-hash-check | 
-.Op Cm --hash-file Ar HASHFILE
+.Op Cm --hash-file Ar hashfile
 .Op Cm --force-hash-check
 .Oc
 .Op Cm --no-usb-check
 .Op Cm --
-.Ar ISOFILE
+.Ar imagefile
 .
 .\" Help action
 .Nm bootiso
@@ -111,7 +111,7 @@ assumes
 action in
 .Dq Automatic
 mode: inspect
-.Ar ISOFILE
+.Ar imagefile
 boot capabilities and find the best way to make a bootable USB drive
 (see
 .Sx "INSTALL MODES"
@@ -124,7 +124,7 @@ bellow).
 displays a concise list of options then exits.
 .It Fl i, Cm --inspect
 .Sy Inspect
-.Ar ISOFILE
+.Ar imagefile
 boot capabilities and how
 .Nm
 can handle it. In addition, validate this file
@@ -171,12 +171,12 @@ is not enabled, unless either
 or
 .Cm --no-usb-check
 modifiers are set.
-.It Fl d Ar DEVICE, Cm --device Ar DEVICE
+.It Fl d Ar device, Cm --device Ar device
 Select
-.Ar DEVICE
+.Ar device
 block file as the action target.
 When
-.Ar DEVICE
+.Ar device
 is not connected through a USB bus,
 .Nm
 will fail and exit, unless
@@ -197,22 +197,22 @@ The default behavior is to prompt user when hash check
 fails.
 .It Fl H, Cm --no-hash-check
 Skip the lookup for hash sum-files in the same folder as
-.Ar "ISOFILE".
+.Ar "imagefile".
 See
 .Cm --hash-file
 definition for a description of the lookup mechanism.
-.It Cm --hash-file Ar HASHFILE
+.It Cm --hash-file Ar hashfile
 Explicitly set the
-.Ar HASHFILE
+.Ar hashfile
 containing the ISO hash. The default behavior is to look for files
 matching those conditions:
 .Bl -enum
 .It
 Located in the same folder as
-.Ar "ISOFILE".
+.Ar "imagefile".
 .It
 Which name is the concatenation of
-.Ar "ISOFILE",
+.Ar "imagefile",
 "." and the hash function name suffixed with
 .Ql "sum".
 .El
@@ -229,28 +229,28 @@ This might work, but could also lower the chances of successful legacy BIOS boot
 when the major versions mismatch.
 .It Fl M, Cm --no-mime-check
 Don't assert that
-.Ar ISOFILE
+.Ar imagefile
 has the right mime-type.
 .It Cm --no-size-check
 Don't assert that selected device size is larger than
-.Ar "ISOFILE".
+.Ar "imagefile".
 .It Cm --no-usb-check
 Don't assert that selected device is connected through USB bus.
 .It Cm --no-wimsplit
 Prevent splitting
 .Pa /sources/install.wim
 file in Windows ISOs.
-.It Cm --remote-bootloader Ar VERSION
+.It Cm --remote-bootloader Ar version
 Force download of
 .Xr syslinux
 remote bootloader at version
-.Ar "VERSION".
+.Ar "version".
 Version must follow the pattern MAJOR.MINOR.
 Examples: 4.10, 6.04.
 That will only work with x64 system architecture.
-.It Fl t Ar "FSTYPE", Cm --type Ar FSTYPE
+.It Fl t Ar "fstype", Cm --type Ar fstype
 Format to
-.Ar FSTYPE
+.Ar fstype
 instead of default FAT32 (vfat).
 Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs.
 .Pp
@@ -262,9 +262,9 @@ action is discouraged: it cannot work in
 mode, and it could prevent UEFI boot in
 .Dq Mount-Rsync
 mode since the UEFI standard mandates a FAT32 partition.
-.It Fl L Ar "LABEL", Cm --label Ar LABEL
+.It Fl L Ar "label", Cm --label Ar label
 Set partition label as
-.Ar LABEL
+.Ar label
 instead of inferring.
 .Nm
 will cut labels which
@@ -282,7 +282,7 @@ Posix end of options.
 .Nm
 will not process any option after this flag
 and treat the upcoming item as
-.Ar "ISOFILE".
+.Ar "imagefile".
 .El
 .
 .Ss Install mode modifiers
@@ -298,7 +298,7 @@ bellow).
 Override
 .Dq Automatic
 mode and install
-.Ar ISOFILE
+.Ar imagefile
 in
 .Dq Image-Copy
 mode. 
@@ -306,7 +306,7 @@ mode.
 Override
 .Dq Automatic
 mode and install
-.Ar ISOFILE
+.Ar imagefile
 in
 .Dq Mount-Rsync
 mode.
@@ -326,7 +326,7 @@ In the default
 mode,
 .Nm
 will inspect
-.Ar ISOFILE
+.Ar imagefile
 and choose the best strategy to end up with a
 bootable USB stick. These strategies are described in the bellow two modes.
 It is advised no to enforce any strategy and let
@@ -392,12 +392,12 @@ unless
 .Cm --local-bootloader
 flag is set.
 When invoked with
-.Cm --remote-bootloader Ar VERSION
+.Cm --remote-bootloader Ar version
 modifier,
 .Nm
 will ignore local version check and forces download of the
 kernel.org version at
-.Ar "VERSION".
+.Ar "version".
 .It
 If none of the above conditions are met,
 .Nm
@@ -412,12 +412,12 @@ performs a set of tests with user safety and confidence in mind:
 .Bl -bullet
 .It
 Checks
-.Ar ISOFILE
+.Ar imagefile
 hash sum against a hash file if one found. Supported hash algorithms
 are md5, sha1, sha256 and sha512.
 .It
 Checks 
-.Ar ISOFILE
+.Ar imagefile
 mime-type with 
 .Xr file 1
 utility.
@@ -514,7 +514,7 @@ Assertion failed: a safety check has not passed. See
 Synopsis noncompliance: program invocation does not match any known combination of options and operands.
 .It Sy 3
 Missing boot capabilities:
-.Ar ISOFILE
+.Ar imagefile
 does not have boot capabilities
 .Nm
 knows of.

@@ -33,17 +33,17 @@ Each line depicts an action. When both short and long options exist, only the
     <td><code class="Nm">bootiso</code></td>
     <td>[<code class="Cm">--dd</code> | <code class="Cm">--mrsync</code>]
       [<code class="Fl">-aJMy</code>] [<code class="Fl">-d</code>
-      <var class="Ar">DEVICE</var>] [<code class="Fl">-L</code>
-      <var class="Ar">PARTLABEL</var>] [<code class="Fl">-t</code>
-      <var class="Ar">FSTYPE</var>] [<code class="Cm">--no-hash-check</code> |
-      [<code class="Cm">--hash-file</code> <var class="Ar">HASHFILE</var>]
+      <var class="Ar">device</var>] [<code class="Fl">-L</code>
+      <var class="Ar">label</var>] [<code class="Fl">-t</code>
+      <var class="Ar">fstype</var>] [<code class="Cm">--no-hash-check</code> |
+      [<code class="Cm">--hash-file</code> <var class="Ar">hashfile</var>]
       [<code class="Cm">--force-hash-check</code>]]
       [<code class="Cm">--local-bootloader</code> |
-      <code class="Cm">--remote-bootloader</code> <var class="Ar">VERSION</var>]
+      <code class="Cm">--remote-bootloader</code> <var class="Ar">version</var>]
       [<code class="Cm">--no-wimsplit</code>]
       [<code class="Cm">--no-size-check</code>]
       [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--</code>]
-      <var class="Ar">ISOFILE</var></td>
+      <var class="Ar">imagefile</var></td>
   </tr>
 </table>
 <br/>
@@ -51,9 +51,9 @@ Each line depicts an action. When both short and long options exist, only the
   <tr>
     <td><code class="Nm">bootiso</code></td>
     <td><code class="Fl">-f</code> [<code class="Fl">-ay</code>]
-      [<code class="Fl">-d</code> <var class="Ar">DEVICE</var>]
-      [<code class="Fl">-L</code> <var class="Ar">PARTLABEL</var>]
-      [<code class="Fl">-t</code> <var class="Ar">FSTYPE</var>]
+      [<code class="Fl">-d</code> <var class="Ar">device</var>]
+      [<code class="Fl">-L</code> <var class="Ar">label</var>]
+      [<code class="Fl">-t</code> <var class="Ar">fstype</var>]
       [<code class="Cm">--no-usb-check</code>]</td>
   </tr>
 </table>
@@ -62,9 +62,9 @@ Each line depicts an action. When both short and long options exist, only the
   <tr>
     <td><code class="Nm">bootiso</code></td>
     <td><code class="Fl">-i</code> [<code class="Cm">--no-hash-check</code> |
-      [<code class="Cm">--hash-file</code> <var class="Ar">HASHFILE</var>]
+      [<code class="Cm">--hash-file</code> <var class="Ar">hashfile</var>]
       [<code class="Cm">--force-hash-check</code>]] [<code class="Cm">--</code>]
-      <var class="Ar">ISOFILE</var></td>
+      <var class="Ar">imagefile</var></td>
   </tr>
 </table>
 <br/>
@@ -79,10 +79,10 @@ Each line depicts an action. When both short and long options exist, only the
   <tr>
     <td><code class="Nm">bootiso</code></td>
     <td><code class="Fl">-p</code> [<code class="Cm">--no-hash-check</code> |
-      [<code class="Cm">--hash-file</code> <var class="Ar">HASHFILE</var>]
+      [<code class="Cm">--hash-file</code> <var class="Ar">hashfile</var>]
       [<code class="Cm">--force-hash-check</code>]]
       [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--</code>]
-      <var class="Ar">ISOFILE</var></td>
+      <var class="Ar">imagefile</var></td>
   </tr>
 </table>
 <br/>
@@ -122,7 +122,7 @@ One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
     execution, and modifiers define the specifics to reach that goal. At most
     one action flag can be set. In the absence of action flag,
     <code class="Nm">bootiso</code> assumes <b class="Sy">install</b> action in
-    &#x201C;Automatic&#x201D; mode: inspect <var class="Ar">ISOFILE</var> boot
+    &#x201C;Automatic&#x201D; mode: inspect <var class="Ar">imagefile</var> boot
     capabilities and find the best way to make a bootable USB drive (see
     <a class="Sx" href="#INSTALL_MODES">INSTALL MODES</a> bellow).</p>
 </section>
@@ -134,9 +134,10 @@ One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
   <dd><b class="Sy">Help</b> displays a concise list of options then exits.</dd>
   <dt><a class="permalink" href="#i,"><code class="Fl" id="i,">-i,</code></a>
     <code class="Cm">--inspect</code></dt>
-  <dd><b class="Sy">Inspect</b> <var class="Ar">ISOFILE</var> boot capabilities
-      and how <code class="Nm">bootiso</code> can handle it. In addition,
-      validate this file against a hash file if one is found, then exit.</dd>
+  <dd><b class="Sy">Inspect</b> <var class="Ar">imagefile</var> boot
+      capabilities and how <code class="Nm">bootiso</code> can handle it. In
+      addition, validate this file against a hash file if one is found, then
+      exit.</dd>
   <dt><a class="permalink" href="#l,"><code class="Fl" id="l,">-l,</code></a>
     <code class="Cm">--list-usb-drives</code></dt>
   <dd><b class="Sy">List USB drives</b> then exits. Diverse information will be
@@ -170,10 +171,10 @@ Use generic modifiers knowingly as some might override default safe behaviors.
         <code class="Cm">--no-usb-check</code> modifiers are set.</p>
   </dd>
   <dt><a class="permalink" href="#d"><code class="Fl" id="d">-d</code></a>
-    <var class="Ar">DEVICE,</var> <code class="Cm">--device</code>
-    <var class="Ar">DEVICE</var></dt>
-  <dd>Select <var class="Ar">DEVICE</var> block file as the action target. When
-      <var class="Ar">DEVICE</var> is not connected through a USB bus,
+    <var class="Ar">device,</var> <code class="Cm">--device</code>
+    <var class="Ar">device</var></dt>
+  <dd>Select <var class="Ar">device</var> block file as the action target. When
+      <var class="Ar">device</var> is not connected through a USB bus,
       <code class="Nm">bootiso</code> will fail and exit, unless
       <code class="Cm">--no-usb-check</code> is set.
     <p class="Pp"><b class="Sy">Notice:</b> Device block files are usually
@@ -188,15 +189,15 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dt><a class="permalink" href="#H,"><code class="Fl" id="H,">-H,</code></a>
     <code class="Cm">--no-hash-check</code></dt>
   <dd>Skip the lookup for hash sum-files in the same folder as
-      <var class="Ar">ISOFILE</var>. See <code class="Cm">--hash-file</code>
+      <var class="Ar">imagefile</var>. See <code class="Cm">--hash-file</code>
       definition for a description of the lookup mechanism.</dd>
   <dt><a class="permalink" href="#--hash-file"><code class="Cm" id="--hash-file">--hash-file</code></a>
-    <var class="Ar">HASHFILE</var></dt>
-  <dd>Explicitly set the <var class="Ar">HASHFILE</var> containing the ISO hash.
+    <var class="Ar">hashfile</var></dt>
+  <dd>Explicitly set the <var class="Ar">hashfile</var> containing the ISO hash.
       The default behavior is to look for files matching those conditions:
     <ol class="Bl-enum">
-      <li>Located in the same folder as <var class="Ar">ISOFILE</var>.</li>
-      <li>Which name is the concatenation of <var class="Ar">ISOFILE</var>,
+      <li>Located in the same folder as <var class="Ar">imagefile</var>.</li>
+      <li>Which name is the concatenation of <var class="Ar">imagefile</var>,
           &quot;.&quot; and the hash function name suffixed with
           &#x2018;<code class="Li">sum</code>&#x2019;.</li>
     </ol>
@@ -213,26 +214,26 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     mismatch.</dd>
   <dt><a class="permalink" href="#M,"><code class="Fl" id="M,">-M,</code></a>
     <code class="Cm">--no-mime-check</code></dt>
-  <dd>Don't assert that <var class="Ar">ISOFILE</var> has the right
+  <dd>Don't assert that <var class="Ar">imagefile</var> has the right
     mime-type.</dd>
   <dt><a class="permalink" href="#--no-size-check"><code class="Cm" id="--no-size-check">--no-size-check</code></a></dt>
   <dd>Don't assert that selected device size is larger than
-      <var class="Ar">ISOFILE</var>.</dd>
+      <var class="Ar">imagefile</var>.</dd>
   <dt><a class="permalink" href="#--no-usb-check"><code class="Cm" id="--no-usb-check">--no-usb-check</code></a></dt>
   <dd>Don't assert that selected device is connected through USB bus.</dd>
   <dt><a class="permalink" href="#--no-wimsplit"><code class="Cm" id="--no-wimsplit">--no-wimsplit</code></a></dt>
   <dd>Prevent splitting <span class="Pa">/sources/install.wim</span> file in
       Windows ISOs.</dd>
   <dt><a class="permalink" href="#--remote-bootloader"><code class="Cm" id="--remote-bootloader">--remote-bootloader</code></a>
-    <var class="Ar">VERSION</var></dt>
+    <var class="Ar">version</var></dt>
   <dd>Force download of <a class="Xr">syslinux</a> remote bootloader at version
-      <var class="Ar">VERSION</var>. Version must follow the pattern
+      <var class="Ar">version</var>. Version must follow the pattern
       MAJOR.MINOR. Examples: 4.10, 6.04. That will only work with x64 system
       architecture.</dd>
   <dt><a class="permalink" href="#t"><code class="Fl" id="t">-t</code></a>
-    <var class="Ar">FSTYPE</var>, <code class="Cm">--type</code>
-    <var class="Ar">FSTYPE</var></dt>
-  <dd>Format to <var class="Ar">FSTYPE</var> instead of default FAT32 (vfat).
+    <var class="Ar">fstype</var>, <code class="Cm">--type</code>
+    <var class="Ar">fstype</var></dt>
+  <dd>Format to <var class="Ar">fstype</var> instead of default FAT32 (vfat).
       Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs.
     <p class="Pp"><b class="Sy">Important Notice:</b> usage with
         <b class="Sy">install</b> action is discouraged: it cannot work in
@@ -241,9 +242,9 @@ Use generic modifiers knowingly as some might override default safe behaviors.
         FAT32 partition.</p>
   </dd>
   <dt><a class="permalink" href="#L"><code class="Fl" id="L">-L</code></a>
-    <var class="Ar">LABEL</var>, <code class="Cm">--label</code>
-    <var class="Ar">LABEL</var></dt>
-  <dd>Set partition label as <var class="Ar">LABEL</var> instead of inferring.
+    <var class="Ar">label</var>, <code class="Cm">--label</code>
+    <var class="Ar">label</var></dt>
+  <dd>Set partition label as <var class="Ar">label</var> instead of inferring.
       <code class="Nm">bootiso</code> will cut labels which are too long
       regarding the selected filesystem limitations.
     <p class="Pp"><b class="Sy">Note:</b> It cannot work in
@@ -256,7 +257,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dt><a class="permalink" href="#--"><code class="Cm" id="--">--</code></a></dt>
   <dd>Posix end of options. <code class="Nm">bootiso</code> will not process any
       option after this flag and treat the upcoming item as
-      <var class="Ar">ISOFILE</var>.</dd>
+      <var class="Ar">imagefile</var>.</dd>
 </dl>
 </section>
 <section class="Ss">
@@ -269,10 +270,10 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
   <dt><a class="permalink" href="#--icopy"><code class="Cm" id="--icopy">--icopy</code></a>,
     <code class="Cm">--dd</code></dt>
   <dd>Override &#x201C;Automatic&#x201D; mode and install
-      <var class="Ar">ISOFILE</var> in &#x201C;Image-Copy&#x201D; mode.</dd>
+      <var class="Ar">imagefile</var> in &#x201C;Image-Copy&#x201D; mode.</dd>
   <dt><a class="permalink" href="#--mrsync"><code class="Cm" id="--mrsync">--mrsync</code></a></dt>
   <dd>Override &#x201C;Automatic&#x201D; mode and install
-      <var class="Ar">ISOFILE</var> in &#x201C;Mount-Rsync&#x201D; mode.</dd>
+      <var class="Ar">imagefile</var> in &#x201C;Mount-Rsync&#x201D; mode.</dd>
 </dl>
 </section>
 </section>
@@ -284,12 +285,13 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
 <dl class="Bl-tag">
   <dt><i class="Em">Automatic</i></dt>
   <dd>In the default &#x201C;Automatic&#x201D; mode,
-      <code class="Nm">bootiso</code> will inspect <var class="Ar">ISOFILE</var>
-      and choose the best strategy to end up with a bootable USB stick. These
-      strategies are described in the bellow two modes. It is advised no to
-      enforce any strategy and let <code class="Nm">bootiso</code> choose.
-      Invoke <code class="Cm">--inspect</code> action flag to print identified
-      boot capabilities and the strategy picked up by
+      <code class="Nm">bootiso</code> will inspect
+      <var class="Ar">imagefile</var> and choose the best strategy to end up
+      with a bootable USB stick. These strategies are described in the bellow
+      two modes. It is advised no to enforce any strategy and let
+      <code class="Nm">bootiso</code> choose. Invoke
+      <code class="Cm">--inspect</code> action flag to print identified boot
+      capabilities and the strategy picked up by
       <code class="Nm">bootiso</code>.</dd>
   <dt><i class="Em">Image-Copy</i></dt>
   <dd>In &#x201C;Image-Copy&#x201D; mode enforcable with
@@ -321,10 +323,10 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
           version available in https://www.kernel.org unless
           <code class="Cm">--local-bootloader</code> flag is set. When invoked
           with <code class="Cm">--remote-bootloader</code>
-          <var class="Ar">VERSION</var> modifier,
+          <var class="Ar">version</var> modifier,
           <code class="Nm">bootiso</code> will ignore local version check and
           forces download of the kernel.org version at
-          <var class="Ar">VERSION</var>.</li>
+          <var class="Ar">version</var>.</li>
       <li>If none of the above conditions are met,
           <code class="Nm">bootiso</code> will fail and exit.</li>
     </ol>
@@ -336,9 +338,9 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
 <code class="Nm">bootiso</code> performs a set of tests with user safety and
   confidence in mind:
 <ul class="Bl-bullet">
-  <li>Checks <var class="Ar">ISOFILE</var> hash sum against a hash file if one
+  <li>Checks <var class="Ar">imagefile</var> hash sum against a hash file if one
       found. Supported hash algorithms are md5, sha1, sha256 and sha512.</li>
-  <li>Checks <var class="Ar">ISOFILE</var> mime-type with
+  <li>Checks <var class="Ar">imagefile</var> mime-type with
       <a class="Xr">file(1)</a> utility.</li>
   <li>Asserts selected device is connected through USB preventing system damages
       and exit if it doesn't, with <a class="Xr">udevadm(8)</a> utility.</li>
@@ -420,7 +422,7 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
   <dd>Synopsis noncompliance: program invocation does not match any known
       combination of options and operands.</dd>
   <dt><b class="Sy">3</b></dt>
-  <dd>Missing boot capabilities: <var class="Ar">ISOFILE</var> does not have
+  <dd>Missing boot capabilities: <var class="Ar">imagefile</var> does not have
       boot capabilities <code class="Nm">bootiso</code> knows of.</dd>
   <dt><b class="Sy">4</b></dt>
   <dd>Missing file: a file provided as option argument or operand does not
