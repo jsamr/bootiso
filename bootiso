@@ -474,8 +474,8 @@ checkSudo() {
 }
 
 failISOCheck() {
-  echoerr "Provided file '$selectedIsoFile' doesn't seem to be an ISO file (wrong mime-type: '$mimetype')."
-  echowarn "You can bypass this policy with $(boldify '-M, --no-mime-check'), but the operation will likely fail."
+  echoerr "Provided file '$selectedIsoFile' doesn't seem to be an ISO file (wrong mime-type: '$mimetype')." \
+          "You can bypass this policy with $(boldify '-M, --no-mime-check')."
   failAndExit "${exitStatus[BADFILE]}"
 }
 
@@ -931,9 +931,8 @@ parseArguments() {
               if [ ${#key} -eq 2 ]; then
                 yellowify "$(boldify "$wrongOptions") flag."
               else
-                yellowify "$(boldify "$wrongOptions") stacked flags."
+                yellowify "$(boldify "$wrongOptions") flags."
               fi
-
             fi
             failAndExit "${exitStatus[SYNOPSISNC]}"
           fi
@@ -1597,10 +1596,10 @@ checkUserFlags() {
   fi
   if [ "${userFlags['no-hash-check']}" == 'true' ] && [ "${userFlags['force-hash-check']}" == 'true' ]; then
     failAndExit "${exitStatus[SYNOPSISNC]}" \
-      "You cannot combine $(boldify '--no-hash-check')$ and $(boldify '--force-hash-check')$"
+      "You cannot combine $(boldify '--no-hash-check') and $(boldify '--force-hash-check')"
   elif [ "${userFlags['no-hash-check']}" == 'true' ] && [ -n "${userVars['hash-file']}" ]; then
     failAndExit "${exitStatus[SYNOPSISNC]}" \
-      "You cannot combine $(boldify '--no-hash-check')$ and $(boldify '--hash-file')$"
+      "You cannot combine $(boldify '--no-hash-check') and $(boldify '--hash-file')"
   fi
   # warnings (only with sudo)
   if ((EUID == 0)); then
