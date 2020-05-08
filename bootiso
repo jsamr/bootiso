@@ -493,7 +493,7 @@ assertISOIsOK() {
   if [ ! -f "$selectedIsoFile" ]; then
     failAndExit "${exitStatus[MISFILE]}" "Provided iso file '$selectedIsoFile' does not exist."
   fi
-  if [ "$disableMimeCheck" == 'false' ]; then
+  if [ "$disableMimeCheck" == false ]; then
     mimetype=$(file --mime-type -b -- "$selectedIsoFile")
     [ "$mimetype" == "application/octet-stream" ]
     isOctetStream=$?
@@ -792,7 +792,7 @@ parseArguments() {
   typeset isEndOfOptions=false
   while [[ $# -gt 0 ]]; do
     key="$1"
-    if [ "$isEndOfOptions" == 'false' ]; then
+    if [ "$isEndOfOptions" == false ]; then
       case $key in
       # ACTIONS
       -h | --help | help)
@@ -992,19 +992,16 @@ createTempFile() {
   fi
 }
 
+# $1: 'true' if image file is hybrid, 'false' otherwise
 mountISOFile() {
   local diskReport startSector=0 sectorSize=512
-  diskReport=$(sfdisk -lJ "$selectedIsoFile" 2> /dev/null)
   isoMountPoint=$(createMountFolder iso) || exit "$?"
   temporaryAssets+=("$isoMountPoint")
   echogood "Created image mount point at '$isoMountPoint'."
-  # If the image has no partition (iso9660 filesystem), diskReport will be empty
-  # and this step skipped.
-  # Mount the first bootable partition.
-  # In some hybrid image or 'img' files, the first partition might not start at sector 0.
-  # So we first check the first bootable partition offset
-  # with a combination of sfdisk and jq.
-  if [[ -n "$diskReport" ]]; then
+  # If the image is hybrid, the first partition might not start at sector 0.
+  # So we first check the first bootable partition offset with a combination of sfdisk and jq.
+  if [[ "$1" == true ]]; then
+    diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2> /dev/null)
     sectorSize=$(echo "$diskReport" | jq '.partitiontable.sectorsize?')
     startSector=$(echo "$diskReport" | jq '.partitiontable.partitions | map(select(.bootable==true))[0].start | select (.!=null)')
     if [[ -z "$sectorSize" ]]; then
@@ -1049,9 +1046,9 @@ selectDevice() {
     fi
   }
   handleDeviceSelection() {
-    if [ ${#devicesList[@]} -eq 1 ] && [ "$disableUSBCheck" == 'false' ]; then
+    if [ ${#devicesList[@]} -eq 1 ] && [ "$disableUSBCheck" == false ]; then
       # autoselect
-      if [ "$disableConfirmation" == 'false' ] || { [ "$disableConfirmation" == 'true' ] && [ "$autoselect" == 'true' ]; }; then
+      if [ "$disableConfirmation" == false ] || { [ "$disableConfirmation" == 'true' ] && [ "$autoselect" == 'true' ]; }; then
         typeset selected="${devicesList[0]}"
         echogood "Autoselecting '$selected' (only USB device candidate)"
         selectedDevice="/dev/$selected"
@@ -1129,7 +1126,7 @@ assertISOSize() {
 shouldWipeUSBKey() {
   typeset answer='y'
   echowarn "About to wipe the content of device '$selectedDevice'."
-  if [ "$disableConfirmation" == 'false' ]; then
+  if [ "$disableConfirmation" == false ]; then
     read -r -p "${logPrefixEmpty}Are you sure you want to proceed? (y/n)> " answer
   else
     echowarn "Bypassing confirmation with $(boldify '-y, --assume-yes')."
@@ -1271,7 +1268,7 @@ copyWithRsync() {
     typeset rsyncOptions=""
     temporaryAssets+=("$statusFile")
     if [ -f "$wimFile" ]; then
-      if [ "$disableWimsplit" == 'false' ]; then
+      if [ "$disableWimsplit" == false ]; then
         rsyncOptions="--exclude sources/install.wim"
         echogood "Detected a Windows install.wim file, which will be handled by 'wimlib-imagex' utility."
       else
@@ -1282,7 +1279,7 @@ copyWithRsync() {
       # shellcheck disable=SC2086
       rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$isoMountPoint"/. "$usbMountPoint"
       local status=$?
-      if ((status == 0)) && [ -f "$wimFile" ] && [ "$disableWimsplit" == 'false' ]; then
+      if ((status == 0)) && [ -f "$wimFile" ] && [ "$disableWimsplit" == false ]; then
         echo
         wimlib-imagex split "$wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
       fi
@@ -1460,7 +1457,7 @@ installBootloader() {
   # return 0 : install from kernel.org
   # return 1+: install from local
   checkSyslinuxVersion() {
-    if [ "$localBootloader" == "true" ]; then
+    if [ "$localBootloader" == true ]; then
       echogood "Enfoced local SYSLINUX bootloader at version '$localSyslinuxVersion'."
       return 1
     fi
@@ -1622,11 +1619,11 @@ checkUserFlags() {
   # warnings (only with sudo)
   if ((EUID == 0)); then
     # Eject format
-    if [ "${userFlags['no-eject']}" == "true" ] && [ "$action" == "format" ]; then
+    if [ "${userFlags['no-eject']}" == true ] && [ "$action" == "format" ]; then
       echowarn "You don't need to prevent device ejection through $(boldify '-J') flag with 'format'."
     fi
     # Warn autoselecting while assume yes is false
-    if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['assume-yes']}" == 'false' ]; then
+    if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['assume-yes']}" == false ]; then
       echowarn "$(boldify '-a, --autoselect') is enabled by default when $(boldify '-y, --asume-yes') is not set."
     fi
   fi
@@ -1675,7 +1672,7 @@ cleanup() {
   }
   ejectDevice() {
     if [[ "$operationSuccess" =~ ^install ]]; then
-      if [ "$noDeviceEjection" == 'false' ]; then
+      if [ "$noDeviceEjection" == false ]; then
         if eject "$selectedDevice" |& indentAll; then
           echogood "USB device succesfully ejected." \
             "You can safely remove it!"
@@ -1811,22 +1808,21 @@ inspectISO() {
     fi
   }
   inspectISOFilesystem
-  mountISOFile >/dev/null
+  mountISOFile $isHybrid >/dev/null
   inspectSyslinux
   inspectEFICapabilities
   umountISO >/dev/null
-  # set relative paths
+  isoInspection['supportsEFIBoot']=$supportsEFIBoot
   isoInspection['syslinuxConf']=${syslinuxConfig#${isoMountPoint}}
   isoInspection['syslinuxBin']=${syslinuxBinary#${isoMountPoint}}
   isoInspection['syslinuxVer']=$isoSyslinuxVersion
   isoInspection['isHybrid']=$isHybrid
-  isoInspection['supportsEFIBoot']=$supportsEFIBoot
 }
 
 inspectISOBootCapabilities() {
   typeset uefiCompatible=${isoInspection['supportsEFIBoot']}
   typeset syslinuxCompatible=false
-  if [ "${isoInspection['supportsEFIBoot']}" == "true" ]; then
+  if [ "${isoInspection['supportsEFIBoot']}" == true ]; then
     if [ "$partitionType" != "vfat" ]; then
       echowarn "Found UEFI boot capabilities but you selected '$partitionType' type, which is not compatible with UEFI boot." \
         "Be warned that only legacy boot might work, if any."
@@ -1934,11 +1930,11 @@ execWithRsync() {
   checkSyslinuxInstall
   inspectISOBootCapabilities
   runSecurityAssessments
-  mountISOFile
+  mountISOFile "${isoInspection['isHybrid']}"
   partitionUSB false
   mountUSB
   copyWithRsync
-  if [ "$addSyslinuxBootloader" == 'true' ]; then
+  if [ "$addSyslinuxBootloader" == true ]; then
     installBootloader
   fi
 }
@@ -1951,7 +1947,7 @@ execWithDD() {
 }
 
 execAuto() {
-  if [ "${isoInspection['isHybrid']}" == "true" ]; then
+  if [ "${isoInspection['isHybrid']}" == true ]; then
     echogood "Found hybrid image; choosing copy mode 'dd'."
     execWithDD
   else
@@ -1990,7 +1986,7 @@ main() {
   fi
   if [ "$expectingISOFile" == 'true' ]; then
     assertISOIsOK
-    if [ "$disableHashCheck" == 'false' ]; then
+    if [ "$disableHashCheck" == false ]; then
       checkISOHash
     else
       echowarn "Skipping hash check with $(boldify '-H, --no-hash-check') flag"
