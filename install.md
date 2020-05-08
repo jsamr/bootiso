@@ -70,7 +70,7 @@ However, fo the sake of user comfort, it is recommanded that package maintainers
       <td style="text-align: left;">
         lsblk, sfdisk, mkfs, blkid, wipefs, blockdev, column, mount, umount, blockdev
       </td>
-      <td colspan="3" align="center">util-linux &ge; 2.24</td>
+      <td colspan="3" align="center">util-linux &ge; 2.26</td>
     </tr>
     <tr>
       <td style="text-align: left;">find, xargs</td>
