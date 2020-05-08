@@ -167,7 +167,7 @@ typeset -A exitStatus=(
 typeset selectedIsoFile # no default
 typeset hashFile
 typeset selectedDevice # default to prompted to user
-typeset partitionLabel # default to inferred from ISO file label
+typeset partitionLabel # default to inferred from image file label
 typeset partitionType  # default to vfat
 typeset action='install-auto'
 typeset selectedBootloaderVersion # default to auto
@@ -245,7 +245,7 @@ typeset installModeModifiersTable="
 --mrsync|Install ISOFILE in \"Mount-Rsync\" mode.
 "
 typeset helpIntro="\
-$scriptName v$version - create a bootable USB drive from an ISO image."
+$scriptName v$version - create a bootable USB drive from an image file."
 
 typeset helpSynopsis="
 Usage: $(boldify "$scriptName") [$(underline MODIFIER...)] $(underline ISOFILE)
@@ -417,9 +417,9 @@ umountUSB() {
 umountISO() {
   if isMounted "$isoMountPoint"; then
     if umount "$isoMountPoint" |& indentAll; then
-      echogood "ISO succesfully unmounted ($isoMountPoint)."
+      echogood "Image succesfully unmounted ($isoMountPoint)."
     else
-      echowarn "Could not unmount ISO mount point."
+      echowarn "Could not unmount image mount point."
     fi
   fi
 }
@@ -475,7 +475,7 @@ checkSudo() {
 }
 
 failISOCheck() {
-  echoerr "Provided file '$selectedIsoFile' doesn't seem to be an ISO file (wrong mime-type: '$mimetype')." \
+  echoerr "Provided file '$selectedIsoFile' doesn't seem to be an image file (wrong mime-type: '$mimetype')." \
           "You can bypass this policy with $(boldify '-M, --no-mime-check')."
   failAndExit "${exitStatus[BADFILE]}"
 }
@@ -997,11 +997,11 @@ mountISOFile() {
   diskReport=$(sfdisk -lJ "$selectedIsoFile" 2> /dev/null)
   isoMountPoint=$(createMountFolder iso) || exit "$?"
   temporaryAssets+=("$isoMountPoint")
-  echogood "Created ISO mount point at '$isoMountPoint'."
+  echogood "Created image mount point at '$isoMountPoint'."
   # If the image has no partition (iso9660 filesystem), diskReport will be empty
   # and this step skipped.
   # Mount the first bootable partition.
-  # In some hybrid ISO or 'img' files, the first partition might not start at sector 0.
+  # In some hybrid image or 'img' files, the first partition might not start at sector 0.
   # So we first check the first bootable partition offset
   # with a combination of sfdisk and jq.
   if [[ -n "$diskReport" ]]; then
@@ -1014,7 +1014,7 @@ mountISOFile() {
   startSector=${startSector:-0}
   sectorSize=${sectorSize:-0}
   if ! mount -r -o loop,offset=$((sectorSize * startSector)) -- "$selectedIsoFile" "$isoMountPoint" >/dev/null; then
-    failAndExit "${exitStatus[INTERNALIO]}" "Could not mount ISO file."
+    failAndExit "${exitStatus[INTERNALIO]}" "Could not mount image file."
   fi
 }
 
@@ -1289,7 +1289,7 @@ copyWithRsync() {
       echo "$status" >"$statusFile"
     ) &
     pid=$!
-    echo -n "$scriptName: Copying files from ISO to USB device with 'rsync'    "
+    echo -n "$scriptName: Copying files from image to USB device with 'rsync'    "
     while [ -e "/proc/$pid" ]; do
       updateProgress
     done
@@ -1314,7 +1314,7 @@ copyWithDD() {
       echo "$?" >"$statusFile"
     ) &
     pid=$!
-    echo -n "$scriptName: Copying files from ISO to USB device with 'dd'    "
+    echo -n "$scriptName: Copying files from image to USB device with 'dd'    "
     while [ -e "/proc/$pid" ]; do
       updateProgress
     done
@@ -1471,7 +1471,7 @@ installBootloader() {
       echoinfo "Searching for SYSLINUX V$syslinuxVersion remotely."
       if ! installSyslinuxVersion "$syslinuxVersion"; then
         if [ ! -z "${isoInspection['syslinuxVer']}" ]; then
-          echowarn "Falling back to ISO SYSLINUX version '${isoInspection['syslinuxVer']}'"
+          echowarn "Falling back to image SYSLINUX version '${isoInspection['syslinuxVer']}'"
           syslinuxVersion="${isoInspection['syslinuxVer']}"
           installSyslinuxVersion "${isoInspection['syslinuxVer']}"
           return $?
@@ -1486,11 +1486,11 @@ installBootloader() {
     compute "$localSyslinuxVersion == ${isoInspection['syslinuxVer']}" >/dev/null
     versionsMatch=$?
     if ((versionsMatch == 0)); then
-      echogood "ISO SYSLINUX version matches local version."
+      echogood "image SYSLINUX version matches local version."
       return 1
     else
       typeset -i status
-      echowarn "ISO SYSLINUX version doesn't match local version." \
+      echowarn "image SYSLINUX version doesn't match local version." \
         "Scheduling download of version $syslinuxVersion..."
       if ! installSyslinuxVersion "$syslinuxVersion"; then
         echowarn "Falling back to local SYSLINUX version '$localSyslinuxVersion'."
@@ -1849,9 +1849,9 @@ inspectISOBootCapabilities() {
   fi
   if [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
     failAndExit "${exitStatus[MISBOOTCAP]}" \
-      "The selected ISO is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
+      "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
       "Therefore, it cannot result in any successful booting with $scriptName." \
-      "Consider following the documentation provided with this ISO file."
+      "Consider following the documentation provided with this image file."
   fi
 }
 
@@ -1886,38 +1886,38 @@ printISOBootCapabilities() {
   fi
   echoinfo "Reporting '$selectedIsoFile' boot capabilities:"
   if [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
-    echoerr "The selected ISO is not hybrid, doesn't support UEFI or legacy BIOS booting with SYSLINUX." \
+    echoerr "The selected image is not hybrid, doesn't support UEFI or legacy BIOS booting with SYSLINUX." \
       "It cannot result in any successful booting with $scriptName."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == false ]; then
-    echogood "The selected ISO is not hybrid, but supports legacy BIOS booting with $syslinux." \
+    echogood "The selected image is not hybrid, but supports legacy BIOS booting with $syslinux." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with any PC BIOS."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == true ]; then
-    echogood "The selected ISO is not hybrid, but supports UEFI boot." \
+    echogood "The selected image is not hybrid, but supports UEFI boot." \
       "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with modern UEFI-enabled PC BIOS."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == true ]; then
-    echogood "The selected ISO is not hybrid, but supports legacy BIOS booting with $syslinux and UEFI boot." \
+    echogood "The selected image is not hybrid, but supports legacy BIOS booting with $syslinux and UEFI boot." \
       "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with any PC BIOS."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
-    echowarn "The selected ISO is hybrid, but doesn't support UEFI or SYSLINUX legacy BIOS bootloader." \
+    echowarn "The selected image is hybrid, but doesn't support UEFI or SYSLINUX legacy BIOS bootloader." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes, but $scriptName is not aware of its booting scheme."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == false ]; then
-    echogood "The selected ISO is hybrid and supports legacy BIOS booting with $syslinux." \
+    echogood "The selected image is hybrid and supports legacy BIOS booting with $syslinux." \
       "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PC BIOS."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == true ]; then
-    echogood "The selected ISO is hybrid and supports UEFI boot." \
+    echogood "The selected image is hybrid and supports UEFI boot." \
       "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with modern UEFI-enabled PC BIOS."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == true ]; then
-    echogood "The selected ISO is hybrid and supports legacy BIOS booting with $syslinux along with UEFI boot." \
+    echogood "The selected image is hybrid and supports legacy BIOS booting with $syslinux along with UEFI boot." \
       "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PC BIOS."
   fi
   typeset localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
   if [ "$syslinuxCompatible" == true ] && [ ! -z "${isoInspection['syslinuxVer']}" ] && [ "$isHybrid" == false ]; then
     if compute "$localSyslinuxVersion == ${isoInspection['syslinuxVer']}"; then
-      echogood "Furthermore, SYSLINUX version in the ISO file matches local version (${isoInspection['syslinuxVer']})."
+      echogood "Furthermore, SYSLINUX version in the image file matches local version (${isoInspection['syslinuxVer']})."
     elif compute "${localSyslinuxVersion%.*} == ${isoInspection['syslinuxVer']%.*}"; then
-      echoinfo "However, SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the minor part of local version ($localSyslinuxVersion), which should not cause any problems."
+      echoinfo "However, SYSLINUX version (${isoInspection['syslinuxVer']}) in the image file doesn't match the minor part of local version ($localSyslinuxVersion), which should not cause any problems."
     else
-      echowarn "SYSLINUX version (${isoInspection['syslinuxVer']}) in the ISO file doesn't match the major part of local version ($localSyslinuxVersion)." \
+      echowarn "SYSLINUX version (${isoInspection['syslinuxVer']}) in the image file doesn't match the major part of local version ($localSyslinuxVersion)." \
         "$scriptName will try to download and execute this version from kernel.org, unless given the modifier $(boldify '--local-bootloader')." \
         "If that fails, it will attempt installation with the local version of SYSLINUX."
     fi
@@ -1952,10 +1952,10 @@ execWithDD() {
 
 execAuto() {
   if [ "${isoInspection['isHybrid']}" == "true" ]; then
-    echogood "Found hybrid ISO; choosing copy mode 'dd'."
+    echogood "Found hybrid image; choosing copy mode 'dd'."
     execWithDD
   else
-    echoinfo "Found non-hybrid ISO; inspecting ISO for boot capabilities..."
+    echoinfo "Found non-hybrid image; inspecting image for boot capabilities..."
     execWithRsync
   fi
 }
