@@ -223,7 +223,7 @@ typeset openTicketMessage="This is not expected: please open a ticket at $ticket
 typeset actionFlagsTable="
 -f, --format|Format selected USB drive and exit.
 -h, --help|Display this help message and exit.
--i, --inspect|Inspect ISOFILE boot capabilities.
+-i, --inspect|Inspect <imagefile> boot capabilities.
 -l, --list-usb-drives|List available USB drives and exit.
 -p, --probe|Equivalent to -i followed by -l actions.
 -v, --version|Display version and exit.
@@ -231,29 +231,29 @@ typeset actionFlagsTable="
 
 typeset modifierFlagsTable="
 -a, --autoselect|In combination with -y, autoselect USB drive when only one is connected.
--d, --device DEVICE|Pick DEVICE block file as target USB drive.
--H, --no-hash-check|Don't search for hash files and check ISOFILE integrity.
+-d, --device <device>|Pick <device> block file as target USB drive.
+-H, --no-hash-check|Don't search for hash files and check <imagefile> integrity.
 -J, --no-eject|Don't eject drive after unmounting.
--L, --label PARTLABEL|Set partition label to PARTLABEL.
--M, --no-mime-check|Don't check ISOFILE mime-type.
--t, --type FSTYPE|Format to FSTYPE.
+-L, --label <label>|Set partition label to <label>.
+-M, --no-mime-check|Don't check <imagefile> mime-type.
+-t, --type <fstype>|Format to <fstype>.
 -y, --assume-yes|Don't prompt for confirmation before erasing drive.
 "
 
 typeset installModeModifiersTable="
---icopy, --dd|Install ISOFILE in \"Image-Copy\" mode.
---mrsync|Install ISOFILE in \"Mount-Rsync\" mode.
+--icopy, --dd|Install <imagefile> in \"Image-Copy\" mode.
+--mrsync|Install <imagefile> in \"Mount-Rsync\" mode.
 "
 typeset helpIntro="\
 $scriptName v$version - create a bootable USB drive from an image file."
 
 typeset helpSynopsis="
-Usage: $(boldify "$scriptName") [$(underline MODIFIER...)] $(underline ISOFILE)
-       $(boldify "$scriptName") $(underline ACTION) [$(underline MODIFIER...)] $(underline ISOFILE)
-       $(boldify "$scriptName") $(underline ACTION)"
+Usage: $(boldify "$scriptName") [$(underline modifier...)] <imagefile>
+       $(boldify "$scriptName") $(underline action) [$(underline modifier...)] <imagefile>
+       $(boldify "$scriptName") $(underline action)"
 
 typeset helpHint="
-Invoked with no ACTION flag, $scriptName will default to install action in automatic mode: inspect ISOFILE \
+Invoked with no action flag, $scriptName will default to install action in automatic mode: inspect <imagefile> \
 boot capabilities and find the best way to make a bootable USB drive. \
 Read $scriptName man page for a detailed description and advanced options."
 
