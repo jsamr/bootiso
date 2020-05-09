@@ -43,7 +43,7 @@ However, fo the sake of user comfort, it is recommanded that package maintainers
       <td style="text-align: left;">wimlib-imagex</td>
       <td>wimlib</td>
       <td>wimtools</td>
-      <td>wimlib</td>
+      <td>wimlib-utils</td>
     </tr>
     <tr>
       <td style="text-align: left;">extlinux</td>
