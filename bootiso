@@ -126,6 +126,7 @@ typeset -A userFlags=(
   ['assume-yes']=''
   ['device']=''
   ['no-eject']=''
+  ['mbr']=''
   ['autoselect']=''
   ['no-mime-check']=''
   ['no-usb-check']=''
@@ -184,6 +185,7 @@ typeset autoselect
 typeset shouldMakePartition
 typeset noDeviceEjection
 typeset localBootloader
+typeset enforceMBR
 
 # See console_codes GNU-Linux man page
 typeset setRed="\e[31m"
@@ -852,6 +854,10 @@ parseArguments() {
         setUserVar 'remote-bootloader' "$2"
         shift 2
         ;;
+      --mbr)
+        enableUserFlag 'mbr'
+        shift
+        ;;
       -y | --assume-yes)
         enableUserFlag 'assume-yes'
         shift
@@ -1255,8 +1261,7 @@ partitionUSB() {
     unmountPartitions
     eraseDevice
     if [ "$shouldMakePartition" == 'true' ]; then
-      echo "IS NOT BOOTABLE $notBootable"
-      if [[ "${isoInspection['supportsEFIBoot']}" == true || "$notBootable" == true ]]; then
+      if [[ "$enforceMBR" == false && ("${isoInspection['supportsEFIBoot']}" == true || "$notBootable" == true) ]]; then
         tableType=GPT
       else
         tableType=MBR
@@ -1751,6 +1756,7 @@ assignInternalVariables() {
   # Option flags
   disableConfirmation=${userFlags['assume-yes']:-'false'}
   autoselect=${userFlags['autoselect']:-'false'}
+  enforceMBR=${userFlags['mbr']:-'false'}
   localBootloader=${userFlags['local-bootloader']:-'false'}
   disableMimeCheck=${userFlags['no-mime-check']:-'false'}
   disableUSBCheck=${userFlags['no-usb-check']:-'false'}
