@@ -33,7 +33,7 @@ typeset -Ar commandPackages=(
   ['column']='util-linux'
   ['blockdev']='util-linux'
   ['grep']='grep'
-  ['sed']=['sed']
+  ['sed']='sed'
   ['file']='file'
   ['awk']='gawk'
   ['mlabel']='mtools'
@@ -336,7 +336,7 @@ echoinfo() {
 # $*: The message to print.
 failAndExit() {
   local status=$1
-  if ! [[ $status =~ ^[0-9]+$ ]] ; then
+  if ! [[ $status =~ ^[0-9]+$ ]]; then
     echoerr "(failAndExit) Internal state error."
     status="${exitStatus[INTERNALST]}"
   else
@@ -476,7 +476,7 @@ checkSudo() {
 
 failISOCheck() {
   echoerr "Provided file '$selectedIsoFile' doesn't seem to be an image file (wrong mime-type: '$mimetype')." \
-          "You can bypass this policy with $(boldify '-M, --no-mime-check')."
+    "You can bypass this policy with $(boldify '-M, --no-mime-check')."
   failAndExit "${exitStatus[BADFILE]}"
 }
 
@@ -1001,7 +1001,7 @@ mountISOFile() {
   # If the image is hybrid, the first partition might not start at sector 0.
   # So we first check the first bootable partition offset with a combination of sfdisk and jq.
   if [[ "$1" == true ]]; then
-    diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2> /dev/null)
+    diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2>/dev/null)
     sectorSize=$(echo "$diskReport" | jq '.partitiontable.sectorsize?')
     startSector=$(echo "$diskReport" | jq '.partitiontable.partitions | map(select(.bootable==true))[0].start | select (.!=null)')
     if [[ -z "$sectorSize" ]]; then
@@ -1138,34 +1138,70 @@ shouldWipeUSBKey() {
   fi
 }
 
-createMBRPartitionTable() {
-  typeset sfdiskCommand='sfdisk'
-  typeset sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+')
-  typeset -Ar mbrTypeCodes=(['vfat']='c' ['exfat']='7' ['ntfs']='7' ['ext2']='83' ['ext3']='83' ['ext4']='83' ['f2fs']='83')
-  typeset partitionOptions
+# $1: partType - MBR or GPT
+# $2: notBootable - true or false
+createPartitionTable() {
+  typeset partitionOptions="label: gpt" \
+    sfdiskCommand='sfdisk' \
+    sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+') \
+    tableType=$1 \
+    notBootable=$2
+  typeset -A gptTypeCodes
   makeSfdiskCommand() {
     # Retrocompatibility for 'old' sfdisk versions
     if compute "$sfdiskVersion >= 2.28"; then
       sfdiskCommand='sfdisk -W always'
     fi
   }
+  initGPT() {
+    partitionOptions="label: gpt\n"
+    if [ "$notBootable" == true ]; then
+      gptTypeCodes=(
+        # Defaults to Windows basic data partition
+        ['vfat']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
+        ['exfat']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
+        ['ntfs']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
+        # Otherwise consider a "Linux basic data partition"
+        ['ext2']='L'
+        ['ext3']='L'
+        ['ext4']='L'
+        ['f2fs']='L'
+      )
+    else
+      if [[ "${isoInspection['supportsEFIBoot']}" == true ]]; then
+        # Set typecode to EFI System Partition
+        gptTypeCodes[vfat]='U'
+      else
+        failAndExit "${exitStatus[INTERNALST]}" "GPT partition tables are not compatible with legacy BIOS boot."
+      fi
+    fi
+    partitionOptions+="type=${gptTypeCodes[$partitionType]}"
+  }
+  initMBR() {
+    partitionOptions="label: dos\n"
+    mbrTypeCodes=(['vfat']='c' ['exfat']='7' ['ntfs']='7' ['ext2']='83' ['ext3']='83' ['ext4']='83' ['f2fs']='83')
+    partitionOptions+="$selectedPartition : start=2048, type=${mbrTypeCodes[$partitionType]}"
+  }
   makeSfdiskCommand
-  if [ "$notBootable" == true ]; then
-    partitionOptions="$selectedPartition : start=2048, type=${mbrTypeCodes[$partitionType]}"
-  else
-    partitionOptions="$selectedPartition : start=2048, type=${mbrTypeCodes[$partitionType]}, bootable"
+  case "$tableType" in
+  GPT) initGPT ;;
+  MBR) initMBR ;;
+  *) failAndExit "${exitStatus[INTERNALST]}" "Unexpected partition scheme '$1'" ;;
+  esac
+  if [ "$notBootable" == false ]; then
+    partitionOptions+=", bootable"
   fi
-  echogood "Creating MBR partition table with 'sfdisk' v$sfdiskVersion..."
-  # Create partition table
-  echo "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "${exitStatus[INTERNALIO]}" \
-    "Failed to write USB device partition table."
+  echogood "Creating $tableType partition table with 'sfdisk' v$sfdiskVersion..."
+  echo -e "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "${exitStatus[INTERNALIO]}" \
+    "Failed to write USB device $tableType partition table."
   partprobe "$selectedDevice" # Refresh partition table
   syncdev
 }
 
-# $1: not-bootable, default false. When true, the partition will not be bootable.
+# $1: notBootable - true or false
+#     default false
 partitionUSB() {
-  typeset notBootable=${false:-1}
+  typeset tableType notBootable=${false:-1}
   # These options always end up with the label flag setter
   typeset -Ar mkfsOpts=(
     ['vfat']="-v -F 32 -n" # Fat32 mode
@@ -1211,7 +1247,12 @@ partitionUSB() {
     unmountPartitions
     eraseDevice
     if [ "$shouldMakePartition" == 'true' ]; then
-      createMBRPartitionTable
+      if [[ "${isoInspection['supportsEFIBoot']}" == true ]]; then
+        tableType=GPT
+      else
+        tableType=MBR
+      fi
+      createPartitionTable $tableType $notBootable
       formatPartition
     fi
   else
