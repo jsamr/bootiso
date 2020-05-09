@@ -9,6 +9,7 @@
 
 **Enhancements**
 
+- Sensible default label with format action: `${USER}_${VENDOR}` with USER read from SUDO_USER and VENDOR from lsblk VENDOR attribute
 - Add `--icopy` alias for `--dd`
 - Support `eopkg` package manager (Solus)
 - Rewrite of `--help` action with text wrapping and columns for better readability
