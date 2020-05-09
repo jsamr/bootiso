@@ -64,13 +64,13 @@ typeset shortOptions='bydJahlMftLp'
 typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
 typeset -Ar userVarsCompatibilityMatrix=(
   ['iso-file']='install-auto install-mount-rsync install-image-copy inspect probe'
+  ['hash-file']='install-auto install-mount-rsync install-image-copy inspect probe'
   ['device']='install-auto install-mount-rsync install-image-copy format'
   ['type']='install-mount-rsync format'
   ['label']='install-mount-rsync format'
-  ['remote-bootloader']='install-auto install-mount-rsync'
+  ['remote-bootloader']='install-mount-rsync'
 )
 typeset -Ar userFlagsCompatibilityMatrix=(
-  ['local-bootloader']='install-auto install-mount-rsync'
   ['assume-yes']='install-auto install-mount-rsync install-image-copy format'
   ['no-eject']='install-auto install-mount-rsync install-image-copy format'
   ['autoselect']='install-auto install-mount-rsync install-image-copy format'
@@ -79,6 +79,10 @@ typeset -Ar userFlagsCompatibilityMatrix=(
   ['force-hash-check']='install-auto install-mount-rsync install-image-copy probe inspect'
   ['no-usb-check']='install-auto install-mount-rsync install-image-copy list-usb-drives probe format'
   ['no-size-check']='install-auto install-mount-rsync install-image-copy'
+  ['mbr']='format install-mount-rsync'
+  # Mount-Rsync specials
+  ['local-bootloader']='install-mount-rsync'
+  ['no-wimsplit']='install-mount-rsync'
 )
 
 # internal variables
@@ -1705,7 +1709,7 @@ checkFlagMatrix() {
       #shellcheck disable=SC2086
       if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
         failAndExit "${exitStatus[SYNOPSISNC]}" \
-          "$(boldify $action) action doesn't support $(boldify --$key)$ modifier."
+          "$(boldify $action) action doesn't support $(boldify --$key) modifier."
       fi
     fi
   done
