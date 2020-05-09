@@ -13,18 +13,21 @@ Each line depicts an action. When both short and long options exist,
 only the short version is displayed for readability.
 .Pp
 .Nm bootiso
-.Op Cm --dd | --mrsync
 .Op Fl aJMy
 .Op Fl d Ar device
 .Op Fl L Ar label
 .Op Fl t Ar fstype
 .Oo
+.Cm --icopy | --dd | --mrsync
+.Op Cm --mbr
+.Op Cm --no-wimsplit
+.Op Cm --local-bootloader | Cm --remote-bootloader Ar version
+.Oc
+.Oo
 .Cm --no-hash-check | 
 .Op Cm --hash-file Ar hashfile
 .Op Cm --force-hash-check
 .Oc
-.Op Cm --local-bootloader | Cm --remote-bootloader Ar version
-.Op Cm --no-wimsplit
 .Op Cm --no-size-check
 .Op Cm --no-usb-check
 .Op Cm --
@@ -37,6 +40,7 @@ only the short version is displayed for readability.
 .Op Fl d Ar device
 .Op Fl L Ar label
 .Op Fl t Ar fstype
+.Op Cm --mbr
 .Op Cm --no-usb-check
 .
 .\" Inspect action
@@ -238,6 +242,8 @@ when the major versions mismatch.
 Don't assert that
 .Ar imagefile
 has the right mime-type.
+.It Cm --mbr
+Enforce legacy MBR partition table over default GPT.
 .It Cm --no-size-check
 Don't assert that selected device size is larger than
 .Ar "imagefile".
@@ -407,11 +413,6 @@ modifier,
 will ignore local version check and forces download of the
 kernel.org version at
 .Ar "version".
-GPT partition cannot be enforced in such a situation, and
-.Nm
-will abort if the
-.Cm --gpt
-modifier is set in such scenario.
 .It
 If none of the above conditions are met,
 .Nm

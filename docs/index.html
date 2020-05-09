@@ -31,16 +31,17 @@ Each line depicts an action. When both short and long options exist, only the
 <table class="Nm">
   <tr>
     <td><code class="Nm">bootiso</code></td>
-    <td>[<code class="Cm">--dd</code> | <code class="Cm">--mrsync</code>]
-      [<code class="Fl">-aJMy</code>] [<code class="Fl">-d</code>
+    <td>[<code class="Fl">-aJMy</code>] [<code class="Fl">-d</code>
       <var class="Ar">device</var>] [<code class="Fl">-L</code>
       <var class="Ar">label</var>] [<code class="Fl">-t</code>
-      <var class="Ar">fstype</var>] [<code class="Cm">--no-hash-check</code> |
+      <var class="Ar">fstype</var>] [<code class="Cm">--icopy</code> |
+      <code class="Cm">--dd</code> | <code class="Cm">--mrsync</code>
+      [<code class="Cm">--mbr</code>] [<code class="Cm">--no-wimsplit</code>]
+      [<code class="Cm">--local-bootloader</code> |
+      <code class="Cm">--remote-bootloader</code>
+      <var class="Ar">version</var>]] [<code class="Cm">--no-hash-check</code> |
       [<code class="Cm">--hash-file</code> <var class="Ar">hashfile</var>]
       [<code class="Cm">--force-hash-check</code>]]
-      [<code class="Cm">--local-bootloader</code> |
-      <code class="Cm">--remote-bootloader</code> <var class="Ar">version</var>]
-      [<code class="Cm">--no-wimsplit</code>]
       [<code class="Cm">--no-size-check</code>]
       [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--</code>]
       <var class="Ar">imagefile</var></td>
@@ -54,6 +55,7 @@ Each line depicts an action. When both short and long options exist, only the
       [<code class="Fl">-d</code> <var class="Ar">device</var>]
       [<code class="Fl">-L</code> <var class="Ar">label</var>]
       [<code class="Fl">-t</code> <var class="Ar">fstype</var>]
+      [<code class="Cm">--mbr</code>]
       [<code class="Cm">--no-usb-check</code>]</td>
   </tr>
 </table>
@@ -221,6 +223,8 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     <code class="Cm">--no-mime-check</code></dt>
   <dd>Don't assert that <var class="Ar">imagefile</var> has the right
     mime-type.</dd>
+  <dt><a class="permalink" href="#--mbr"><code class="Cm" id="--mbr">--mbr</code></a></dt>
+  <dd>Enforce legacy MBR partition table over default GPT.</dd>
   <dt><a class="permalink" href="#--no-size-check"><code class="Cm" id="--no-size-check">--no-size-check</code></a></dt>
   <dd>Don't assert that selected device size is larger than
       <var class="Ar">imagefile</var>.</dd>
@@ -335,10 +339,7 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
           <var class="Ar">version</var> modifier,
           <code class="Nm">bootiso</code> will ignore local version check and
           forces download of the kernel.org version at
-          <var class="Ar">version</var>. GPT partition cannot be enforced in
-          such a situation, and <code class="Nm">bootiso</code> will abort if
-          the <code class="Cm">--gpt</code> modifier is set in such
-        scenario.</li>
+          <var class="Ar">version</var>.</li>
       <li>If none of the above conditions are met,
           <code class="Nm">bootiso</code> will fail and exit.</li>
     </ol>
