@@ -666,6 +666,7 @@ findFileFromPatterns() {
 }
 
 configureLabel() {
+  local user
   partitionLabel=${partitionLabel:-$(blkid -o value -s LABEL -- "$selectedIsoFile")}
   case $partitionType in
   vfat)
@@ -691,8 +692,9 @@ configureLabel() {
       "$openTicketMessage"
     ;;
   esac
-  # Fallback to "BOOTISO"
-  partitionLabel=${partitionLabel:-"BOOTISO"}
+  # Fallback to "USER_FLASH"
+  user=${SUDO_USER:-$USER}
+  partitionLabel=${partitionLabel:-"${user^^}_FLASH"}
   if [ -z "${userVars['label']}" ]; then
     echogood "Partition label automatically set to '$partitionLabel'." \
       "You can explicitly set the label with $(boldify '-L, --label')."
@@ -1201,7 +1203,7 @@ createPartitionTable() {
 # $1: notBootable - true or false
 #     default false
 partitionUSB() {
-  typeset tableType notBootable=${false:-1}
+  typeset tableType notBootable=${1:-false}
   # These options always end up with the label flag setter
   typeset -Ar mkfsOpts=(
     ['vfat']="-v -F 32 -n" # Fat32 mode
@@ -1247,6 +1249,7 @@ partitionUSB() {
     unmountPartitions
     eraseDevice
     if [ "$shouldMakePartition" == 'true' ]; then
+      echo "IS NOT BOOTABLE $notBootable"
       if [[ "${isoInspection['supportsEFIBoot']}" == true || "$notBootable" == true ]]; then
         tableType=GPT
       else
