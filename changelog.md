@@ -6,6 +6,8 @@
 - (*experimental*) Add `bash` and `zsh` completion scripts with image files completions in current and `$XDG_DOWNLOAD_DIR` (default ~/Downloads) folder
 - (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
 - Semantic exit status, cf [#DIAGNOSTICS](https://jsamr.github.io/bootiso/#DIAGNOSTICS)
+- GPT partition tables support: they are “defaulted”, except in Mount-Rsync mode with legacy BIOS boot
+- Add `--mbr` modifier to enforce MBR partition tables
 
 **Enhancements**
 
