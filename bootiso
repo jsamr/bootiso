@@ -666,7 +666,7 @@ findFileFromPatterns() {
 }
 
 configureLabel() {
-  local user
+  local user vendor
   partitionLabel=${partitionLabel:-$(blkid -o value -s LABEL -- "$selectedIsoFile")}
   case $partitionType in
   vfat)
@@ -692,9 +692,15 @@ configureLabel() {
       "$openTicketMessage"
     ;;
   esac
-  # Fallback to "USER_FLASH"
-  user=${SUDO_USER:-$USER}
-  partitionLabel=${partitionLabel:-"${user^^}_FLASH"}
+  # Fallback to "USER_VENDOR" if format
+  if [[ "$action" == format ]]; then
+    user=${SUDO_USER:-$USER}
+    vendor=$(lsblk -dno VENDOR "$selectedDevice")
+    vendor=${vendor:-FLASH}
+    partitionLabel=${partitionLabel:-"${user^^}_${vendor^^}"}
+  else
+    partitionLabel=BOOTISO
+  fi
   if [ -z "${userVars['label']}" ]; then
     echogood "Partition label automatically set to '$partitionLabel'." \
       "You can explicitly set the label with $(boldify '-L, --label')."
