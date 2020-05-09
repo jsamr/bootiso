@@ -1247,12 +1247,12 @@ partitionUSB() {
     unmountPartitions
     eraseDevice
     if [ "$shouldMakePartition" == 'true' ]; then
-      if [[ "${isoInspection['supportsEFIBoot']}" == true ]]; then
+      if [[ "${isoInspection['supportsEFIBoot']}" == true || "$notBootable" == true ]]; then
         tableType=GPT
       else
         tableType=MBR
       fi
-      createPartitionTable $tableType $notBootable
+      createPartitionTable $tableType "$notBootable"
       formatPartition
     fi
   else
