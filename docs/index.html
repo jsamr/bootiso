@@ -129,6 +129,11 @@ One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
 <section class="Ss">
 <h2 class="Ss" id="Actions"><a class="permalink" href="#Actions">Actions</a></h2>
 <dl class="Bl-tag">
+  <dt><a class="permalink" href="#f,"><code class="Fl" id="f,">-f,</code></a>
+    <code class="Cm">--format</code></dt>
+  <dd>Create a GPT partition table describing a partition occupying all the
+      available place. Finally, format this partition in FAT32 or any type
+      available with the <code class="Cm">--type</code> modifier.</dd>
   <dt><a class="permalink" href="#h,"><code class="Fl" id="h,">-h,</code></a>
     <code class="Cm">--help</code></dt>
   <dd><b class="Sy">Help</b> displays a concise list of options then exits.</dd>
@@ -205,8 +210,8 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   </dd>
   <dt><a class="permalink" href="#J,"><code class="Fl" id="J,">-J,</code></a>
     <code class="Cm">--no-eject</code></dt>
-  <dd>Do not eject device after unmounting after install. This is the default
-      behavior with <b class="Sy">format</b> action.</dd>
+  <dd>Do not eject device after unmounting. This is the default behavior with
+      <b class="Sy">format</b> action.</dd>
   <dt><a class="permalink" href="#--local-bootloader"><code class="Cm" id="--local-bootloader">--local-bootloader</code></a></dt>
   <dd>Prevent download of remote bootloader and force local syslinux during
       installation. This might work, but could also lower the chances of
@@ -236,8 +241,8 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dd>Format to <var class="Ar">fstype</var> instead of default FAT32 (vfat).
       Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs.
     <p class="Pp"><b class="Sy">Important Notice:</b> usage with
-        <b class="Sy">install</b> action is discouraged: it cannot work in
-        &#x201C;Image-Copy&#x201D; mode, and it could prevent UEFI boot in
+        <b class="Sy">install</b> action is discouraged: it will be ignored in
+        &#x201C;Image-Copy&#x201D; mode, and could prevent UEFI boot in
         &#x201C;Mount-Rsync&#x201D; mode since the UEFI standard mandates a
         FAT32 partition.</p>
   </dd>
@@ -294,7 +299,7 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
       capabilities and the strategy picked up by
       <code class="Nm">bootiso</code>.</dd>
   <dt><i class="Em">Image-Copy</i></dt>
-  <dd>In &#x201C;Image-Copy&#x201D; mode enforcable with
+  <dd>In &#x201C;Image-Copy&#x201D; mode enforceable with
       <code class="Cm">--icopy</code> install modifier,
       <code class="Nm">bootiso</code> uses <a class="Xr">dd(1)</a> utility to
       make a raw copy of the ISO. This is perfectly appropriate when the ISO
@@ -302,31 +307,38 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
       have been generated with <a class="Xr">isohybrid(1)</a>. A vast majority
       of GNU-Linux images are shipped with this feature.</dd>
   <dt><i class="Em">Mount-Rsync</i></dt>
-  <dd>In &#x201C;Mount-Rsync&#x201D; mode enforcable with
+  <dd>In &#x201C;Mount-Rsync&#x201D; mode enforceable with
       <code class="Cm">--mrsync</code> install modifier,
-      <code class="Nm">bootiso</code> creates one partition and a MBR table in
-      the USB drive and copy files from mounted ISO. The behavior will change
-      depending on the presence of special files to identify wether legacy BIOS
-      boot or UEFI boot should be preferred. <code class="Nm">bootiso</code>
-      will check conditions to figure out which one to choose:
+      <code class="Nm">bootiso</code> creates one partition and a partition
+      table in the USB drive and copy files from mounted ISO. The behavior will
+      change depending on the presence of special files to identify wether
+      legacy BIOS boot or UEFI boot should be preferred.
+      <code class="Nm">bootiso</code> will check conditions to figure out which
+      one to choose:
     <ol class="Bl-enum">
       <li>If <span class="Pa">/efi/boot/*</span> boot files exist, choose UEFI
-          boot and FAT32 filesystem mandated by the standard. In which case, if
-          a Windows <span class="Pa">/sources/install.wim</span> file is found,
+          boot, GPT partition table and FAT32 filesystem mandated by the
+          standard. In which case, if a Windows
+          <span class="Pa">/sources/install.wim</span> file is found,
           <a class="Xr">wimlib-imagex(1)</a> will be used to circumvent FAT32
           filesystem size limitations. You can prevent this behavior with
-          <code class="Cm">--no-wimsplit</code> modifier flag.</li>
+          <code class="Cm">--no-wimsplit</code> modifier flag. You can also
+          enforce MBR partition table with <code class="Cm">--mbr</code>
+          modifier flag.</li>
       <li>If <a class="Xr">syslinux(1)</a> configuration files are found, it
           will install the <a class="Xr">syslinux</a> bootloader to allow legacy
-          BIOS boot. When the local version of <a class="Xr">syslinux</a>
-          doesn't match ISO version, it will attempt to download the closest
-          version available in https://www.kernel.org unless
-          <code class="Cm">--local-bootloader</code> flag is set. When invoked
-          with <code class="Cm">--remote-bootloader</code>
+          BIOS boot and select MBR partition table. When the local version of
+          <a class="Xr">syslinux</a> doesn't match ISO version, it will attempt
+          to download the closest version available in https://www.kernel.org
+          unless <code class="Cm">--local-bootloader</code> flag is set. When
+          invoked with <code class="Cm">--remote-bootloader</code>
           <var class="Ar">version</var> modifier,
           <code class="Nm">bootiso</code> will ignore local version check and
           forces download of the kernel.org version at
-          <var class="Ar">version</var>.</li>
+          <var class="Ar">version</var>. GPT partition cannot be enforced in
+          such a situation, and <code class="Nm">bootiso</code> will abort if
+          the <code class="Cm">--gpt</code> modifier is set in such
+        scenario.</li>
       <li>If none of the above conditions are met,
           <code class="Nm">bootiso</code> will fail and exit.</li>
     </ol>

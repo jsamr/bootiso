@@ -119,6 +119,13 @@ bellow).
 .
 .Ss Actions
 .Bl -tag
+.It Fl f, Cm --format
+Create a GPT partition table
+describing a partition occupying all the available place.
+Finally, format this partition in FAT32 or any type available
+with the
+.Cm --type
+modifier.
 .It Fl h, Cm --help
 .Sy Help
 displays a concise list of options then exits.
@@ -219,7 +226,7 @@ Which name is the concatenation of
 .Pp
 Supported hash functions are md5, sha1, sha256 and sha512.
 .It Fl J, Cm --no-eject
-Do not eject device after unmounting after install.
+Do not eject device after unmounting.
 This is the default behavior with
 .Sy format
 action.
@@ -257,9 +264,9 @@ Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs.
 .Sy Important Notice:
 usage with
 .Sy install
-action is discouraged: it cannot work in
+action is discouraged: it will be ignored in
 .Dq Image-Copy
-mode, and it could prevent UEFI boot in
+mode, and could prevent UEFI boot in
 .Dq Mount-Rsync
 mode since the UEFI standard mandates a FAT32 partition.
 .It Fl L Ar "label", Cm --label Ar label
@@ -339,7 +346,7 @@ action flag to print identified boot capabilities and the strategy picked up by
 .It Em Image-Copy
 In 
 .Dq Image-Copy
-mode enforcable with 
+mode enforceable with 
 .Cm --icopy
 install modifier,
 .Nm
@@ -353,11 +360,11 @@ A vast majority of GNU-Linux images are shipped with this feature.
 .It Em Mount-Rsync
 In
 .Dq Mount-Rsync
-mode enforcable with
+mode enforceable with
 .Cm --mrsync
 install modifier,
 .Nm
-creates one partition and a MBR table in the USB drive and copy files
+creates one partition and a partition table in the USB drive and copy files
 from mounted ISO. The behavior will change depending on the presence of special files to
 identify wether legacy BIOS boot or UEFI boot should be preferred.
 .Nm
@@ -366,21 +373,23 @@ will check conditions to figure out which one to choose:
 .It
 If 
 .Pa /efi/boot/*
-boot files exist, choose UEFI boot and FAT32 filesystem
-mandated by the standard. In which case, if a Windows
+boot files exist, choose UEFI boot, GPT partition table
+and FAT32 filesystem mandated by the standard. In which case, if a Windows
 .Pa /sources/install.wim
 file is found, 
 .Xr wimlib-imagex 1
 will be used to circumvent FAT32 filesystem size limitations.
 You can prevent this behavior with 
 .Cm --no-wimsplit
+modifier flag. You can also enforce MBR partition table with
+.Cm --mbr
 modifier flag.
 .It
 If  
 .Xr syslinux 1
 configuration files are found, it will install the
 .Xr syslinux
-bootloader to allow legacy BIOS boot.
+bootloader to allow legacy BIOS boot and select MBR partition table.
 When the local version of
 .Xr syslinux
 doesn't match ISO version, it will attempt to download the
@@ -398,6 +407,11 @@ modifier,
 will ignore local version check and forces download of the
 kernel.org version at
 .Ar "version".
+GPT partition cannot be enforced in such a situation, and
+.Nm
+will abort if the
+.Cm --gpt
+modifier is set in such scenario.
 .It
 If none of the above conditions are met,
 .Nm
