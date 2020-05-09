@@ -139,6 +139,7 @@ typeset _bootiso_format_opts=(
   '(--device -d)'{--device,-d}"[pick <DEVICE> block file as target USB drive]:device:_list_devices"
   '(-L --label --dd --icopy)'{-L,--label}"[set partition label to <LABEL>]:label:(${USER:u}_)"
   '(-t --type --dd --icopy)'{-t,--type}"[format to <FSTYPE>]:fstype:(${filesystems[*]})"
+  '--mbr[write MBR partition table instead of GPT]'
 )
 
 typeset _bootiso_inspect_opts=(

@@ -200,12 +200,12 @@ __bootiso_start() {
   case "$act" in
   default)
     expectsoperand=$(__bootiso_expects_image)
-    one_word_flags=("--dd,--icopy" "--mrsync" "-a,--autoselect" "-H,--no-hash-check" "-J,--no-eject" "-M,--no-mime-check" "-y,--asume-yes" "--force-hash-check" "--local-bootloader" "--no-wimsplit" "--no-size-check" "--no-usb-check")
+    one_word_flags=("--dd,--icopy" "--mrsync" "-a,--autoselect" "-H,--no-hash-check" "-J,--no-eject" "-M,--no-mime-check" "-y,--asume-yes" "--force-hash-check" "--local-bootloader" "--no-wimsplit" "--no-size-check" "--no-usb-check" "--mbr")
     two_word_flags=("-d,--device" "-L,--label" "-t,--type" "-H,--hash-file" "--remote-bootloader")
     ;;
   format)
     expectsoperand=false
-    one_word_flags=("-a,--autoselect" "-y,--asume-yes" "--no-usb-check")
+    one_word_flags=("-a,--autoselect" "-y,--asume-yes" "--no-usb-check" "--mbr")
     two_word_flags=("-d,--device" "-L,--label" "-t,--type")
     ;;
   inspect)
