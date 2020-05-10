@@ -931,17 +931,16 @@ parseArguments() {
         shift
         ;;
       -*)
-        # Probably an option, possibly a file.
-        if [ ! -f "$key" ]; then
-          # Assume it's stacked options
-          if [[ "$key" =~ ^-["$shortOptions"]{2,}$ ]]; then
+        if [[ "$isEndOfOptions" == false ]]; then
+          if [[ "$key" =~ ^-- ]]; then
+            failAndExit "${exitStatus[SYNOPSISNC]}" "Unknown option: $(boldify "$key")."
+          # Handle stacked options
+          elif [[ "$key" =~ ^-["$shortOptions"]{2,}$ ]]; then
             shift
             typeset options=${key#*-}
             typeset -a extractedOptions
             mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
             set -- "${extractedOptions[@]}" "$@"
-          elif [[ "$key" =~ ^--[a-zA-Z0-9]{2,}$ ]]; then
-            failAndExit "${exitStatus[SYNOPSISNC]}" "Unknown option: $(boldify "$key")."
           else
             printf "\\e[0;31m%s\\e[m" "$scriptName: Unknown option: "
             printf '%s' "$key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
@@ -956,7 +955,6 @@ parseArguments() {
             failAndExit "${exitStatus[SYNOPSISNC]}"
           fi
         else
-          # Happened to be a file.
           setUserVar 'iso-file' "$1"
           shift
         fi
