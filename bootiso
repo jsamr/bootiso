@@ -359,7 +359,7 @@ failAndExit() {
 }
 
 syncdev() {
-  sync "$selectedDevice"
+  sync
 }
 
 compute() {
@@ -1294,6 +1294,7 @@ mountUSB() {
   fi
 }
 
+# Requires variable "i" in scope
 updateProgress() {
   local sp="/-\\|"
   # print when launched from terminal
@@ -1311,18 +1312,23 @@ cleanProgress() {
 }
 
 syncWithProgress() {
-  printProgress() {
-    local -i isWriting=1
-    local -i i=1
-    echo -n "$scriptName: Synchronizing writes on device '${selectedDevice}'    "
-    while ((isWriting != 0)); do
-      isWriting=$(awk '{ print $9 }' "/sys/block/${selectedDevice#/dev/}/stat")
-      updateProgress
-    done
-    cleanProgress
-  }
-  printProgress
-  syncdev
+  local -i i=1
+  local -i status
+  local syncPid
+  local statusFile
+  statusFile=$(createTempFile "bootiso-sync-status")
+  temporaryAssets+=("$statusFile")
+  syncdev &
+  syncPid=$!
+  echo -n "$scriptName: Synchronizing writes on device '${selectedDevice}'   "
+  while [ -e "/proc/$syncPid" ]; do
+    updateProgress
+  done
+  cleanProgress
+  status=$(cat "$statusFile")
+  if [ ! "$status" -eq 0 ]; then
+    failAndExit "${exitStatus[INTERNALIO]}" "Sync call failed."
+  fi
 }
 
 copyWithRsync() {
@@ -1332,7 +1338,7 @@ copyWithRsync() {
     local wimFile="$isoMountPoint/sources/install.wim"
     local rsyncOptions=""
     local status
-    statusFile=$(createTempFile "bootiso-status")
+    statusFile=$(createTempFile "bootiso-rsync-status")
     temporaryAssets+=("$statusFile")
     if [ -f "$wimFile" ]; then
       if [ "$disableWimsplit" == false ]; then
@@ -1346,6 +1352,7 @@ copyWithRsync() {
       # shellcheck disable=SC2086
       rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$isoMountPoint"/. "$usbMountPoint"
       status=$?
+      cleanProgress
       if ((status == 0)) && [ -f "$wimFile" ] && [ "$disableWimsplit" == false ]; then
         echo
         wimlib-imagex split "$wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
