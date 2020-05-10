@@ -785,7 +785,7 @@ listDevicesTable() {
     echoinfo "Listing USB devices available in your system:"
   fi
   if [ "${#devicesList[@]}" -gt 0 ]; then
-    $lsblkCmd "${devicesList[@]/#/\/dev\/}" | sed 's/^/         /'
+    $lsblkCmd "${devicesList[@]/#/\/dev\/}" | sed "s/^/$logPrefixEmpty/"
     return 0
   else
     echowarn "Couldn't find any USB drives on your system." \
