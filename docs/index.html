@@ -20,30 +20,30 @@
 <section class="Sh">
 <h1 class="Sh" id="NAME"><a class="permalink" href="#NAME">NAME</a></h1>
 <code class="Nm">bootiso</code> &#x2014;
-<div class="Nd">create a bootable USB drive from an ISO image</div>
+<div class="Nd">create a bootable USB drive from an image file</div>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
-Each line depicts an action. When both short and long options exist, only the
-  short version is displayed for readability.
+Each line depicts an action. When both short and long options exist, only one is
+  displayed, often the shorter.
 <p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
     <td><code class="Nm">bootiso</code></td>
     <td>[<code class="Fl">-aJMy</code>] [<code class="Fl">-d</code>
-      <var class="Ar">device</var>] [<code class="Fl">-L</code>
-      <var class="Ar">label</var>] [<code class="Fl">-t</code>
-      <var class="Ar">fstype</var>] [<code class="Cm">--icopy</code> |
-      <code class="Cm">--dd</code> | <code class="Cm">--mrsync</code>
-      [<code class="Cm">--mbr</code>] [<code class="Cm">--no-wimsplit</code>]
-      [<code class="Cm">--local-bootloader</code> |
-      <code class="Cm">--remote-bootloader</code>
-      <var class="Ar">version</var>]] [<code class="Cm">--no-hash-check</code> |
+      <var class="Ar">device</var>] [<code class="Cm">--no-hash-check</code> |
       [<code class="Cm">--hash-file</code> <var class="Ar">hashfile</var>]
       [<code class="Cm">--force-hash-check</code>]]
       [<code class="Cm">--no-size-check</code>]
-      [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--</code>]
+      [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--icopy</code>
+      | <code class="Cm">--dd</code> | <code class="Cm">--mrsync</code>
+      [<code class="Fl">-L</code> <var class="Ar">label</var>]
+      [<code class="Fl">-t</code> <var class="Ar">fstype</var>]
+      [<code class="Cm">--mbr</code>] [<code class="Cm">--no-wimsplit</code>]
+      [<code class="Cm">--local-bootloader</code> |
+      <code class="Cm">--remote-bootloader</code>
+      <var class="Ar">version</var>]] [<code class="Cm">--</code>]
       <var class="Ar">imagefile</var></td>
   </tr>
 </table>
@@ -133,32 +133,36 @@ One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
 <dl class="Bl-tag">
   <dt><a class="permalink" href="#f,"><code class="Fl" id="f,">-f,</code></a>
     <code class="Cm">--format</code></dt>
-  <dd>Create a GPT partition table describing a partition occupying all the
-      available place. Finally, format this partition in FAT32 or any type
-      available with the <code class="Cm">--type</code> modifier.</dd>
+  <dd>Wipe and format the selected USB device.
+    <p class="Pp"><b class="Sy">Default Behavior:</b> If no device were
+        explicitly selected with <code class="Cm">--device</code> modifier,
+        <code class="Nm">bootiso</code> will prompt for selection. With no
+        further notice, <code class="Nm">bootiso</code> will write a GPT
+        partition table and format a FAT32 partition, but
+        <code class="Cm">--mbr</code> and <code class="Cm">--type</code>
+        modifiers can change those defaults.</p>
+  </dd>
   <dt><a class="permalink" href="#h,"><code class="Fl" id="h,">-h,</code></a>
     <code class="Cm">--help</code></dt>
-  <dd><b class="Sy">Help</b> displays a concise list of options then exits.</dd>
+  <dd>Display a concise list of options then exits.</dd>
   <dt><a class="permalink" href="#i,"><code class="Fl" id="i,">-i,</code></a>
     <code class="Cm">--inspect</code></dt>
-  <dd><b class="Sy">Inspect</b> <var class="Ar">imagefile</var> boot
-      capabilities and how <code class="Nm">bootiso</code> can handle it. In
-      addition, validate this file against a hash file if one is found, then
-      exit.</dd>
+  <dd>Inspect <var class="Ar">imagefile</var> boot capabilities and how
+      <code class="Nm">bootiso</code> can handle it. In addition, validate this
+      file against a hash file if one is found, then exit.</dd>
   <dt><a class="permalink" href="#l,"><code class="Fl" id="l,">-l,</code></a>
     <code class="Cm">--list-usb-drives</code></dt>
-  <dd><b class="Sy">List USB drives</b> then exits. Diverse information will be
-      printed such as model, vendor, size, serial number and device file name
-      which can be later used with <code class="Fl">-d,</code>
-      <code class="Cm">--device</code> modifier.</dd>
+  <dd>List USB drives then exits. Diverse information will be printed such as
+      model, vendor, size and device file name which can be later used with
+      <code class="Fl">-d,</code> <code class="Cm">--device</code>
+    modifier.</dd>
   <dt><a class="permalink" href="#p,"><code class="Fl" id="p,">-p,</code></a>
     <code class="Cm">--probe</code></dt>
-  <dd><b class="Sy">Probe</b> is equivalent to <b class="Sy">inspect</b>
-      followed by <b class="Sy">list USB drives</b> actions.</dd>
+  <dd>Probe is equivalent to <b class="Sy">inspect</b> followed by
+      <b class="Sy">list USB drives</b> actions.</dd>
   <dt><a class="permalink" href="#v,"><code class="Fl" id="v,">-v,</code></a>
     <code class="Cm">--version</code></dt>
-  <dd><b class="Sy">Version</b> displays <code class="Nm">bootiso</code> version
-      then exits.</dd>
+  <dd>Displays <code class="Nm">bootiso</code> version then exits.</dd>
 </dl>
 </section>
 <section class="Ss">
@@ -217,14 +221,16 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dt><a class="permalink" href="#--local-bootloader"><code class="Cm" id="--local-bootloader">--local-bootloader</code></a></dt>
   <dd>Prevent download of remote bootloader and force local syslinux during
       installation. This might work, but could also lower the chances of
-      successful legacy BIOS boot, especially when the major versions
-    mismatch.</dd>
+      successful legacy BIOS boot, especially when the major versions mismatch.
+      Requires <code class="Cm">--mrsync</code> install modifier.</dd>
   <dt><a class="permalink" href="#M,"><code class="Fl" id="M,">-M,</code></a>
     <code class="Cm">--no-mime-check</code></dt>
   <dd>Don't assert that <var class="Ar">imagefile</var> has the right
     mime-type.</dd>
   <dt><a class="permalink" href="#--mbr"><code class="Cm" id="--mbr">--mbr</code></a></dt>
-  <dd>Enforce legacy MBR partition table over default GPT.</dd>
+  <dd>Enforce legacy MBR partition table over default GPT. Requires
+      <code class="Cm">--mrsync</code> install modifier or
+      <b class="Sy">format</b> action.</dd>
   <dt><a class="permalink" href="#--no-size-check"><code class="Cm" id="--no-size-check">--no-size-check</code></a></dt>
   <dd>Don't assert that selected device size is larger than
       <var class="Ar">imagefile</var>.</dd>
@@ -232,30 +238,36 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dd>Don't assert that selected device is connected through USB bus.</dd>
   <dt><a class="permalink" href="#--no-wimsplit"><code class="Cm" id="--no-wimsplit">--no-wimsplit</code></a></dt>
   <dd>Prevent splitting <span class="Pa">/sources/install.wim</span> file in
-      Windows ISOs.</dd>
+      Windows ISOs. Requires <code class="Cm">--mrsync</code> install
+    modifier.</dd>
   <dt><a class="permalink" href="#--remote-bootloader"><code class="Cm" id="--remote-bootloader">--remote-bootloader</code></a>
     <var class="Ar">version</var></dt>
   <dd>Force download of <a class="Xr">syslinux</a> remote bootloader at version
       <var class="Ar">version</var>. Version must follow the pattern
       MAJOR.MINOR. Examples: 4.10, 6.04. That will only work with x64 system
-      architecture.</dd>
+      architecture. Requires <code class="Cm">--mrsync</code> install
+    modifier.</dd>
   <dt><a class="permalink" href="#t"><code class="Fl" id="t">-t</code></a>
     <var class="Ar">fstype</var>, <code class="Cm">--type</code>
     <var class="Ar">fstype</var></dt>
   <dd>Format to <var class="Ar">fstype</var> instead of default FAT32 (vfat).
-      Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs.
+      Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs. Requires
+      <code class="Cm">--mrsync</code> install modifier or
+      <b class="Sy">format</b> action.
     <p class="Pp"><b class="Sy">Important Notice:</b> usage with
-        <b class="Sy">install</b> action is discouraged: it will be ignored in
-        &#x201C;Image-Copy&#x201D; mode, and could prevent UEFI boot in
-        &#x201C;Mount-Rsync&#x201D; mode since the UEFI standard mandates a
-        FAT32 partition.</p>
+        <b class="Sy">install</b> action is discouraged: it will be rejected in
+        &#x201C;Automatic&#x201D; and &#x201C;Image-Copy&#x201D; modes, and
+        could prevent UEFI boot in &#x201C;Mount-Rsync&#x201D; mode since the
+        UEFI standard mandates a FAT32 partition.</p>
   </dd>
   <dt><a class="permalink" href="#L"><code class="Fl" id="L">-L</code></a>
     <var class="Ar">label</var>, <code class="Cm">--label</code>
     <var class="Ar">label</var></dt>
   <dd>Set partition label as <var class="Ar">label</var> instead of inferring.
       <code class="Nm">bootiso</code> will cut labels which are too long
-      regarding the selected filesystem limitations.
+      regarding the selected filesystem limitations. Requires
+      <code class="Cm">--mrsync</code> install modifier or
+      <b class="Sy">format</b> action.
     <p class="Pp"><b class="Sy">Note:</b> It cannot work in
         &#x201C;Image-Copy&#x201D; install mode.</p>
   </dd>

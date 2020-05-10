@@ -4,25 +4,17 @@
 .Os bootiso 4.0.0-alpha.0
 .Sh NAME 
 .Nm bootiso 
-.Nd create a bootable USB drive from an ISO image
+.Nd create a bootable USB drive from an image file
 .
 .
 .Sh SYNOPSIS 
 .\" Install action
-Each line depicts an action. When both short and long options exist,
-only the short version is displayed for readability.
+Each line depicts an action. When both short and long options exist, only
+one is displayed, often the shorter.
 .Pp
 .Nm bootiso
 .Op Fl aJMy
 .Op Fl d Ar device
-.Op Fl L Ar label
-.Op Fl t Ar fstype
-.Oo
-.Cm --icopy | --dd | --mrsync
-.Op Cm --mbr
-.Op Cm --no-wimsplit
-.Op Cm --local-bootloader | Cm --remote-bootloader Ar version
-.Oc
 .Oo
 .Cm --no-hash-check | 
 .Op Cm --hash-file Ar hashfile
@@ -30,6 +22,14 @@ only the short version is displayed for readability.
 .Oc
 .Op Cm --no-size-check
 .Op Cm --no-usb-check
+.Oo
+.Cm --icopy | --dd | --mrsync
+.Op Fl L Ar label
+.Op Fl t Ar fstype
+.Op Cm --mbr
+.Op Cm --no-wimsplit
+.Op Cm --local-bootloader | Cm --remote-bootloader Ar version
+.Oc
 .Op Cm --
 .Ar imagefile
 .
@@ -124,39 +124,46 @@ bellow).
 .Ss Actions
 .Bl -tag
 .It Fl f, Cm --format
-Create a GPT partition table
-describing a partition occupying all the available place.
-Finally, format this partition in FAT32 or any type available
-with the
+Wipe and format the selected USB device.
+
+.Sy Default Behavior:
+If no device were
+explicitly selected with
+.Cm --device
+modifier,
+.Nm
+will prompt for selection. With no further notice,
+.Nm
+will write a GPT partition table and format a FAT32 partition,
+but
+.Cm --mbr
+and
 .Cm --type
-modifier.
+modifiers can change those defaults.
 .It Fl h, Cm --help
-.Sy Help
-displays a concise list of options then exits.
+Display a concise list of options then exits.
 .It Fl i, Cm --inspect
-.Sy Inspect
+Inspect
 .Ar imagefile
 boot capabilities and how
 .Nm
 can handle it. In addition, validate this file
 against a hash file if one is found, then exit.
 .It Fl l, Cm --list-usb-drives
-.Sy List USB drives
-then exits. Diverse information will be printed such as model,
-vendor, size, serial number and device file name which can be later
-used with
+List USB drives then exits.
+Diverse information will be printed such as model,
+vendor, size and device file name which can be later used with
 .Fl d, Cm --device
 modifier.
 .It Fl p, Cm --probe
-.Sy Probe
+Probe
 is equivalent to
 .Sy inspect
 followed by 
 .Sy list USB drives
 actions.
 .It Fl v, Cm --version
-.Sy Version
-displays
+Displays
 .Nm
 version then exits.
 .El
@@ -238,12 +245,20 @@ action.
 Prevent download of remote bootloader and force local syslinux during installation.
 This might work, but could also lower the chances of successful legacy BIOS boot, especially
 when the major versions mismatch.
+Requires
+.Cm --mrsync
+install modifier.
 .It Fl M, Cm --no-mime-check
 Don't assert that
 .Ar imagefile
 has the right mime-type.
 .It Cm --mbr
 Enforce legacy MBR partition table over default GPT.
+Requires
+.Cm --mrsync
+install modifier or
+.Sy format
+action.
 .It Cm --no-size-check
 Don't assert that selected device size is larger than
 .Ar "imagefile".
@@ -252,7 +267,9 @@ Don't assert that selected device is connected through USB bus.
 .It Cm --no-wimsplit
 Prevent splitting
 .Pa /sources/install.wim
-file in Windows ISOs.
+file in Windows ISOs. Requires
+.Cm --mrsync
+install modifier.
 .It Cm --remote-bootloader Ar version
 Force download of
 .Xr syslinux
@@ -261,27 +278,43 @@ remote bootloader at version
 Version must follow the pattern MAJOR.MINOR.
 Examples: 4.10, 6.04.
 That will only work with x64 system architecture.
+Requires
+.Cm --mrsync
+install modifier.
+.
 .It Fl t Ar "fstype", Cm --type Ar fstype
 Format to
 .Ar fstype
 instead of default FAT32 (vfat).
 Supported types: vfat, exfat, ntfs, ext2, ext3, ext4, and f2fs.
+Requires
+.Cm --mrsync
+install modifier or
+.Sy format
+action.
 .Pp
 .Sy Important Notice:
 usage with
 .Sy install
-action is discouraged: it will be ignored in
+action is discouraged: it will be rejected in
+.Dq Automatic
+and
 .Dq Image-Copy
-mode, and could prevent UEFI boot in
+modes, and could prevent UEFI boot in
 .Dq Mount-Rsync
 mode since the UEFI standard mandates a FAT32 partition.
 .It Fl L Ar "label", Cm --label Ar label
 Set partition label as
 .Ar label
-instead of inferring.
+instead of inferring. 
 .Nm
 will cut labels which
 are too long regarding the selected filesystem limitations.
+Requires
+.Cm --mrsync
+install modifier or
+.Sy format
+action.
 .Pp
 .Sy Note:
 It cannot work in
