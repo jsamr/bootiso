@@ -61,7 +61,7 @@ However, fo the sake of user comfort, it is recommanded that package maintainers
         <td colspan="3" align="center">bash &ge; 4.0</td>
       </tr>
       <td style="text-align: left;">
-        md5sum, sha1sum, sha256sum, sha512sum, cut, cat, mkdir, chmod, dirname, basename, date, tr
+        md5sum, sha1sum, sha256sum, sha512sum, cut, cat, mkdir, chmod, dirname, basename, date, tr, tty, sleep
       </td>
       <td colspan="3" align="center">coreutils</td>
     </tr>
