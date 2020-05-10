@@ -942,14 +942,14 @@ parseArguments() {
             mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
             set -- "${extractedOptions[@]}" "$@"
           else
-            printf "\\e[0;31m%s\\e[m" "$scriptName: Unknown option: "
-            printf '%s' "$key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
+            printf "\\e[0;31m%s\\e[m" "$scriptName: Unknown options: "
+            printf '%s.' "$key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
             if [[ "$key" =~ ^-[a-zA-Z0-9]+$ ]]; then
               typeset wrongOptions=$(printf '%s' "${key#*-}" | grep -Po "[^$shortOptions]" | tr -d '\n')
               if [ ${#key} -eq 2 ]; then
-                yellowify "$(boldify "$wrongOptions") flag."
+                echowarn "$(boldify "$wrongOptions") flag were not recognized."
               else
-                yellowify "$(boldify "$wrongOptions") flags."
+                echowarn "$(boldify "$wrongOptions") flags were not recognized."
               fi
             fi
             failAndExit "${exitStatus[SYNOPSISNC]}"
