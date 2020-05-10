@@ -2,9 +2,9 @@
 [![Version](https://badgen.net/github/tag/jsamr/bootiso?label=version)]()
 [![Codacy grade](https://img.shields.io/codacy/grade/9f441cf6a1d6475484a9bb3ec2ed9713.svg)](https://app.codacy.com/app/jsamr/bootiso?utm_source=github.com&utm_medium=referral&utm_content=jsamr/bootiso&utm_campaign=badger)
 
-**Create a USB bootable device from an ISO image easily and securely.**
+**Create a USB bootable device from an image file easily and securely.**
 
-Because of its reliance on GNU tools, **bootiso** target system is GNU/Linux.
+Because of its reliance on GNU and POSIX tools, **bootiso** primarly targets GNU/Linux systems.
 
 ## Install
 
