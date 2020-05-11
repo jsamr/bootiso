@@ -20,16 +20,20 @@ Check [install.md](install.md) for detailed instructions.
 
 ## Reference Manual
 
-The official manual is available at [jsamr.github.io/bootiso](https://jsamr.github.io/bootiso/). The reference should also be available as a man page via `man bootiso`. If you are in a hury, jump to the [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES) section.
+The official manual is available at [jsamr.github.io/bootiso](https://jsamr.github.io/bootiso/).
+The reference should also be available as a man page via `man bootiso`.
+If you are in a hury, jump to the [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES) section.
 
-| Highlights                                                  |
-|:-----------------------------------------------------------:|
-| [SYNOPSIS](https://jsamr.github.io/bootiso/#SYNOPSIS)       |
-| [DESCRIPTION](https://jsamr.github.io/bootiso/#DESCRIPTION) |
-| [GUARDRAILS](https://jsamr.github.io/bootiso/#GUARDRAILS)   |
-| [ENVIRONMENT](https://jsamr.github.io/bootiso/#ENVIRONMENT) |
-| [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES)       |
-| [DIAGNOSTICS](https://jsamr.github.io/bootiso/#DIAGNOSTICS) |
+| Highlights                                                          |
+|:-------------------------------------------------------------------:|
+| [SYNOPSIS](https://jsamr.github.io/bootiso/#SYNOPSIS)               |
+| [DESCRIPTION](https://jsamr.github.io/bootiso/#DESCRIPTION)         |
+| [INSTALL MODES](https://jsamr.github.io/bootiso/#INSTALL_MODES)     |
+| [GUARDRAILS](https://jsamr.github.io/bootiso/#GUARDRAILS)           |
+| [EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)         |
+| [ENVIRONMENT](https://jsamr.github.io/bootiso/#ENVIRONMENT)         |
+| [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES)               |
+| [TROUBLESHOOTING](https://jsamr.github.io/bootiso/#TROUBLESHOOTING) |
 
 <a name="action"></a>
 
@@ -64,4 +68,5 @@ In the bellow example, the selected device with `--device` (shorten `-d`) flag i
 ## Distros tweaks
 
 - On Fedora, set `SYSLINUX_LIB_ROOT` env to `/usr/share/syslinux`
+- On Fedora, wimlib is packaged under wimlib-utils
 - On Debian-based systems, wimlib is packaged under wimtools
