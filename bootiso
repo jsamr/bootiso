@@ -275,7 +275,7 @@ Usage: $(boldify "$scriptName") [$(underline modifier...)] <imagefile>
 typeset helpHint="
 Invoked with no action flag, $scriptName will default to install action in automatic mode: inspect <imagefile> \
 boot capabilities and find the best way to make a bootable USB drive. \
-Read $scriptName man page for a detailed description and advanced options."
+Advanced options are described in $scriptName man page."
 
 displayHelp() {
   local termwidth
