@@ -8,9 +8,22 @@
 .
 .
 .Sh SYNOPSIS 
-.\" Install action
-Each line depicts an action. When both short and long options exist, only
-one is displayed, often the shorter.
+.\" Install auto action
+Each line depicts an action, with the exception of the first three lines
+which describe
+.Sy install
+action modes. Respectively,
+.Dq Automatic,
+.Dq Image-Copy
+and
+.Dq Mount-Rsync
+modes. In the former two,
+.Ar INSTALLMODS
+refers to an option enumerated in the first
+.Dq Automatic
+synopsis line.
+When both short and long options exist, only
+one is printed.
 .Pp
 .Nm bootiso
 .Op Fl aJMy
@@ -22,17 +35,28 @@ one is displayed, often the shorter.
 .Oc
 .Op Cm --no-size-check
 .Op Cm --no-usb-check
-.Oo
-.Cm --icopy | --dd | --mrsync
+.Op Cm --
+.Ar imagefile
+.\" Install Image-Copy mode
+.Nm bootiso
+.Cm --icopy
+.Op Ar "INSTALLMODS" No ...
+.Op Cm --
+.Ar imagefile
+.\" Install Mount-Rsync mode
+.Nm bootiso
+.Cm --mrsync
+.Op Ar "INSTALLMODS" No ...
 .Op Fl L Ar label
 .Op Fl t Ar fstype
-.Op Cm --mbr
+.Op Cm --gpt
 .Op Cm --no-wimsplit
+.Op Cm --partype Ar typeid
 .Op Cm --local-bootloader | Cm --remote-bootloader Ar version
-.Oc
 .Op Cm --
 .Ar imagefile
 .
+.Pp
 .\" Format action
 .Nm bootiso
 .Fl f
@@ -40,9 +64,11 @@ one is displayed, often the shorter.
 .Op Fl d Ar device
 .Op Fl L Ar label
 .Op Fl t Ar fstype
-.Op Cm --mbr
+.Op Cm --gpt
 .Op Cm --no-usb-check
+.Op Cm --partype Ar typeid
 .
+.Pp
 .\" Inspect action
 .Nm bootiso
 .Fl i
@@ -54,11 +80,13 @@ one is displayed, often the shorter.
 .Op Cm --
 .Ar imagefile
 .
+.Pp
 .\" List usb drives action
 .Nm bootiso
 .Fl l
 .Op Cm --no-usb-check
 .
+.Pp
 .\" Probe action
 .Nm bootiso
 .Fl p
@@ -71,10 +99,12 @@ one is displayed, often the shorter.
 .Op Cm --
 .Ar imagefile
 .
+.Pp
 .\" Help action
 .Nm bootiso
 .Fl h
 .
+.Pp
 .\" Version action
 .Nm bootiso
 .Fl v
@@ -134,12 +164,12 @@ modifier,
 .Nm
 will prompt for selection. With no further notice,
 .Nm
-will write a GPT partition table and format a FAT32 partition,
-but
-.Cm --mbr
+will write a MBR partition table and format a FAT32 partition.
+These defaults can be overriden with
+.Cm --gpt
 and
 .Cm --type
-modifiers can change those defaults.
+modifiers.
 .It Fl h, Cm --help
 Display a concise list of options then exits.
 .It Fl i, Cm --inspect
@@ -213,6 +243,20 @@ You will be prompted to select a device when not using this modifier.
 Fail and exit when no valid hash is found.
 The default behavior is to prompt user when hash check
 fails.
+.It Cm --gpt
+Enforce GPT partition scheme over default MBR. Requires
+.Cm --mrsync
+install modifier or
+.Sy format
+action.
+.Pp
+.Sy Important Notice:
+Booting systems are generally more sensible to GPT partition types compared to MBR
+partition types. It is thus advised that you explicitly set the partition type with
+.Cm --partype
+modifier when enforcing GPT. This is however not required for Windows images which have
+a special handling by
+.Nm .
 .It Fl H, Cm --no-hash-check
 Skip the lookup for hash sum-files in the same folder as
 .Ar "imagefile".
@@ -231,8 +275,9 @@ Located in the same folder as
 .It
 Which name is the concatenation of
 .Ar "imagefile",
-"." and the hash function name suffixed with
-.Ql "sum".
+.Dq "\&."
+and the hash function name suffixed with
+.Dq "sum".
 .El
 .Pp
 Supported hash functions are md5, sha1, sha256 and sha512.
@@ -252,13 +297,6 @@ install modifier.
 Don't assert that
 .Ar imagefile
 has the right mime-type.
-.It Cm --mbr
-Enforce legacy MBR partition table over default GPT.
-Requires
-.Cm --mrsync
-install modifier or
-.Sy format
-action.
 .It Cm --no-size-check
 Don't assert that selected device size is larger than
 .Ar "imagefile".
@@ -270,6 +308,20 @@ Prevent splitting
 file in Windows ISOs. Requires
 .Cm --mrsync
 install modifier.
+.It Cm --partype Ar typeid
+Enforce a specific MBR partition type, or GPT partition type when
+.Cm --gpt
+modifier is set. See
+.Xr sfdisk 8
+.Dq type
+field described in
+.Em "INPUT FORMATS"
+section.
+Requires
+.Cm --mrsync
+install modifier or
+.Sy format
+action.
 .It Cm --remote-bootloader Ar version
 Force download of
 .Xr syslinux
@@ -341,21 +393,21 @@ mode (see
 bellow).
 .Bl -tag
 .It Cm "--icopy", Cm --dd
-Override
-.Dq Automatic
-mode and install
-.Ar imagefile
-in
+Enforce
 .Dq Image-Copy
-mode. 
-.It Cm --mrsync
-Override
-.Dq Automatic
-mode and install
+mode and enable specific options for this mode.
+.Nm
+will fail if the
 .Ar imagefile
-in
+is not hybrid.
+.It Cm --mrsync
+Enforce
 .Dq Mount-Rsync
-mode.
+mode and enable specific options for this mode.
+.Nm
+will fail if the
+.Ar imagefile
+is not an ISO 9660 volume container.
 .El
 .
 .
@@ -391,11 +443,15 @@ install modifier,
 .Nm
 uses
 .Xr dd 1
-utility to make a raw copy of the ISO.
-This is perfectly appropriate when the ISO file is aimed both at disk drives and CDs.
-These are special ISOs which have been generated with 
-.Xr isohybrid 1 .
-A vast majority of GNU-Linux images are shipped with this feature.
+utility to make a raw copy of
+.Ar "imagefile".
+This is perfectly appropriate when the image file contains a builtin boot capability.
+It requires to have a partition table, which can be directly copied to the target device
+along with the data partitions. ISOs with this feature are called
+.Dq "hybrid",
+and a vast majority of GNU-Linux images are shipped that way. See 
+.Xr isohybrid 1
+for more information on this topic.
 .It Em Mount-Rsync
 In
 .Dq Mount-Rsync
@@ -403,7 +459,7 @@ mode enforceable with
 .Cm --mrsync
 install modifier,
 .Nm
-creates one partition and a partition table in the USB drive and copy files
+creates a MBR partition table and format one partition in the USB drive and copy files
 from mounted ISO. The behavior will change depending on the presence of special files to
 identify wether legacy BIOS boot or UEFI boot should be preferred.
 .Nm
@@ -412,16 +468,14 @@ will check conditions to figure out which one to choose:
 .It
 If 
 .Pa /efi/boot/*
-boot files exist, choose UEFI boot, GPT partition table
-and FAT32 filesystem mandated by the standard. In which case, if a Windows
+boot files exist, choose UEFI boot and FAT32 filesystem mandated by
+the standard. In which case, if a Windows
 .Pa /sources/install.wim
 file is found, 
 .Xr wimlib-imagex 1
 will be used to circumvent FAT32 filesystem size limitations.
 You can prevent this behavior with 
 .Cm --no-wimsplit
-modifier flag. You can also enforce MBR partition table with
-.Cm --mbr
 modifier flag.
 .It
 If  
@@ -497,55 +551,7 @@ See
 .El
 .
 .
-.Sh EXAMPLES
-.Bl -tag
-.It Sy Probe
-To have a quick feedback, probe around to check
-.Nm
-capabilities with given
-.Dq file.iso
-and list USB drives candidates:
-.Pp
-.D1 Nm Fl p No file.iso
-.Pp
-Alternatively, you can use
-.Fl i
-action flag to solely inspect
-.Dq file.iso
-or
-.Fl l
-action flag to solely list USB drives.
-.It Sy Install
-With the default
-.Sy install
-action in
-.Dq Automatic
-mode, give 
-.Dq file.iso
-as sole argument and you'll be prompted to select from available USB drives.
-If there is only one USB device connected,
-.Nm
-will automatically select it:
-.Pp
-.D1 Nm No file.iso
-.Pp
-You can also explicitly set the target USB device:
-.Pp
-.D1 Nm Fl d No /dev/sde file.iso
-.Pp
-Avoid being prompted before writting to USB drive and autoselect device when there is
-exactly one connected:
-.Pp
-.D1 Nm Fl ay No file.iso
-.It Sy Format
-Format the USB drive to NTFS and label it 
-.Dq "SONY JOE".
-Be careful with the label name, which size and character set is limited by the
-target filesystem:
-.Pp
-.D1 Nm Fl ft No ntfs Fl L No 'SONY JOE'
-.El
-.Sh DIAGNOSTICS
+.Sh EXIT STATUS
 The
 .Nm
 utility exits 0 on success, >0 on error. Error exit status < 64 depict
@@ -595,6 +601,73 @@ Internal third party error.
 .El
 .
 .
+.Sh EXAMPLES
+.Bl -tag
+.It Sy Probe
+To have a quick feedback, probe around to check
+.Nm
+capabilities with given
+.Dq file.iso
+and list USB drives candidates:
+.Pp
+.D1 Nm Fl p No file.iso
+.Pp
+Alternatively, you can use
+.Fl i
+action flag to solely inspect
+.Dq file.iso
+or
+.Fl l
+action flag to solely list USB drives.
+.It Sy Install
+With the default
+.Sy install
+action in
+.Dq Automatic
+mode, give 
+.Dq file.iso
+as sole argument and you'll be prompted to select from available USB drives.
+If there is only one USB device connected,
+.Nm
+will automatically select it:
+.Pp
+.D1 Nm No file.iso
+.Pp
+You can also explicitly set the target USB device:
+.Pp
+.D1 Nm Fl d No /dev/sde file.iso
+.Pp
+Avoid being prompted before writting to USB drive and autoselect device when there is
+exactly one connected:
+.Pp
+.D1 Nm Fl ay No file.iso
+.It Sy Format
+Format the USB drive to NTFS and label it 
+.Dq "SONY JOE".
+Be careful with the label name, which size and character set is limited by the
+target filesystem:
+.Pp
+.D1 Nm Fl ft No ntfs Fl L No 'SONY JOE'
+.El
+.Sh TROUBLESHOOTING
+.Bl -bullet
+.It
+If legacy BIOS boot doesn't work, be advised that
+UEFI-compliant boot systems have a Compatibility Support Module (CSM) option to enable legacy BIOS boot.
+.It
+Remote
+.Xr syslinux
+booloader feature only work in x64 systems.
+.It
+If the
+.Ar imagefile
+has UEFI support and the boot fails on a UEFI-compatible machine, one can try different partition types with
+.Cm --partype
+modifier, because some systems will assume specific types and refuse to load data otherwise.
+This is especially prevalent with GPT partition tables.
+.El
+.
+.
 .Sh COPYRIGHT
 Copyright Jules Sam. Randolph.
 License MIT
@@ -636,30 +709,6 @@ Ch. 12,
 .\" .Sh HISTORY
 .Sh AUTHORS
 .An "Jules Sam. Randolph" Aq "jules.sam.randolph@gmail.com"
-.
-.
-.Sh CAVEATS
-.Nm
-logic becomes fuzzy when not in
-.Dq Image-Copy
-mode. It leads to limitations:
-.Bl -bullet
-.It
-.Nm
-cannot handle partition tables mapping more than one partition in
-.Dq Mount-Rsync
-mode.
-.It
-When we refer to 
-.Dq UEFI
-or
-.Dq legacy BIOS
-boot capabilities in this manual, the user is expected to confirm that the computer on which to USB-boot has such capabilities.
-.It
-Remote booloader
-.Xr syslinux
-feature only work in x64 systems.
-.El
 .
 .
 .\" .Sh BUGS

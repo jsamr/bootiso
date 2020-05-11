@@ -24,8 +24,13 @@
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SYNOPSIS"><a class="permalink" href="#SYNOPSIS">SYNOPSIS</a></h1>
-Each line depicts an action. When both short and long options exist, only one is
-  displayed, often the shorter.
+Each line depicts an action, with the exception of the first three lines which
+  describe <b class="Sy">install</b> action modes. Respectively,
+  &#x201C;Automatic,&#x201D; &#x201C;Image-Copy&#x201D; and
+  &#x201C;Mount-Rsync&#x201D; modes. In the former two,
+  <var class="Ar">INSTALLMODS</var> refers to an option enumerated in the first
+  &#x201C;Automatic&#x201D; synopsis line. When both short and long options
+  exist, only one is printed.
 <p class="Pp"></p>
 <br/>
 <table class="Nm">
@@ -36,17 +41,35 @@ Each line depicts an action. When both short and long options exist, only one is
       [<code class="Cm">--hash-file</code> <var class="Ar">hashfile</var>]
       [<code class="Cm">--force-hash-check</code>]]
       [<code class="Cm">--no-size-check</code>]
-      [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--icopy</code>
-      | <code class="Cm">--dd</code> | <code class="Cm">--mrsync</code>
-      [<code class="Fl">-L</code> <var class="Ar">label</var>]
-      [<code class="Fl">-t</code> <var class="Ar">fstype</var>]
-      [<code class="Cm">--mbr</code>] [<code class="Cm">--no-wimsplit</code>]
-      [<code class="Cm">--local-bootloader</code> |
-      <code class="Cm">--remote-bootloader</code>
-      <var class="Ar">version</var>]] [<code class="Cm">--</code>]
+      [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--</code>]
       <var class="Ar">imagefile</var></td>
   </tr>
 </table>
+<br/>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td><code class="Cm">--icopy</code> [<var class="Ar">INSTALLMODS</var>
+      <span class="No">...</span>] [<code class="Cm">--</code>]
+      <var class="Ar">imagefile</var></td>
+  </tr>
+</table>
+<br/>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm">bootiso</code></td>
+    <td><code class="Cm">--mrsync</code> [<var class="Ar">INSTALLMODS</var>
+      <span class="No">...</span>] [<code class="Fl">-L</code>
+      <var class="Ar">label</var>] [<code class="Fl">-t</code>
+      <var class="Ar">fstype</var>] [<code class="Cm">--gpt</code>]
+      [<code class="Cm">--no-wimsplit</code>] [<code class="Cm">--partype</code>
+      <var class="Ar">typeid</var>] [<code class="Cm">--local-bootloader</code>
+      | <code class="Cm">--remote-bootloader</code>
+      <var class="Ar">version</var>] [<code class="Cm">--</code>]
+      <var class="Ar">imagefile</var></td>
+  </tr>
+</table>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
@@ -55,10 +78,11 @@ Each line depicts an action. When both short and long options exist, only one is
       [<code class="Fl">-d</code> <var class="Ar">device</var>]
       [<code class="Fl">-L</code> <var class="Ar">label</var>]
       [<code class="Fl">-t</code> <var class="Ar">fstype</var>]
-      [<code class="Cm">--mbr</code>]
-      [<code class="Cm">--no-usb-check</code>]</td>
+      [<code class="Cm">--gpt</code>] [<code class="Cm">--no-usb-check</code>]
+      [<code class="Cm">--partype</code> <var class="Ar">typeid</var>]</td>
   </tr>
 </table>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
@@ -69,6 +93,7 @@ Each line depicts an action. When both short and long options exist, only one is
       <var class="Ar">imagefile</var></td>
   </tr>
 </table>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
@@ -76,6 +101,7 @@ Each line depicts an action. When both short and long options exist, only one is
     <td><code class="Fl">-l</code> [<code class="Cm">--no-usb-check</code>]</td>
   </tr>
 </table>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
@@ -87,6 +113,7 @@ Each line depicts an action. When both short and long options exist, only one is
       <var class="Ar">imagefile</var></td>
   </tr>
 </table>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
@@ -94,6 +121,7 @@ Each line depicts an action. When both short and long options exist, only one is
     <td><code class="Fl">-h</code></td>
   </tr>
 </table>
+<p class="Pp"></p>
 <br/>
 <table class="Nm">
   <tr>
@@ -137,10 +165,10 @@ One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
     <p class="Pp"><b class="Sy">Default Behavior:</b> If no device were
         explicitly selected with <code class="Cm">--device</code> modifier,
         <code class="Nm">bootiso</code> will prompt for selection. With no
-        further notice, <code class="Nm">bootiso</code> will write a GPT
-        partition table and format a FAT32 partition, but
-        <code class="Cm">--mbr</code> and <code class="Cm">--type</code>
-        modifiers can change those defaults.</p>
+        further notice, <code class="Nm">bootiso</code> will write a MBR
+        partition table and format a FAT32 partition. These defaults can be
+        overriden with <code class="Cm">--gpt</code> and
+        <code class="Cm">--type</code> modifiers.</p>
   </dd>
   <dt><a class="permalink" href="#h,"><code class="Fl" id="h,">-h,</code></a>
     <code class="Cm">--help</code></dt>
@@ -197,6 +225,17 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dt><a class="permalink" href="#--force-hash-check"><code class="Cm" id="--force-hash-check">--force-hash-check</code></a></dt>
   <dd>Fail and exit when no valid hash is found. The default behavior is to
       prompt user when hash check fails.</dd>
+  <dt><a class="permalink" href="#--gpt"><code class="Cm" id="--gpt">--gpt</code></a></dt>
+  <dd>Enforce GPT partition scheme over default MBR. Requires
+      <code class="Cm">--mrsync</code> install modifier or
+      <b class="Sy">format</b> action.
+    <p class="Pp"><b class="Sy">Important Notice:</b> Booting systems are
+        generally more sensible to GPT partition types compared to MBR partition
+        types. It is thus advised that you explicitly set the partition type
+        with <code class="Cm">--partype</code> modifier when enforcing GPT. This
+        is however not required for Windows images which have a special handling
+        by <code class="Nm">bootiso</code>.</p>
+  </dd>
   <dt><a class="permalink" href="#H,"><code class="Fl" id="H,">-H,</code></a>
     <code class="Cm">--no-hash-check</code></dt>
   <dd>Skip the lookup for hash sum-files in the same folder as
@@ -209,8 +248,8 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     <ol class="Bl-enum">
       <li>Located in the same folder as <var class="Ar">imagefile</var>.</li>
       <li>Which name is the concatenation of <var class="Ar">imagefile</var>,
-          &quot;.&quot; and the hash function name suffixed with
-          &#x2018;<code class="Li">sum</code>&#x2019;.</li>
+          &#x201C;.&#x201D; and the hash function name suffixed with
+          &#x201C;sum&#x201D;.</li>
     </ol>
     <p class="Pp">Supported hash functions are md5, sha1, sha256 and sha512.</p>
   </dd>
@@ -227,10 +266,6 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     <code class="Cm">--no-mime-check</code></dt>
   <dd>Don't assert that <var class="Ar">imagefile</var> has the right
     mime-type.</dd>
-  <dt><a class="permalink" href="#--mbr"><code class="Cm" id="--mbr">--mbr</code></a></dt>
-  <dd>Enforce legacy MBR partition table over default GPT. Requires
-      <code class="Cm">--mrsync</code> install modifier or
-      <b class="Sy">format</b> action.</dd>
   <dt><a class="permalink" href="#--no-size-check"><code class="Cm" id="--no-size-check">--no-size-check</code></a></dt>
   <dd>Don't assert that selected device size is larger than
       <var class="Ar">imagefile</var>.</dd>
@@ -240,6 +275,14 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dd>Prevent splitting <span class="Pa">/sources/install.wim</span> file in
       Windows ISOs. Requires <code class="Cm">--mrsync</code> install
     modifier.</dd>
+  <dt><a class="permalink" href="#--partype"><code class="Cm" id="--partype">--partype</code></a>
+    <var class="Ar">typeid</var></dt>
+  <dd>Enforce a specific MBR partition type, or GPT partition type when
+      <code class="Cm">--gpt</code> modifier is set. See
+      <a class="Xr">sfdisk(8)</a> &#x201C;type&#x201D; field described in
+      <i class="Em">INPUT FORMATS</i> section. Requires
+      <code class="Cm">--mrsync</code> install modifier or
+      <b class="Sy">format</b> action.</dd>
   <dt><a class="permalink" href="#--remote-bootloader"><code class="Cm" id="--remote-bootloader">--remote-bootloader</code></a>
     <var class="Ar">version</var></dt>
   <dd>Force download of <a class="Xr">syslinux</a> remote bootloader at version
@@ -290,11 +333,13 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
 <dl class="Bl-tag">
   <dt><a class="permalink" href="#--icopy"><code class="Cm" id="--icopy">--icopy</code></a>,
     <code class="Cm">--dd</code></dt>
-  <dd>Override &#x201C;Automatic&#x201D; mode and install
-      <var class="Ar">imagefile</var> in &#x201C;Image-Copy&#x201D; mode.</dd>
+  <dd>Enforce &#x201C;Image-Copy&#x201D; mode and enable specific options for
+      this mode. <code class="Nm">bootiso</code> will fail if the
+      <var class="Ar">imagefile</var> is not hybrid.</dd>
   <dt><a class="permalink" href="#--mrsync"><code class="Cm" id="--mrsync">--mrsync</code></a></dt>
-  <dd>Override &#x201C;Automatic&#x201D; mode and install
-      <var class="Ar">imagefile</var> in &#x201C;Mount-Rsync&#x201D; mode.</dd>
+  <dd>Enforce &#x201C;Mount-Rsync&#x201D; mode and enable specific options for
+      this mode. <code class="Nm">bootiso</code> will fail if the
+      <var class="Ar">imagefile</var> is not an ISO 9660 volume container.</dd>
 </dl>
 </section>
 </section>
@@ -318,29 +363,29 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
   <dd>In &#x201C;Image-Copy&#x201D; mode enforceable with
       <code class="Cm">--icopy</code> install modifier,
       <code class="Nm">bootiso</code> uses <a class="Xr">dd(1)</a> utility to
-      make a raw copy of the ISO. This is perfectly appropriate when the ISO
-      file is aimed both at disk drives and CDs. These are special ISOs which
-      have been generated with <a class="Xr">isohybrid(1)</a>. A vast majority
-      of GNU-Linux images are shipped with this feature.</dd>
+      make a raw copy of <var class="Ar">imagefile</var>. This is perfectly
+      appropriate when the image file contains a builtin boot capability. It
+      requires to have a partition table, which can be directly copied to the
+      target device along with the data partitions. ISOs with this feature are
+      called &#x201C;hybrid&#x201D;, and a vast majority of GNU-Linux images are
+      shipped that way. See <a class="Xr">isohybrid(1)</a> for more information
+      on this topic.</dd>
   <dt><i class="Em">Mount-Rsync</i></dt>
   <dd>In &#x201C;Mount-Rsync&#x201D; mode enforceable with
       <code class="Cm">--mrsync</code> install modifier,
-      <code class="Nm">bootiso</code> creates one partition and a partition
-      table in the USB drive and copy files from mounted ISO. The behavior will
-      change depending on the presence of special files to identify wether
-      legacy BIOS boot or UEFI boot should be preferred.
+      <code class="Nm">bootiso</code> creates a MBR partition table and format
+      one partition in the USB drive and copy files from mounted ISO. The
+      behavior will change depending on the presence of special files to
+      identify wether legacy BIOS boot or UEFI boot should be preferred.
       <code class="Nm">bootiso</code> will check conditions to figure out which
       one to choose:
     <ol class="Bl-enum">
       <li>If <span class="Pa">/efi/boot/*</span> boot files exist, choose UEFI
-          boot, GPT partition table and FAT32 filesystem mandated by the
-          standard. In which case, if a Windows
-          <span class="Pa">/sources/install.wim</span> file is found,
+          boot and FAT32 filesystem mandated by the standard. In which case, if
+          a Windows <span class="Pa">/sources/install.wim</span> file is found,
           <a class="Xr">wimlib-imagex(1)</a> will be used to circumvent FAT32
           filesystem size limitations. You can prevent this behavior with
-          <code class="Cm">--no-wimsplit</code> modifier flag. You can also
-          enforce MBR partition table with <code class="Cm">--mbr</code>
-          modifier flag.</li>
+          <code class="Cm">--no-wimsplit</code> modifier flag.</li>
       <li>If <a class="Xr">syslinux(1)</a> configuration files are found, it
           will install the <a class="Xr">syslinux</a> bootloader to allow legacy
           BIOS boot and select MBR partition table. When the local version of
@@ -388,51 +433,8 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
 </dl>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
-<dl class="Bl-tag">
-  <dt><b class="Sy">Probe</b></dt>
-  <dd>To have a quick feedback, probe around to check
-      <code class="Nm">bootiso</code> capabilities with given
-      &#x201C;file.iso&#x201D; and list USB drives candidates:
-    <p class="Pp"></p>
-    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
-      <code class="Fl">-p</code> <span class="No">file.iso</span></div>
-    <p class="Pp">Alternatively, you can use <code class="Fl">-i</code> action
-        flag to solely inspect &#x201C;file.iso&#x201D; or
-        <code class="Fl">-l</code> action flag to solely list USB drives.</p>
-  </dd>
-  <dt><b class="Sy">Install</b></dt>
-  <dd>With the default <b class="Sy">install</b> action in
-      &#x201C;Automatic&#x201D; mode, give &#x201C;file.iso&#x201D; as sole
-      argument and you'll be prompted to select from available USB drives. If
-      there is only one USB device connected, <code class="Nm">bootiso</code>
-      will automatically select it:
-    <p class="Pp"></p>
-    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
-      <span class="No">file.iso</span></div>
-    <p class="Pp">You can also explicitly set the target USB device:</p>
-    <p class="Pp"></p>
-    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
-      <code class="Fl">-d</code> <span class="No">/dev/sde file.iso</span></div>
-    <p class="Pp">Avoid being prompted before writting to USB drive and
-        autoselect device when there is exactly one connected:</p>
-    <p class="Pp"></p>
-    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
-      <code class="Fl">-ay</code> <span class="No">file.iso</span></div>
-  </dd>
-  <dt><b class="Sy">Format</b></dt>
-  <dd>Format the USB drive to NTFS and label it &#x201C;SONY JOE&#x201D;. Be
-      careful with the label name, which size and character set is limited by
-      the target filesystem:
-    <p class="Pp"></p>
-    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
-      <code class="Fl">-ft</code> <span class="No">ntfs</span>
-      <code class="Fl">-L</code> <span class="No">'SONY JOE'</span></div>
-  </dd>
-</dl>
-</section>
-<section class="Sh">
-<h1 class="Sh" id="DIAGNOSTICS"><a class="permalink" href="#DIAGNOSTICS">DIAGNOSTICS</a></h1>
+<h1 class="Sh" id="EXIT_STATUS"><a class="permalink" href="#EXIT_STATUS">EXIT
+  STATUS</a></h1>
 The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
   Error exit status &lt; 64 depict unfavorable conditions external to the
   program such as a missing file. On the other hand, exit status superior or
@@ -481,6 +483,65 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
 </dl>
 </section>
 <section class="Sh">
+<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+<dl class="Bl-tag">
+  <dt><b class="Sy">Probe</b></dt>
+  <dd>To have a quick feedback, probe around to check
+      <code class="Nm">bootiso</code> capabilities with given
+      &#x201C;file.iso&#x201D; and list USB drives candidates:
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Fl">-p</code> <span class="No">file.iso</span></div>
+    <p class="Pp">Alternatively, you can use <code class="Fl">-i</code> action
+        flag to solely inspect &#x201C;file.iso&#x201D; or
+        <code class="Fl">-l</code> action flag to solely list USB drives.</p>
+  </dd>
+  <dt><b class="Sy">Install</b></dt>
+  <dd>With the default <b class="Sy">install</b> action in
+      &#x201C;Automatic&#x201D; mode, give &#x201C;file.iso&#x201D; as sole
+      argument and you'll be prompted to select from available USB drives. If
+      there is only one USB device connected, <code class="Nm">bootiso</code>
+      will automatically select it:
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <span class="No">file.iso</span></div>
+    <p class="Pp">You can also explicitly set the target USB device:</p>
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Fl">-d</code> <span class="No">/dev/sde file.iso</span></div>
+    <p class="Pp">Avoid being prompted before writting to USB drive and
+        autoselect device when there is exactly one connected:</p>
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Fl">-ay</code> <span class="No">file.iso</span></div>
+  </dd>
+  <dt><b class="Sy">Format</b></dt>
+  <dd>Format the USB drive to NTFS and label it &#x201C;SONY JOE&#x201D;. Be
+      careful with the label name, which size and character set is limited by
+      the target filesystem:
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Fl">-ft</code> <span class="No">ntfs</span>
+      <code class="Fl">-L</code> <span class="No">'SONY JOE'</span></div>
+  </dd>
+</dl>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="TROUBLESHOOTING"><a class="permalink" href="#TROUBLESHOOTING">TROUBLESHOOTING</a></h1>
+<ul class="Bl-bullet">
+  <li>If legacy BIOS boot doesn't work, be advised that UEFI-compliant boot
+      systems have a Compatibility Support Module (CSM) option to enable legacy
+      BIOS boot.</li>
+  <li>Remote <a class="Xr">syslinux</a> booloader feature only work in x64
+      systems.</li>
+  <li>If the <var class="Ar">imagefile</var> has UEFI support and the boot fails
+      on a UEFI-compatible machine, one can try different partition types with
+      <code class="Cm">--partype</code> modifier, because some systems will
+      assume specific types and refuse to load data otherwise. This is
+      especially prevalent with GPT partition tables.</li>
+</ul>
+</section>
+<section class="Sh">
 <h1 class="Sh" id="COPYRIGHT"><a class="permalink" href="#COPYRIGHT">COPYRIGHT</a></h1>
 Copyright Jules Sam. Randolph. License MIT https://opensource.org/licenses/MIT
   This is free software: you are free to change and redistribute it. There is NO
@@ -513,20 +574,6 @@ Copyright Jules Sam. Randolph. License MIT https://opensource.org/licenses/MIT
 <h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
 <span class="An">Jules Sam. Randolph</span>
   &#x27E8;jules.sam.randolph@gmail.com&#x27E9;
-</section>
-<section class="Sh">
-<h1 class="Sh" id="CAVEATS"><a class="permalink" href="#CAVEATS">CAVEATS</a></h1>
-<code class="Nm">bootiso</code> logic becomes fuzzy when not in
-  &#x201C;Image-Copy&#x201D; mode. It leads to limitations:
-<ul class="Bl-bullet">
-  <li><code class="Nm">bootiso</code> cannot handle partition tables mapping
-      more than one partition in &#x201C;Mount-Rsync&#x201D; mode.</li>
-  <li>When we refer to &#x201C;UEFI&#x201D; or &#x201C;legacy BIOS&#x201D; boot
-      capabilities in this manual, the user is expected to confirm that the
-      computer on which to USB-boot has such capabilities.</li>
-  <li>Remote booloader <a class="Xr">syslinux</a> feature only work in x64
-      systems.</li>
-</ul>
 </section>
 </div>
 <table class="foot">
