@@ -92,7 +92,7 @@ typeset mountRoot=/mnt
 typeset tempRoot=/var/tmp/bootiso
 typeset cacheRoot=/var/cache/bootiso
 typeset selectedPartition
-typeset isoMountPoint
+typeset elTorinoMountPoint
 typeset usbMountPoint
 typeset startTime
 typeset endTime
@@ -109,12 +109,13 @@ typeset logPrefixEmpty="$(printf "%${logPrefixLength}s")"
 typeset -A syslinuxInstall
 typeset -a temporaryAssets=()
 typeset -A isoInspection=(
-  ['isHybrid']=''
-  ['syslinuxBin']=''
-  ['syslinuxVer']=''
-  ['syslinuxConf']=''
-  ['supportsEFIBoot']=''
-  ['hasWimFile']=''
+  [syslinuxBin]=''
+  [syslinuxVer]=''
+  [syslinuxConf]=''
+  [isHybrid]=false
+  [supportsEFIBoot]=false
+  [supportsBIOSBoot]=false
+  [hasWimFile]=false
 )
 typeset -A userFlags=(
   # Actions
@@ -167,6 +168,18 @@ typeset -A exitStatus=(
   [INTERNALIO]=64
   [INTERNALST]=65
   [INTERNALTP]=66
+)
+
+typeset -A gptPartitionCodes=(
+  [efi]="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+  # Windows Data partition
+  [wdp]="EBD0A0A2-B9E5-4433-87C0-68B6B72699C7"
+  # Linux Filesystem Data
+  [lfd]="0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+)
+
+typeset -A mbrPartitionCodes=(
+  [efi]=ef
 )
 
 # user defined variables
@@ -422,10 +435,20 @@ umountUSB() {
   fi
 }
 
-umountISO() {
-  if isMounted "$isoMountPoint"; then
-    if umount "$isoMountPoint" |& indentAll; then
-      echogood "Image succesfully unmounted ($isoMountPoint)."
+# $1: mountPoint
+unmountPartition() {
+  local mountPoint="$1"
+  if isMounted "$mountPoint"; then
+    if ! umount "$mountPoint" |& indentAll; then
+      echowarn "Could not unmount image mount point."
+    fi
+  fi
+}
+
+umountElTorino() {
+  if isMounted "$elTorinoMountPoint"; then
+    if umount "$elTorinoMountPoint" |& indentAll; then
+      echogood "Image succesfully unmounted ($elTorinoMountPoint)."
     else
       echowarn "Could not unmount image mount point."
     fi
@@ -699,19 +722,23 @@ configureLabel() {
     # EXT labels have maximum 16 chars
     partitionLabel=${partitionLabel:0:16}
     ;;
+  f2fs)
+    # F2FS labels have maximum 512 glyphs
+    # approximated with 512 chars
+    partitionLabel=${partitionLabel:0:512}
+    ;;
   *)
-    echowarn "Unexpected partition type '$partitionType'." \
-      "$openTicketMessage"
+    echowarn "Unexpected partition type '$partitionType'." "$openTicketMessage"
     ;;
   esac
   # Fallback to "USER_VENDOR" if format
   if [[ "$action" == format ]]; then
     user=${SUDO_USER:-$USER}
-    vendor=$(lsblk -dno VENDOR "$selectedDevice")
+    vendor=$(lsblk -dno VENDOR "$selectedDevice" 2> /dev/null)
     vendor=${vendor:-FLASH}
     partitionLabel=${partitionLabel:-"${user^^}_${vendor^^}"}
   else
-    partitionLabel=BOOTISO
+    partitionLabel=${partitionLabel:-BOOTISO}
   fi
   if [ -z "${userVars['label']}" ]; then
     echogood "Partition label automatically set to '$partitionLabel'." \
@@ -1015,29 +1042,6 @@ createTempFile() {
   fi
 }
 
-# $1: 'true' if image file is hybrid, 'false' otherwise
-mountISOFile() {
-  local diskReport startSector=0 sectorSize=512
-  isoMountPoint=$(createMountFolder iso) || exit "$?"
-  temporaryAssets+=("$isoMountPoint")
-  echogood "Created image mount point at '$isoMountPoint'."
-  # If the image is hybrid, the first partition might not start at sector 0.
-  # So we first check the first bootable partition offset with a combination of sfdisk and jq.
-  if [[ "$1" == true ]]; then
-    diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2>/dev/null)
-    sectorSize=$(echo "$diskReport" | jq '.partitiontable.sectorsize?')
-    startSector=$(echo "$diskReport" | jq '.partitiontable.partitions | map(select(.bootable==true))[0].start | select (.!=null)')
-    if [[ -z "$sectorSize" ]]; then
-      echowarn "Unexpected output from sfdisk utility: ${diskReport}"
-    fi
-  fi
-  startSector=${startSector:-0}
-  sectorSize=${sectorSize:-0}
-  if ! mount -r -o loop,offset=$((sectorSize * startSector)) -- "$selectedIsoFile" "$isoMountPoint" >/dev/null; then
-    failAndExit "${exitStatus[INTERNALIO]}" "Could not mount image file."
-  fi
-}
-
 # $1 : a device block
 # Returns "usb" if device is USB, "ata" for SATA and "other" otherwise
 getDeviceType() {
@@ -1181,26 +1185,20 @@ createPartitionTable() {
   initGPT() {
     partitionOptions="label: gpt\n"
     gptTypeCodes=(
-      # Defaults to Windows basic data partition
-      ['vfat']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
-      ['exfat']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
-      ['ntfs']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
-      # Otherwise consider a "Linux basic data partition"
-      ['ext2']='L'
-      ['ext3']='L'
-      ['ext4']='L'
-      ['f2fs']='L'
+      ['vfat']="${gptPartitionCodes[wdp]}"
+      ['exfat']="${gptPartitionCodes[wdp]}"
+      ['ntfs']="${gptPartitionCodes[wdp]}"
+      ['ext2']="${gptPartitionCodes[lfd]}"
+      ['ext3']="${gptPartitionCodes[lfd]}"
+      ['ext4']="${gptPartitionCodes[lfd]}"
+      ['f2fs']="${gptPartitionCodes[lfd]}"
     )
-    if [ "$notBootable" == true ]; then
-      echo
-    else
-      if [[ "${isoInspection['supportsEFIBoot']}" == true ]]; then
+    if [ "$notBootable" == false ]; then
+      if [[ "${isoInspection['supportsEFIBoot']}" == true && "${isoInspection['hasWimFile']}" == false ]]; then
         # Windows UEFI boot partitions must be of type "Windows Data Partition",
         # otherwise bug with "Drivers not found"
-        if [[ "${isoInspection['hasWimFile']}" == false ]]; then
-          # Set typecode to EFI System Partition
-          gptTypeCodes[vfat]='U'
-        fi
+        # Set typecode to EFI System Partition
+        gptTypeCodes[vfat]="${gptPartitionCodes[efi]}"
       else
         failAndExit "${exitStatus[INTERNALST]}" "GPT partition tables are not compatible with legacy BIOS boot."
       fi
@@ -1341,7 +1339,7 @@ copyWithRsync() {
   rsyncWithProgress() {
     local -i i=1
     local statusFile
-    local wimFile="$isoMountPoint/sources/install.wim"
+    local wimFile="$elTorinoMountPoint/sources/install.wim"
     local rsyncOptions=""
     local status
     statusFile=$(createTempFile "bootiso-rsync-status")
@@ -1356,7 +1354,7 @@ copyWithRsync() {
     fi
     (
       # shellcheck disable=SC2086
-      rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$isoMountPoint"/. "$usbMountPoint"
+      rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$elTorinoMountPoint"/. "$usbMountPoint"
       status=$?
       cleanProgress
       if ((status == 0)) && [ -f "$wimFile" ] && [ "$disableWimsplit" == false ]; then
@@ -1758,7 +1756,7 @@ cleanup() {
   }
   ejectDevice() {
     if [[ "$operationSuccess" =~ ^install ]]; then
-      if [ "$noDeviceEjection" == false ]; then
+      if [[ "$noDeviceEjection" == false ]]; then
         if eject "$selectedDevice" |& indentAll; then
           echogood "USB device succesfully ejected." \
             "You can safely remove it!"
@@ -1772,7 +1770,7 @@ cleanup() {
   }
   if ((EUID == 0)); then
     local asset
-    umountISO
+    umountElTorino
     umountUSB
     for asset in "${temporaryAssets[@]}"; do
       removeTempAsset "$asset"
@@ -1853,33 +1851,125 @@ runSecurityAssessments() {
   assertISOSize "$selectedDevice" "$selectedIsoFile"
 }
 
-inspectISO() {
+# $1: mountPoint
+# $2: inspect syslinux? true or false
+inspectPartition() {
+  local mountPoint="$1" wimFile
+  local supportsEFIBoot hasWimFile syslinuxBin syslinuxConf syslinuxVer
+  supportsEFIBoot=${isoInspection[supportsEFIBoot]:-false}
+  hasWimFile=${isoInspection[hasWimFile]:-false}
+  syslinuxBin=${isoInspection[syslinuxBin]}
+  syslinuxConf=${isoInspection[syslinuxConf]}
+  syslinuxVer=${isoInspection[syslinuxVer]}
   local -a sysLinuxLocations=('boot/syslinux/syslinux.cfg' 'syslinux/syslinux.cfg' 'syslinux.cfg' 'boot/syslinux/extlinux.conf'
     'boot/syslinux/extlinux.cfg' 'boot/extlinux/extlinux.conf' 'boot/extlinux/extlinux.cfg' 'syslinux/extlinux.conf'
     'syslinux/extlinux.cfg' 'extlinux/extlinux.conf' 'extlinux/extlinux.cfg' 'extlinux.conf' 'extlinux.cfg')
   local -a isoLinuxLocations=('boot/isolinux/isolinux.cfg' 'isolinux/isolinux.cfg' 'isolinux.cfg' 'boot/syslinux/isolinux.cfg' 'syslinux/isolinux.cfg')
-  local syslinuxFolder
-  local syslinuxConfig
-  local isHybrid
-  local supportsEFIBoot
-  local syslinuxBinary
-  local isoSyslinuxVersion
-  local wimFile
   inspectSyslinux() {
-    syslinuxBinary=$(matchFirstExpression "$isoMountPoint" 'syslinux.bin' 'isolinux.bin' 'extlinux.bin' 'boot.bin' 'extlinux' 'syslinux' 'isolinux')
-    if [ ! -z "$syslinuxBinary" ]; then
-      isoSyslinuxVersion=$(strings "$syslinuxBinary" | grep -E 'ISOLINUX|SYSLINUX|EXTLINUX' | grep -oP '(\d+\.\d+)' | awk 'NR==1{print $1}')
+    syslinuxBin=$(matchFirstExpression "$mountPoint" 'syslinux.bin' 'isolinux.bin' 'extlinux.bin' 'boot.bin' 'extlinux' 'syslinux' 'isolinux')
+    if [ ! -z "$syslinuxBin" ]; then
+      syslinuxVer=$(strings "$syslinuxBin" | grep -E 'ISOLINUX|SYSLINUX|EXTLINUX' | grep -oP '(\d+\.\d+)' | awk 'NR==1{print $1}')
     fi
-    syslinuxConfig=$(findFileFromPatterns "$isoMountPoint" "${sysLinuxLocations[@]}")
-    if [ -z "$syslinuxConfig" ]; then
-      syslinuxConfig=$(matchFirstExpression "$isoMountPoint" 'syslinux.cfg' 'extlinux.conf' 'extlinux.cfg')
+    syslinuxConf=$(findFileFromPatterns "$mountPoint" "${sysLinuxLocations[@]}")
+    if [ -z "$syslinuxConf" ]; then
+      syslinuxConf=$(matchFirstExpression "$mountPoint" 'syslinux.cfg' 'extlinux.conf' 'extlinux.cfg')
     fi
-    if [ -z "$syslinuxConfig" ]; then
-      syslinuxConfig=$(findFileFromPatterns "$isoMountPoint" "${isoLinuxLocations[@]}")
-      syslinuxConfig=${syslinuxConfig:-$(firstMatchInFolder "$isoMountPoint" 'isolinux.cfg')}
+    if [ -z "$syslinuxConf" ]; then
+      syslinuxConf=$(findFileFromPatterns "$mountPoint" "${isoLinuxLocations[@]}")
+      syslinuxConf=${syslinuxConf:-$(firstMatchInFolder "$mountPoint" 'isolinux.cfg')}
     fi
   }
-  inspectISOFilesystem() {
+  inspectEFICapabilities() {
+    local hasEfiRoot
+    local hasEfiFile
+    hasEfiRoot=$(find "$mountPoint" -type d -iname 'efi' -print -quit)
+    hasEfiFile=$(find "$mountPoint" -type f -ipath '*/efi/*.efi' -prune -print -quit)
+    if [ ! -z "$hasEfiFile" ] && [ ! -z "$hasEfiRoot" ]; then
+      supportsEFIBoot=true
+    fi
+  }
+  inspectWindows() {
+    wimFile="$mountPoint/sources/install.wim"
+    if [[ -e "$wimFile" ]]; then
+      hasWimFile=true
+    fi
+  }
+  inspectEFICapabilities
+  inspectWindows
+  isoInspection[supportsEFIBoot]=$supportsEFIBoot
+  isoInspection[hasWimFile]=$hasWimFile
+  if [[ $2 == true ]]; then
+    inspectSyslinux
+    isoInspection[syslinuxConf]="$syslinuxConf"
+    isoInspection[syslinuxBin]="$syslinuxBin"
+    isoInspection[syslinuxVer]="$syslinuxVer"
+  fi
+}
+
+# $1: mountPoint
+mountElTorinoFile() {
+  local mountPoint="$1"
+  if ! mount -r -o loop -- "$selectedIsoFile" "$mountPoint" >/dev/null; then
+    failAndExit "${exitStatus[INTERNALIO]}" "Could not mount image file."
+  else
+    temporaryAssets+=("$mountPoint")
+  fi
+}
+
+inspectHybridImage() {
+  local diskReport scheme
+  local startSector sectorSize=512
+  local supportsEFIBoot supportsBIOSBoot
+  inspectMBRPartTable() {
+    # Look for the first ESP partition
+    startSector=$(echo "$diskReport" | jq ".partitiontable.partitions | map(select(.type==\"${mbrPartitionCodes[efi]}\"))[0].start | select (.!=null)")
+    # If ESP found, look for first bootable
+    if [[ -n "$startSector" ]]; then
+      supportsEFIBoot=true
+    else
+      supportsEFIBoot=false
+    fi
+    startSector=$(echo "$diskReport" | jq '.partitiontable.partitions | map(select(.bootable==true))[0].start | select (.!=null)')
+    if [[ -n "$startSector" ]]; then
+      supportsBIOSBoot=true
+    else
+      supportsBIOSBoot=false
+    fi
+  }
+  inspectGPTPartTable() {
+    # In GPT mode, UEFI is theoretically the only possible boot mode
+    startSector=$(echo "$diskReport" | jq ".partitiontable.partitions | map(select(.type==\"${gptPartitionCodes[efi]}\"))[0].start | select (.!=null)")
+    supportsBIOSBoot=false
+    if [[ -n "$startSector" ]]; then
+      supportsEFIBoot=true
+    else
+      supportsEFIBoot=false
+    fi
+  }
+  diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2>/dev/null)
+  if (($? != 0)); then
+    failAndExit "${exitStatus[INTERNALIO]}" "sfdisk couldn't read the partition table on the image file, which is likely corrupted."
+  fi
+  scheme=$(echo "$diskReport" | jq -r '.partitiontable.label')
+  case $scheme in
+  dos) inspectMBRPartTable ;;
+  gpt) inspectGPTPartTable ;;
+  esac
+  isoInspection[supportsBIOSBoot]="$supportsBIOSBoot"
+  isoInspection[supportsEFIBoot]="$supportsEFIBoot"
+}
+
+inspectElTorinoImage() {
+  local mountPoint
+  mountPoint=$(createMountFolder iso) || exit "$?"
+  mountElTorinoFile "$mountPoint"
+  inspectPartition "$mountPoint" true
+  unmountPartition "$mountPoint"
+}
+
+inspectImageFile() {
+  local isHybrid
+  inspectImageFilesystem() {
     file -b -- "$selectedIsoFile" | grep -q '^ISO 9660 CD-ROM filesystem'
     if (($? == 0)); then
       isHybrid=false
@@ -1887,36 +1977,13 @@ inspectISO() {
       isHybrid=true
     fi
   }
-  inspectEFICapabilities() {
-    local hasEfiRoot
-    local hasEfiFile
-    hasEfiRoot=$(find "$isoMountPoint" -type d -iname 'efi' -print -quit)
-    hasEfiFile=$(find "$isoMountPoint" -type f -ipath '*/efi/*.efi' -prune -print -quit)
-    supportsEFIBoot=false
-    if [ ! -z "$hasEfiFile" ] && [ ! -z "$hasEfiRoot" ]; then
-      supportsEFIBoot=true
-    fi
-  }
-  inspectWindows() {
-    wimFile="$isoMountPoint/sources/install.wim"
-    if [[ -e "$wimFile" ]]; then
-      hasWimFile=true
-    else
-      hasWimFile=false
-    fi
-  }
-  inspectISOFilesystem
-  mountISOFile $isHybrid >/dev/null
-  inspectSyslinux
-  inspectEFICapabilities
-  inspectWindows
-  umountISO >/dev/null
-  isoInspection['supportsEFIBoot']=$supportsEFIBoot
-  isoInspection['syslinuxConf']=${syslinuxConfig#${isoMountPoint}}
-  isoInspection['syslinuxBin']=${syslinuxBinary#${isoMountPoint}}
-  isoInspection['syslinuxVer']=$isoSyslinuxVersion
-  isoInspection['isHybrid']=$isHybrid
-  isoInspection['hasWimFile']=$hasWimFile
+  inspectImageFilesystem
+  if [[ $isHybrid == true ]]; then
+    inspectHybridImage
+  else
+    inspectElTorinoImage
+  fi
+  isoInspection[isHybrid]=$isHybrid
 }
 
 inspectISOBootCapabilities() {
@@ -1970,7 +2037,8 @@ checkSyslinuxInstall() {
 }
 
 printISOBootCapabilities() {
-  local uefiCompatible=${isoInspection['supportsEFIBoot']}
+  local uefiCompatible=${isoInspection[supportsEFIBoot]}
+  local biosCompatible=${isoInspection[supportsBIOSBoot]}
   local syslinuxCompatible=false
   local isHybrid=${isoInspection['isHybrid']}
   local syslinux='SYSLINUX'
@@ -1981,31 +2049,42 @@ printISOBootCapabilities() {
   if [ ! -z "${isoInspection['syslinuxVer']}" ]; then
     syslinux+=" ${isoInspection['syslinuxVer']}"
   fi
-  echoinfo "Reporting '$selectedIsoFile' boot capabilities:"
+  echoinfo "Reporting '$(basename "$selectedIsoFile")' boot capabilities:"
   if [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
-    echoerr "The selected image is not hybrid, doesn't support UEFI or legacy BIOS booting with SYSLINUX." \
+    echoerr "The selected image is not hybrid, doesn't support UEFI or legacy BIOS booting nor SYSLINUX." \
       "It cannot result in any successful booting with $scriptName."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == false ]; then
     echogood "The selected image is not hybrid, but supports legacy BIOS booting with $syslinux." \
-      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with any PC BIOS."
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with BIOS-boot capable PCs."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == true ]; then
     echogood "The selected image is not hybrid, but supports UEFI boot." \
-      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with modern UEFI-enabled PC BIOS."
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with modern UEFI-capable PCs."
   elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == true ]; then
     echogood "The selected image is not hybrid, but supports legacy BIOS booting with $syslinux and UEFI boot." \
-      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with any PC BIOS."
-  elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
-    echowarn "The selected image is hybrid, but doesn't support UEFI or SYSLINUX legacy BIOS bootloader." \
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with any PCs."
+  elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [[ "$biosCompatible" == false ]] && [ "$uefiCompatible" == false ]; then
+    echowarn "The selected image is hybrid, but doesn't support UEFI or legacy BIOS bootloader." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes, but $scriptName is not aware of its booting scheme."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == false ]; then
     echogood "The selected image is hybrid and supports legacy BIOS booting with $syslinux." \
-      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PC BIOS."
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with BIOS-boot capable PCs."
+  elif [ "$isHybrid" == true ] && [ "$biosCompatible" == true ] && [ "$uefiCompatible" == false ]; then
+    echogood "The selected image is hybrid and supports legacy BIOS booting." \
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with BIOS-boot capable PCs."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == true ]; then
     echogood "The selected image is hybrid and supports UEFI boot." \
-      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with modern UEFI-enabled PC BIOS."
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with modern UEFI-capable PCs."
   elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == true ]; then
     echogood "The selected image is hybrid and supports legacy BIOS booting with $syslinux along with UEFI boot." \
-      "It will boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PC BIOS."
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PCs."
+  elif [ "$isHybrid" == true ] && [ "$biosCompatible" == true ] && [ "$uefiCompatible" == true ]; then
+    echogood "The selected image is hybrid and supports legacy BIOS boot along with UEFI boot." \
+      "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PCs."
+  else
+    echoerr "Wrong state. isHybrid: $isHybrid, biosCompatible: $biosCompatible, uefiCompatible: $uefiCompatible, syslinuxCompatible: $syslinuxCompatible"
+  fi
+  if [[ "$uefiCompatible" == false && ("$syslinuxCompatible" == true || "$biosCompatible" == true) ]]; then
+    echowarn "You might have to enable CSM in your UEFI system for legacy BIOS-boot suport."
   fi
   localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
   if [ "$syslinuxCompatible" == true ] && [ ! -z "${isoInspection['syslinuxVer']}" ] && [ "$isHybrid" == false ]; then
@@ -2027,11 +2106,18 @@ execProbe() {
 }
 
 execWithRsync() {
+  if [ "${isoInspection[isHybrid]}" == true ]; then
+    failAndExit "${exitStatus[ASSERTFAIL]}" "You cannot set Mount-Rsync mode with a hybrid image file." \
+      "Hybrid ISO or disk image files eventually contain multiple partitions and Mount-Rsync mode can only work with one."\
+      "If you think this image file is not hybrid and this is a bug, please report at " \
+      "${ticketsurl}."
+  fi
   shouldMakePartition=true
   checkSyslinuxInstall
   inspectISOBootCapabilities
   runSecurityAssessments
-  mountISOFile "${isoInspection['isHybrid']}"
+  elTorinoMountPoint=$(createMountFolder iso) || exit "$?"
+  mountElTorinoFile "$elTorinoMountPoint"
   partitionUSB false
   mountUSB
   copyWithRsync
@@ -2041,6 +2127,12 @@ execWithRsync() {
 }
 
 execWithDD() {
+  if [ "${isoInspection[isHybrid]}" == false ]; then
+    failAndExit "${exitStatus[ASSERTFAIL]}" "You cannot set Image-Copy mode with a non-hybrid, 'El-Torino' image file." \
+      "El-Torino image files don't have a partition table; and thus target device will not be recognized" \
+      "by any boot system as a boot candidate. If you think this image file is hybrid and this is a bug, please report at "\
+      "${ticketsurl}."
+  fi
   shouldMakePartition=false
   runSecurityAssessments
   partitionUSB false
@@ -2048,8 +2140,8 @@ execWithDD() {
 }
 
 execAuto() {
-  if [ "${isoInspection['isHybrid']}" == true ]; then
-    echogood "Found hybrid image; choosing copy mode 'dd'."
+  if [ "${isoInspection[isHybrid]}" == true ]; then
+    echogood "Found hybrid image; choosing Image-Copy mode."
     execWithDD
   else
     echoinfo "Found non-hybrid image; inspecting image for boot capabilities..."
@@ -2092,7 +2184,7 @@ main() {
     else
       echowarn "Skipping hash check with $(boldify '-H, --no-hash-check') flag"
     fi
-    inspectISO
+    inspectImageFile
   fi
   case "$action" in
   'install-auto') execAuto "$@" ;;
