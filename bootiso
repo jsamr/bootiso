@@ -149,6 +149,7 @@ typeset -A userVars=(
   ['type']=''
   ['label']=''
   ['remote-bootloader']=''
+  ['partype']=''
 )
 
 typeset -A exitStatus=(
@@ -188,7 +189,8 @@ typeset selectedIsoFile # no default
 typeset hashFile
 typeset selectedDevice # default to prompted to user
 typeset partitionLabel # default to inferred from image file label
-typeset partitionType  # default to vfat
+typeset filesystemType # default to vfat
+typeset partitionType  # GPT or MBR partition type
 typeset action='install-auto'
 typeset selectedBootloaderVersion # default to auto
 
@@ -702,7 +704,7 @@ findFileFromPatterns() {
 configureLabel() {
   local user vendor
   partitionLabel=${partitionLabel:-$(blkid -o value -s LABEL -- "$selectedIsoFile")}
-  case $partitionType in
+  case $filesystemType in
   vfat)
     # Label to uppercase, otherwise some DOS systems won't work properly
     partitionLabel=${partitionLabel^^}
@@ -727,7 +729,7 @@ configureLabel() {
     partitionLabel=${partitionLabel:0:512}
     ;;
   *)
-    echowarn "Unexpected partition type '$partitionType'." "$openTicketMessage"
+    echowarn "Unexpected partition type '$filesystemType'." "$openTicketMessage"
     ;;
   esac
   # Fallback to "USER_VENDOR" if format
@@ -904,6 +906,13 @@ parseArguments() {
           failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a device."
         fi
         setUserVar 'device' "$2"
+        shift 2
+        ;;
+      --partype)
+        if (($# < 2)); then
+          failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a partition type."
+        fi
+        setUserVar 'partype' "${2}"
         shift 2
         ;;
       -t | --type)
@@ -1202,12 +1211,12 @@ createPartitionTable() {
         failAndExit "${exitStatus[INTERNALST]}" "GPT partition tables are not compatible with legacy BIOS boot."
       fi
     fi
-    partitionOptions+="type=${gptTypeCodes[$partitionType]}"
+    partitionOptions+="type=${partitionType:-${gptTypeCodes[$filesystemType]}}"
   }
   initMBR() {
     partitionOptions="label: dos\n"
     mbrTypeCodes=(['vfat']='c' ['exfat']='7' ['ntfs']='7' ['ext2']='83' ['ext3']='83' ['ext4']='83' ['f2fs']='83')
-    partitionOptions+="$selectedPartition : start=2048, type=${mbrTypeCodes[$partitionType]}"
+    partitionOptions+="$selectedPartition : start=2048, type=${partitionType:-${mbrTypeCodes[$filesystemType]}}"
   }
   makeSfdiskCommand
   case "$tableType" in
@@ -1264,11 +1273,11 @@ partitionUSB() {
   }
   formatPartition() {
     # format
-    echogood "Creating $partitionType partition on '$selectedPartition'..."
+    echogood "Creating $filesystemType partition on '$selectedPartition'..."
     # shellcheck disable=SC2086
-    mkfs -V -t "$partitionType" ${mkfsOpts[$partitionType]} "$partitionLabel" "$selectedPartition" |&
+    mkfs -V -t "$filesystemType" ${mkfsOpts[$filesystemType]} "$partitionLabel" "$selectedPartition" |&
       indentAll ||
-      failAndExit "${exitStatus[INTERNALIO]}" "Failed to create $partitionType partition on USB device."
+      failAndExit "${exitStatus[INTERNALIO]}" "Failed to create $filesystemType partition on USB device."
   }
   if shouldWipeUSBKey; then
     unmountPartitions
@@ -1288,7 +1297,7 @@ partitionUSB() {
 }
 
 mountUSB() {
-  local type="$partitionType"
+  local type="$filesystemType"
   usbMountPoint=$(createMountFolder usb) || exit "$?"
   temporaryAssets+=("$usbMountPoint")
   echoinfo "Created USB device mount point at '$usbMountPoint'"
@@ -1657,18 +1666,18 @@ checkUserVars() {
     if [ "${userVars['type'],,}" == fat32 ]; then
       userVars['type']=vfat
     fi
-    local partType=${vfat:-${userVars['type']}}
-    if ! containsElement "$partType" "${supportedFS[@]}"; then
-      failAndExit "${exitStatus[SYNOPSISNC]}" "FS type '$partType' not supported." \
+    local fsType=${vfat:-${userVars['type']}}
+    if ! containsElement "$fsType" "${supportedFS[@]}"; then
+      failAndExit "${exitStatus[SYNOPSISNC]}" "FS type '$fsType' not supported." \
         "Supported FS types: $(joinBy "," "${supportedFS[*]}")."
     fi
     if ! containsElement "$action" "install-mount-rsync" "format"; then
       failAndExit "${exitStatus[SYNOPSISNC]}" "Cannot set partition type with action $(boldify "$action")." \
         "$(boldify '-t, --type') is compatible with $(boldify format) and $(boldify install) 'Mount-Rsync' only."
     fi
-    if ! command -v "mkfs.$partType" &>/dev/null; then
+    if ! command -v "mkfs.$fsType" &>/dev/null; then
       failAndExit "${exitStatus[MISDEP]}" \
-        "Program 'mkfs.$partType' could not be found on your system." \
+        "Program 'mkfs.$fsType' could not be found on your system." \
         "Please install it and retry."
     fi
   fi
@@ -1720,7 +1729,7 @@ checkFlagMatrix() {
       if ! containsElement "$action" ${userVarsCompatibilityMatrix[$key]}; then
         if [ "$key" == "iso-file" ]; then
           failAndExit "${exitStatus[SYNOPSISNC]}" \
-            "$(boldify $action) doesn't require any arguments."
+            "$(boldify $action) doesn't require any positional arguments."
         else
           failAndExit "${exitStatus[SYNOPSISNC]}" \
             "$(boldify "$action") action doesn't support $(boldify --$key) modifier."
@@ -1793,7 +1802,8 @@ assignInternalVariables() {
   forceHashCheck=${userFlags['force-hash-check']:-'false'}
   disableWimsplit=${userFlags['no-wimsplit']:-'false'}
   # Vars flags
-  partitionType=${userVars['type']:-'vfat'}
+  filesystemType=${userVars['type']:-'vfat'}
+  partitionType=${userVars['partype']}
   hashFile=${userVars['hash-file']:-''}
   selectedDevice=${userVars['device']:-''}
   partitionLabel=${userVars['label']:-''}
@@ -1917,7 +1927,7 @@ mountElTorinoFile() {
 
 inspectHybridImage() {
   local diskReport scheme
-  local startSector sectorSize=512
+  local startSector
   local supportsEFIBoot supportsBIOSBoot
   inspectMBRPartTable() {
     # Look for the first ESP partition
@@ -1989,8 +1999,8 @@ inspectISOBootCapabilities() {
   local uefiCompatible=${isoInspection['supportsEFIBoot']}
   local syslinuxCompatible=false
   if [ "${isoInspection['supportsEFIBoot']}" == true ]; then
-    if [ "$partitionType" != "vfat" ]; then
-      echowarn "Found UEFI boot capabilities but you selected '$partitionType' type, which is not compatible with UEFI boot." \
+    if [ "$filesystemType" != "vfat" ]; then
+      echowarn "Found UEFI boot capabilities but you selected '$filesystemType' type, which is not compatible with UEFI boot." \
         "Be warned that only legacy boot might work, if any."
     else
       uefiCompatible=true
