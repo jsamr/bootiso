@@ -1218,7 +1218,7 @@ createPartitionTable() {
   MBR) initMBR ;;
   *) failAndExit "${exitStatus[INTERNALST]}" "Unexpected partition scheme '$1'" ;;
   esac
-  if [ "$notBootable" == false ]; then
+  if [[ "$notBootable" == false && "$tableType" == MBR ]]; then
     partitionOptions+=", bootable"
   fi
   echogood "Creating $tableType partition table with 'sfdisk' v$sfdiskVersion..."
