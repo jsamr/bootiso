@@ -114,6 +114,7 @@ typeset -A isoInspection=(
   ['syslinuxVer']=''
   ['syslinuxConf']=''
   ['supportsEFIBoot']=''
+  ['hasWimFile']=''
 )
 typeset -A userFlags=(
   # Actions
@@ -1169,7 +1170,7 @@ createPartitionTable() {
   local sfdiskVersion
   local tableType=$1
   local notBootable=$2
-  local -A gptTypeCodes
+  local -A gptTypeCodes mbrTypeCodes
   sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+')
   makeSfdiskCommand() {
     # Retrocompatibility for 'old' sfdisk versions
@@ -1179,22 +1180,27 @@ createPartitionTable() {
   }
   initGPT() {
     partitionOptions="label: gpt\n"
+    gptTypeCodes=(
+      # Defaults to Windows basic data partition
+      ['vfat']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
+      ['exfat']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
+      ['ntfs']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
+      # Otherwise consider a "Linux basic data partition"
+      ['ext2']='L'
+      ['ext3']='L'
+      ['ext4']='L'
+      ['f2fs']='L'
+    )
     if [ "$notBootable" == true ]; then
-      gptTypeCodes=(
-        # Defaults to Windows basic data partition
-        ['vfat']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
-        ['exfat']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
-        ['ntfs']='EBD0A0A2-B9E5-4433-87C0-68B6B72699C7'
-        # Otherwise consider a "Linux basic data partition"
-        ['ext2']='L'
-        ['ext3']='L'
-        ['ext4']='L'
-        ['f2fs']='L'
-      )
+      echo
     else
       if [[ "${isoInspection['supportsEFIBoot']}" == true ]]; then
-        # Set typecode to EFI System Partition
-        gptTypeCodes[vfat]='U'
+        # Windows UEFI boot partitions must be of type "Windows Data Partition",
+        # otherwise bug with "Drivers not found"
+        if [[ "${isoInspection['hasWimFile']}" == false ]]; then
+          # Set typecode to EFI System Partition
+          gptTypeCodes[vfat]='U'
+        fi
       else
         failAndExit "${exitStatus[INTERNALST]}" "GPT partition tables are not compatible with legacy BIOS boot."
       fi
@@ -1858,6 +1864,7 @@ inspectISO() {
   local supportsEFIBoot
   local syslinuxBinary
   local isoSyslinuxVersion
+  local wimFile
   inspectSyslinux() {
     syslinuxBinary=$(matchFirstExpression "$isoMountPoint" 'syslinux.bin' 'isolinux.bin' 'extlinux.bin' 'boot.bin' 'extlinux' 'syslinux' 'isolinux')
     if [ ! -z "$syslinuxBinary" ]; then
@@ -1890,16 +1897,26 @@ inspectISO() {
       supportsEFIBoot=true
     fi
   }
+  inspectWindows() {
+    wimFile="$isoMountPoint/sources/install.wim"
+    if [[ -e "$wimFile" ]]; then
+      hasWimFile=true
+    else
+      hasWimFile=false
+    fi
+  }
   inspectISOFilesystem
   mountISOFile $isHybrid >/dev/null
   inspectSyslinux
   inspectEFICapabilities
+  inspectWindows
   umountISO >/dev/null
   isoInspection['supportsEFIBoot']=$supportsEFIBoot
   isoInspection['syslinuxConf']=${syslinuxConfig#${isoMountPoint}}
   isoInspection['syslinuxBin']=${syslinuxBinary#${isoMountPoint}}
   isoInspection['syslinuxVer']=$isoSyslinuxVersion
   isoInspection['isHybrid']=$isHybrid
+  isoInspection['hasWimFile']=$hasWimFile
 }
 
 inspectISOBootCapabilities() {
