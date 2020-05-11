@@ -69,6 +69,7 @@ typeset -Ar userVarsCompatibilityMatrix=(
   ['type']='install-mount-rsync format'
   ['label']='install-mount-rsync format'
   ['remote-bootloader']='install-mount-rsync'
+  ['partype']='format install-mount-rsync'
 )
 typeset -Ar userFlagsCompatibilityMatrix=(
   ['assume-yes']='install-auto install-mount-rsync install-image-copy format'
@@ -79,7 +80,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
   ['force-hash-check']='install-auto install-mount-rsync install-image-copy probe inspect'
   ['no-usb-check']='install-auto install-mount-rsync install-image-copy list-usb-drives probe format'
   ['no-size-check']='install-auto install-mount-rsync install-image-copy'
-  ['mbr']='format install-mount-rsync'
+  ['gpt']='format install-mount-rsync'
   # Mount-Rsync specials
   ['local-bootloader']='install-mount-rsync'
   ['no-wimsplit']='install-mount-rsync'
@@ -132,7 +133,7 @@ typeset -A userFlags=(
   ['assume-yes']=''
   ['device']=''
   ['no-eject']=''
-  ['mbr']=''
+  ['gpt']=''
   ['autoselect']=''
   ['no-mime-check']=''
   ['no-usb-check']=''
@@ -203,7 +204,7 @@ typeset autoselect
 typeset shouldMakePartition
 typeset noDeviceEjection
 typeset localBootloader
-typeset enforceMBR
+typeset enforceGPT
 
 # See console_codes GNU-Linux man page
 typeset setRed="\e[31m"
@@ -447,9 +448,7 @@ unmountPartition() {
 
 umountElTorino() {
   if isMounted "$elTorinoMountPoint"; then
-    if umount "$elTorinoMountPoint" |& indentAll; then
-      echogood "Image succesfully unmounted ($elTorinoMountPoint)."
-    else
+    if ! umount "$elTorinoMountPoint" |& indentAll; then
       echowarn "Could not unmount image mount point."
     fi
   fi
@@ -892,8 +891,8 @@ parseArguments() {
         setUserVar 'remote-bootloader' "$2"
         shift 2
         ;;
-      --mbr)
-        enableUserFlag 'mbr'
+      --gpt)
+        enableUserFlag 'gpt'
         shift
         ;;
       -y | --assume-yes)
@@ -1275,7 +1274,7 @@ partitionUSB() {
     unmountPartitions
     eraseDevice
     if [ "$shouldMakePartition" == 'true' ]; then
-      if [[ "$enforceMBR" == false && ("${isoInspection['supportsEFIBoot']}" == true || "$notBootable" == true) ]]; then
+      if [[ "$enforceGPT" == true && (${isoInspection['supportsEFIBoot']} == true || "$notBootable" == true) ]]; then
         tableType=GPT
       else
         tableType=MBR
@@ -1785,7 +1784,7 @@ assignInternalVariables() {
   # Option flags
   disableConfirmation=${userFlags['assume-yes']:-'false'}
   autoselect=${userFlags['autoselect']:-'false'}
-  enforceMBR=${userFlags['mbr']:-'false'}
+  enforceGPT=${userFlags['gpt']:-'false'}
   localBootloader=${userFlags['local-bootloader']:-'false'}
   disableMimeCheck=${userFlags['no-mime-check']:-'false'}
   disableUSBCheck=${userFlags['no-usb-check']:-'false'}
@@ -1998,6 +1997,9 @@ inspectISOBootCapabilities() {
       echogood "UEFI boot check validated. Your USB will work with UEFI boot."
     fi
   fi
+  if [[ "$enforceGPT" == true && "${isoInspection['supportsEFIBoot']}" == false ]]; then
+    echowarn "$(boldify '--gpt') option ignored because image file solely supports legacy BIOS boot, which requires MBR."
+  fi
   if [ ! -z "${isoInspection['syslinuxConf']}" ]; then
     syslinuxCompatible=true
     addSyslinuxBootloader=true
@@ -2008,9 +2010,9 @@ inspectISOBootCapabilities() {
     else
       echogood "Found SYSLINUX config file."
     fi
-    echogood "A SYSLINUX booloader will be installed on your USB."
+    echogood "A SYSLINUX booloader will be installed on your USB device."
   fi
-  if [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
+  if [[ "$syslinuxCompatible" == false && "$uefiCompatible" == false ]]; then
     failAndExit "${exitStatus[MISBOOTCAP]}" \
       "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
       "Therefore, it cannot result in any successful booting with $scriptName." \
