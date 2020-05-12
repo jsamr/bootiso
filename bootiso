@@ -266,8 +266,8 @@ typeset modifierFlagsTable="
 "
 
 typeset installModeModifiersTable="
---icopy, --dd|Install <imagefile> in \"Image-Copy\" mode.
---mrsync|Install <imagefile> in \"Mount-Rsync\" mode.
+--icopy, --dd|Assert \"Image-Copy\" install mode.
+--mrsync|Assert \"Mount-Rsync\" install mode.
 "
 typeset helpIntro="\
 $scriptName v$version - create a bootable USB drive from an image file."
@@ -279,8 +279,7 @@ Usage: $(boldify "$scriptName") [$(underline modifier...)] <imagefile>
 
 typeset helpHint="
 Invoked with no action flag, $scriptName will default to install action in automatic mode: inspect <imagefile> \
-boot capabilities and find the best way to make a bootable USB drive. \
-Advanced options are described in $scriptName man page."
+boot capabilities and find the best way to make a bootable USB drive."
 
 displayHelp() {
   local termwidth
@@ -292,6 +291,7 @@ displayHelp() {
   echo -e "$actionFlagsTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
   echo -e "\n$(boldify 'GENERIC MODIFIERS')"
   echo -e "$modifierFlagsTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "\nAdvanced modifiers are described in $scriptName man page." | fmt -g "$termwidth" -w "$termwidth"
   echo -e "\n$(boldify 'INSTALL MODE MODIFIERS')"
   echo -e "$installModeModifiersTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
 }
