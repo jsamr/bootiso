@@ -51,7 +51,7 @@ __bootiso_clean_flags() {
 
 __bootiso_expects_image() {
   for arg in "${COMP_WORDS[@]}"; do
-    if echo "$arg" | grep -P "$imagefileregex" > /dev/null; then
+    if echo "$arg" | grep -P "$imagefileregex" >/dev/null; then
       echo false
       return 0
     fi
@@ -61,9 +61,17 @@ __bootiso_expects_image() {
 
 __bootiso_check_options() {
   for arg in "${COMP_WORDS[@]}"; do
-    if [[ "$arg" == '--gpt' ]]; then
+    case "$arg" in
+    --gpt)
       user_vars[parscheme]=gpt
-    fi
+      ;;
+    --icopy | --dd)
+      user_vars[installmode]=icopy
+      ;;
+    --mrsync)
+      user_vars[installmode]=mrsync
+      ;;
+    esac
   done
 }
 
@@ -169,6 +177,17 @@ __bootiso_start() {
   local cur prev short_actions act last_opt_arg hashfileregex imagefileregex argtype expectsoperand
   local -a one_word_flags two_word_flags filsystems
   local -A short_actions long_actions user_vars
+  local -a action_flags=("-f,--format" "-h,--help" "-l,--list-usb-drives" "-v,--version" "-p,--probe" "-i,--inspect")
+  local -a one_word_format_opts=("-a,--autoselect" "-y,--asume-yes")
+  local -a two_word_format_opts=("-d,--device")
+  local -a one_word_advanced_format_opts=("--gpt")
+  local -a two_word_advanced_format_opts=("-L,--label" "-t,--type" "--partype")
+  local -a one_word_inspect_opts=("--no-hash-check" "--force-hash-check")
+  local -a two_word_inspect_opts=("--hash-file")
+  local -a one_word_list_usb_opts=("--no-usb-check")
+  local -a one_word_install_opts=("--dd,--icopy" "--mrsync" "-J,--no-eject" "-M,--no-mime-check" "--no-size-check")
+  local -a one_word_mrsync_install_opts=("--local-bootloader" "--no-wimsplit")
+  local -a two_word_mrsync_install_opts=("--remote-bootloader")
   act=default
   expectsoperand=false
   filsystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs)
@@ -176,6 +195,7 @@ __bootiso_start() {
   imagefileregex='\.(iso|img)$'
   user_vars=(
     [parscheme]=mbr
+    [installmode]=auto
   )
   short_actions=(
     [-f]=format
@@ -215,27 +235,46 @@ __bootiso_start() {
   case "$act" in
   default)
     expectsoperand=$(__bootiso_expects_image)
-    one_word_flags=("--dd,--icopy" "--mrsync" "-a,--autoselect" "-H,--no-hash-check" "-J,--no-eject" "-M,--no-mime-check" "-y,--asume-yes" "--force-hash-check" "--local-bootloader" "--no-wimsplit" "--no-size-check" "--no-usb-check" "--gpt")
-    two_word_flags=("-d,--device" "-L,--label" "-t,--type" "-H,--hash-file" "--remote-bootloader" "--partype")
+    one_word_flags=(
+      "${one_word_inspect_opts[@]}"
+      "${one_word_format_opts[@]}"
+      "${one_word_install_opts[@]}"
+    )
+    two_word_flags=(
+      "${two_word_inspect_opts[@]}"
+      "${two_word_format_opts[@]}"
+    )
+    if [[ "${user_vars[installmode]}" == mrsync ]]; then
+      one_word_flags+=(
+        "${one_word_advanced_format_opts[@]}"
+        "${one_word_mrsync_install_opts[@]}"
+      )
+      two_word_flags+=(
+        "${two_word_advanced_format_opts[@]}"
+        "${two_word_mrsync_install_opts[@]}"
+      )
+    elif [[ "${user_vars[installmode]}" == auto ]]; then
+      one_word_flags+=("${action_flags[@]}")
+    fi
     ;;
   format)
     expectsoperand=false
-    one_word_flags=("-a,--autoselect" "-y,--asume-yes" "--no-usb-check" "--gpt")
-    two_word_flags=("-d,--device" "-L,--label" "-t,--type" "--partype")
+    one_word_flags=("${one_word_format_opts[@]}" "${one_word_advanced_format_opts[@]}")
+    two_word_flags=("${two_word_format_opts[@]}" "${two_word_advanced_format_opts[@]}")
     ;;
   inspect)
     expectsoperand=$(__bootiso_expects_image)
-    one_word_flags=("--no-hash-check" "--force-hash-check")
-    two_word_flags=("--hash-file")
+    one_word_flags=("${one_word_inspect_opts[@]}")
+    two_word_flags=("${two_word_inspect_opts[@]}")
     ;;
   probe)
     expectsoperand=$(__bootiso_expects_image)
-    one_word_flags=("--no-usb-check" "--no-hash-check" "--force-hash-check")
-    two_word_flags=("--hash-file")
+    one_word_flags=("${one_word_list_usb_opts[@]}" "${one_word_inspect_opts[@]}")
+    two_word_flags=("${two_word_inspect_opts[@]}")
     ;;
   list-usb-drives)
     expectsoperand=false
-    one_word_flags=("--no-usb-check")
+    one_word_flags=("${one_word_list_usb_opts[@]}")
     ;;
   version | help)
     expectsoperand=false

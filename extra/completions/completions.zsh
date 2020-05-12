@@ -10,6 +10,7 @@ hashpattern="*.(md5sum|sha1sum|sha256sum|sha512sum)"
 imagepattern="*.(iso|img)"
 uservars=(
   [parscheme]=mbr
+  [installmode]=auto #mrsync or icopy
 )
 
 function _args_contain_image_file() {
@@ -24,6 +25,8 @@ function _find_generic_files() {
   local -a expl currdirfiles dwnldirfiles
   local iso_pattern="$1"
   local downloads="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
+  local args_has_image
+  _args_contain_image_file
   if ! _args_contain_image_file; then
     _description -1V tag expl "$2"
     currdirfiles=$(find "$PWD" -maxdepth 1 -type f -iname "$iso_pattern")
@@ -59,9 +62,11 @@ function _list_partypes() {
 
 function _parse_options() {
   for word in "$@"; do
-    if [[ "$word" == '--gpt' ]]; then
-      uservars[parscheme]=gpt
-    fi
+    case "$word" in
+    --gpt) uservars[parscheme]=gpt ;;
+    --icopy | --dd) uservars[installmode]=icopy ;;
+    --mrsync) uservars[installmode]=mrsync ;;
+    esac
   done
 }
 
@@ -138,7 +143,7 @@ typeset _bootiso_help_action=(
 )
 
 typeset _bootiso_inspect_action=(
-  '(-i --inspect)'{-i,--inspect}'[inspect ISOFILE boot capabilities]'
+  '(-i --inspect)'{-i,--inspect}'[inspect <imagefile> boot capabilities]'
 )
 
 typeset _bootiso_list_usb_action=(
@@ -157,27 +162,34 @@ typeset _bootiso_format_opts=(
   '(--assume-yes -y)'{--assume-yes,-y}"[don't prompt for confirmation before erasing drive]"
   '(--autoselect -a)'{--autoselect,-a}"[in combination with -y, autoselect USB drive when only one is connected]"
   '(--device -d)'{--device,-d}"[pick <DEVICE> block file as target USB drive]:device:_list_devices"
-  '(-L --label --dd --icopy)'{-L,--label}"[set partition label to <LABEL>]:label:(${USER:u}_)"
-  '(-t --type --dd --icopy)'{-t,--type}"[format to <FSTYPE>]:fstype:(${filesystems[*]})"
-  '--partype[Enforce a specific MBR partition type, or GPT partition type when --gpt modifier is set]:partype:_list_partypes'
+)
+
+# Options for format and install in Mount-Rsync mode
+typeset _bootiso_advanced_format_opts=(
+  '(-L --label --dd --icopy)'{-L,--label}"[set partition label to <label>]:label:(${USER:u}_)"
+  '(-t --type --dd --icopy)'{-t,--type}"[format to <fstype>]:fstype:(${filesystems[*]})"
+  '--partype[Enforce a specific MBR or GPT partition type, see sfdisk -T]:partype:_list_partypes'
   '--gpt[write GPT partition table instead of MBR]'
 )
 
 typeset _bootiso_inspect_opts=(
   '(--force-hash-check --hash-file)'{--no-hash-check,-H}"[skip the lookup for hash sum-files]"
   "(--no-hash-check -H)--force-hash-check[fail and exit when no valid hash is found]"
-  "(--no-hash-check -H)--hash-file[set the <HASHFILE> of image file]:hash file:_hash_files"
+  "(--no-hash-check -H)--hash-file[set the <hashfile> of image file]:hash file:_hash_files"
 )
 
 typeset _bootiso_install_opts=(
-  '(--mrsync --dd --icopy)'{--dd,--icopy}"[override 'Automatic' mode and install <ISOFILE> in 'Image-Copy' mode]"
-  "(--dd --icopy)--mrsync[override 'Automatic' mode and install <ISOFILE> in 'Mount-Rsync' mode]"
+  '(--mrsync --dd --icopy)'{--dd,--icopy}"[enforce 'Image-Copy' install mode]"
+  "(--dd --icopy)--mrsync[enforce 'Mount-Rsync' install mode]"
   '(-J --no-eject)'{-J,--no-eject}"[don't eject device after unmounting]"
-  '(-M --no-mime-check)'{-M,--no-mime-check}"[don't assert that <ISOFILE> has the right mime-type]"
-  '(--remote-bootloader)--local-bootloader[prevent download of remote bootloader and force local syslinux]'
-  '(--local-bootloader)--remote-bootloader[force download of syslinux remote bootloader at version <VERSION>]:version:(6.04)'
+  '(-M --no-mime-check)'{-M,--no-mime-check}"[don't assert that <imagefile> has the right mime-type]"
+  "--no-size-check[don't assert that selected device size is larger than <imagefile>]"
+)
+
+typeset _bootiso_mrsync_install_opts=(
+  '(--remote-bootloader)--local-bootloader[prevent download of bootloader and force local syslinux]'
+  '(--local-bootloader)--remote-bootloader[force download of syslinux bootloader at <VERSION>]:version:(6.04)'
   '(--dd --icopy)--no-wimsplit[prevent splitting /sources/install.wim file in Windows ISOs]'
-  "--no-size-check[don't assert that selected device size is larger than <ISOFILE>]"
 )
 
 typeset _bootiso_list_usb_opts=(
@@ -189,7 +201,7 @@ _parse_options "$words[@]"
 action=$(_find_action "$words[@]")
 case "$action" in
 format)
-  arguments+=("$_bootiso_format_action[@]" "$_bootiso_format_opts[@]")
+  arguments+=("$_bootiso_format_action[@]" "$_bootiso_format_opts[@]" "$_bootiso_advanced_format_opts[@]")
   ;;
 inspect)
   expectsimage=true
@@ -212,7 +224,10 @@ default)
     "$_bootiso_inspect_action[@]"
     "$_bootiso_probe_action[@]"
   )
-  if [[ ! _args_contain_image_file ]]; then
+  if [[ "$uservars[installmode]" == mrsync ]]; then
+    arguments+=("$_bootiso_advanced_format_opts[@]" "$_bootiso_mrsync_install_opts[@]")
+  fi
+  if ! _args_contain_image_file && [[ "$uservars[installmode]" == auto ]]; then
     arguments+=(
       # options
       "$_bootiso_format_opts[@]"
