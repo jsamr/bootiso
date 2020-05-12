@@ -50,7 +50,8 @@ Each line depicts an action, with the exception of the first three lines which
   <tr>
     <td><code class="Nm">bootiso</code></td>
     <td><code class="Cm">--icopy</code> [<var class="Ar">INSTALLMODS</var>
-      <span class="No">...</span>] [<code class="Cm">--</code>]
+      <span class="No">...</span>] [<code class="Cm">--dd-bs</code>
+      <var class="Ar">blocksize</var>] [<code class="Cm">--</code>]
       <var class="Ar">imagefile</var></td>
   </tr>
 </table>
@@ -224,6 +225,16 @@ Use generic modifiers knowingly as some might override default safe behaviors.
         can be omitted. You will be prompted to select a device when not using
         this modifier.</p>
   </dd>
+  <dt><a class="permalink" href="#--dd-bs"><code class="Cm" id="--dd-bs">--dd-bs</code></a>
+    <var class="Ar">blocksize</var></dt>
+  <dd>Specify the maximum block-size used by <a class="Xr">dd(1)</a> utility in
+      &#x201C;Image-Copy&#x201D; mode. See <code class="Cm">bs</code> option of
+      <a class="Xr">dd(1)</a> utility. Default is 4M. Requires
+      <code class="Cm">--icopy</code> or <code class="Cm">--dd</code> install
+      modifier.
+    <p class="Pp"><b class="Sy">Notice:</b> values bellow 50k can sensibly slow
+        down the installation.</p>
+  </dd>
   <dt><a class="permalink" href="#--force-hash-check"><code class="Cm" id="--force-hash-check">--force-hash-check</code></a></dt>
   <dd>Fail and exit when no valid hash is found. The default behavior is to
       prompt user when hash check fails.</dd>
@@ -279,12 +290,21 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     modifier.</dd>
   <dt><a class="permalink" href="#--partype"><code class="Cm" id="--partype">--partype</code></a>
     <var class="Ar">typeid</var></dt>
-  <dd>Enforce a specific MBR partition type, or GPT partition type when
-      <code class="Cm">--gpt</code> modifier is set. See
-      <a class="Xr">sfdisk(8)</a> &#x201C;type&#x201D; field described in
-      <i class="Em">INPUT FORMATS</i> section. Requires
+  <dd>Set a specific MBR partition type, or GPT partition type when
+      <code class="Cm">--gpt</code> modifier is set, not to be confused with the
+      filesystem type in <code class="Cm">--type</code> modifier. Requires
       <code class="Cm">--mrsync</code> install modifier or
-      <b class="Sy">format</b> action.</dd>
+      <b class="Sy">format</b> action.
+    <p class="Pp">List available types for GPT or MBR with the following
+        commands:</p>
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><b class="Sy">sfdisk</b>
+      <code class="Cm">--list-types --label</code>
+      <span class="No">gpt</span></div>
+    <div class="Bd Bd-indent"><b class="Sy">sfdisk</b>
+      <code class="Cm">--list-types --label</code>
+      <span class="No">mbr</span></div>
+  </dd>
   <dt><a class="permalink" href="#--remote-bootloader"><code class="Cm" id="--remote-bootloader">--remote-bootloader</code></a>
     <var class="Ar">version</var></dt>
   <dd>Force download of <a class="Xr">syslinux</a> remote bootloader at version
@@ -329,38 +349,35 @@ Use generic modifiers knowingly as some might override default safe behaviors.
 <section class="Ss">
 <h2 class="Ss" id="Install_mode_modifiers"><a class="permalink" href="#Install_mode_modifiers">Install
   mode modifiers</a></h2>
-These modifiers only apply to default <b class="Sy">install</b> action, and
-  override &#x201C;Automatic&#x201D; mode (see
+These modifiers only apply to default <b class="Sy">install</b> action (see
   <a class="Sx" href="#INSTALL_MODES">INSTALL MODES</a> bellow).
 <dl class="Bl-tag">
   <dt><a class="permalink" href="#--icopy"><code class="Cm" id="--icopy">--icopy</code></a>,
     <code class="Cm">--dd</code></dt>
-  <dd>Enforce &#x201C;Image-Copy&#x201D; mode and enable specific options for
+  <dd>Assert &#x201C;Image-Copy&#x201D; mode and enable specific options for
       this mode. <code class="Nm">bootiso</code> will fail if the
       <var class="Ar">imagefile</var> is not hybrid.</dd>
   <dt><a class="permalink" href="#--mrsync"><code class="Cm" id="--mrsync">--mrsync</code></a></dt>
-  <dd>Enforce &#x201C;Mount-Rsync&#x201D; mode and enable specific options for
+  <dd>Assert &#x201C;Mount-Rsync&#x201D; mode and enable specific options for
       this mode. <code class="Nm">bootiso</code> will fail if the
-      <var class="Ar">imagefile</var> is not an ISO 9660 volume container.</dd>
+      <var class="Ar">imagefile</var> is not an ISO 9660 filesystem.</dd>
 </dl>
 </section>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="INSTALL_MODES"><a class="permalink" href="#INSTALL_MODES">INSTALL
   MODES</a></h1>
-<code class="Nm">bootiso</code> has three way of performing the
-  <b class="Sy">install</b> action.
+<code class="Nm">bootiso</code> has three operating modes for
+  <b class="Sy">install</b> action. When you assert a specific mode, it allows
+  you to provide advanced options for this mode.
 <dl class="Bl-tag">
   <dt><i class="Em">Automatic</i></dt>
   <dd>In the default &#x201C;Automatic&#x201D; mode,
       <code class="Nm">bootiso</code> will inspect
       <var class="Ar">imagefile</var> and choose the best strategy to end up
       with a bootable USB stick. These strategies are described in the bellow
-      two modes. It is advised no to enforce any strategy and let
-      <code class="Nm">bootiso</code> choose. Invoke
-      <code class="Cm">--inspect</code> action flag to print identified boot
-      capabilities and the strategy picked up by
-      <code class="Nm">bootiso</code>.</dd>
+      two modes. Invoke <code class="Cm">--inspect</code> action flag to print
+      identified boot capabilities and the compatible strategy.</dd>
   <dt><i class="Em">Image-Copy</i></dt>
   <dd>In &#x201C;Image-Copy&#x201D; mode enforceable with
       <code class="Cm">--icopy</code> install modifier,
@@ -380,7 +397,7 @@ These modifiers only apply to default <b class="Sy">install</b> action, and
       behavior will change depending on the presence of special files to
       identify wether legacy BIOS boot or UEFI boot should be preferred.
       <code class="Nm">bootiso</code> will check conditions to figure out which
-      one to choose:
+      ones to choose:
     <ol class="Bl-enum">
       <li>If <span class="Pa">/efi/boot/*</span> boot files exist, choose UEFI
           boot and FAT32 filesystem mandated by the standard. In which case, if

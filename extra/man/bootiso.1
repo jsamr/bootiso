@@ -41,6 +41,7 @@ one is printed.
 .Nm bootiso
 .Cm --icopy
 .Op Ar "INSTALLMODS" No ...
+.Op Cm --dd-bs Ar blocksize
 .Op Cm --
 .Ar imagefile
 .\" Install Mount-Rsync mode
@@ -241,6 +242,23 @@ or
 .Pa /dev/
 prefix can be omitted.
 You will be prompted to select a device when not using this modifier.
+.It Cm --dd-bs Ar blocksize
+Specify the maximum block-size used by
+.Xr dd 1
+utility in
+.Dq Image-Copy
+mode. See
+.Cm bs
+option of
+.Xr dd 1
+utility. Default is 4M. Requires
+.Cm --icopy
+or
+.Cm --dd
+install modifier.
+.Pp
+.Sy Notice:
+values bellow 50k can sensibly slow down the installation.
 .It Cm --force-hash-check
 Fail and exit when no valid hash is found.
 The default behavior is to prompt user when hash check
@@ -311,19 +329,20 @@ file in Windows ISOs. Requires
 .Cm --mrsync
 install modifier.
 .It Cm --partype Ar typeid
-Enforce a specific MBR partition type, or GPT partition type when
+Set a specific MBR partition type, or GPT partition type when
 .Cm --gpt
-modifier is set. See
-.Xr sfdisk 8
-.Dq type
-field described in
-.Em "INPUT FORMATS"
-section.
-Requires
+modifier is set, not to be confused with the filesystem type in
+.Cm --type
+modifier. Requires
 .Cm --mrsync
 install modifier or
 .Sy format
 action.
+.Pp
+List available types for GPT or MBR with the following commands:
+.Pp
+.D1 Sy sfdisk Cm --list-types --label No gpt
+.D1 Sy sfdisk Cm --list-types --label No mbr
 .It Cm --remote-bootloader Ar version
 Force download of
 .Xr syslinux
@@ -388,14 +407,12 @@ and treat the upcoming item as
 .Ss Install mode modifiers
 These modifiers only apply to default
 .Sy install
-action, and override
-.Dq Automatic
-mode (see
+action (see
 .Sx "INSTALL MODES"
 bellow).
 .Bl -tag
 .It Cm "--icopy", Cm --dd
-Enforce
+Assert
 .Dq Image-Copy
 mode and enable specific options for this mode.
 .Nm
@@ -403,22 +420,22 @@ will fail if the
 .Ar imagefile
 is not hybrid.
 .It Cm --mrsync
-Enforce
+Assert
 .Dq Mount-Rsync
 mode and enable specific options for this mode.
 .Nm
 will fail if the
 .Ar imagefile
-is not an ISO 9660 volume container.
+is not an ISO 9660 filesystem.
 .El
 .
 .
 .Sh INSTALL MODES
 .Pp
 .Nm
-has three way of performing the
+has three operating modes for
 .Sy install 
-action.
+action. When you assert a specific mode, it allows you to provide advanced options for this mode.
 .Bl -tag
 .It Em Automatic
 In the default 
@@ -429,13 +446,9 @@ will inspect
 .Ar imagefile
 and choose the best strategy to end up with a
 bootable USB stick. These strategies are described in the bellow two modes.
-It is advised no to enforce any strategy and let
-.Nm
-choose.
 Invoke
 .Cm --inspect
-action flag to print identified boot capabilities and the strategy picked up by
-.Nm "."
+action flag to print identified boot capabilities and the compatible strategy.
 .It Em Image-Copy
 In 
 .Dq Image-Copy
@@ -465,7 +478,7 @@ creates a MBR partition table and format one partition in the USB drive and copy
 from mounted ISO. The behavior will change depending on the presence of special files to
 identify wether legacy BIOS boot or UEFI boot should be preferred.
 .Nm
-will check conditions to figure out which one to choose:
+will check conditions to figure out which ones to choose:
 .Bl -enum
 .It
 If 
