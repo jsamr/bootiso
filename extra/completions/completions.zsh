@@ -174,6 +174,7 @@ typeset _bootiso_advanced_format_opts=(
 
 typeset _bootiso_inspect_opts=(
   '(--force-hash-check --hash-file)'{--no-hash-check,-H}"[skip the lookup for hash sum-files]"
+  '(-M --no-mime-check)'{-M,--no-mime-check}"[don't assert that <imagefile> has the right mime-type]"
   "(--no-hash-check -H)--force-hash-check[fail and exit when no valid hash is found]"
   "(--no-hash-check -H)--hash-file[set the <hashfile> of image file]:hash file:_hash_files"
 )
@@ -182,7 +183,6 @@ typeset _bootiso_install_opts=(
   '(--mrsync --dd --icopy)'{--dd,--icopy}"[enforce 'Image-Copy' install mode]"
   "(--dd --icopy)--mrsync[enforce 'Mount-Rsync' install mode]"
   '(-J --no-eject)'{-J,--no-eject}"[don't eject device after unmounting]"
-  '(-M --no-mime-check)'{-M,--no-mime-check}"[don't assert that <imagefile> has the right mime-type]"
   "--no-size-check[don't assert that selected device size is larger than <imagefile>]"
 )
 
@@ -220,6 +220,7 @@ default)
     # options
     "$_bootiso_install_opts[@]"
     "$_bootiso_inspect_opts[@]"
+    "$_bootiso_format_opts[@]"
     # actions
     "$_bootiso_inspect_action[@]"
     "$_bootiso_probe_action[@]"
@@ -230,7 +231,6 @@ default)
   if ! _args_contain_image_file && [[ "$uservars[installmode]" == auto ]]; then
     arguments+=(
       # options
-      "$_bootiso_format_opts[@]"
       "$_bootiso_list_usb_opts[@]"
       # actions
       "$_bootiso_format_action[@]"

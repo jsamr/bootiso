@@ -182,10 +182,10 @@ __bootiso_start() {
   local -a two_word_format_opts=("-d,--device")
   local -a one_word_advanced_format_opts=("--gpt")
   local -a two_word_advanced_format_opts=("-L,--label" "-t,--type" "--partype")
-  local -a one_word_inspect_opts=("--no-hash-check" "--force-hash-check")
+  local -a one_word_inspect_opts=("--no-hash-check" "--force-hash-check" "-M,--no-mime-check")
   local -a two_word_inspect_opts=("--hash-file")
   local -a one_word_list_usb_opts=("--no-usb-check")
-  local -a one_word_install_opts=("--dd,--icopy" "--mrsync" "-J,--no-eject" "-M,--no-mime-check" "--no-size-check")
+  local -a one_word_install_opts=("--dd,--icopy" "--mrsync" "-J,--no-eject" "--no-size-check")
   local -a one_word_mrsync_install_opts=("--local-bootloader" "--no-wimsplit")
   local -a two_word_mrsync_install_opts=("--remote-bootloader")
   act=default
