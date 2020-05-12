@@ -22,6 +22,7 @@
 - `Makefile` and generic install instructions
 - Don't assume `sudo` or `gksu` are installed when privilege escalation is required
 - Replaced deprecated `mkfs` from util-linux with the `.` counterparts
+- Allow `--no-mime-check` with inspect and probe actions
 
 **Bugfixes**
 
