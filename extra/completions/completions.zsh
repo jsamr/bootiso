@@ -4,8 +4,13 @@ setopt extended_glob
 
 typeset action imagesspec hashpattern imagepattern hasimage=false expectsimage=false
 typeset -a filesystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs) arguments
+typeset -A uservars
+
 hashpattern="*.(md5sum|sha1sum|sha256sum|sha512sum)"
 imagepattern="*.(iso|img)"
+uservars=(
+  [parscheme]=mbr
+)
 
 function _args_contain_image_file() {
   for word in "$words[@]"; do
@@ -43,6 +48,21 @@ function _list_devices() {
   local -a expl
   _description tag expl "device"
   compadd "$expl[@]" -- $(lsblk -pnrdo name)
+}
+
+function _list_partypes() {
+  local -a partypes
+  local parscheme=${uservars[parscheme]}
+  IFS=$'\n' partypes=($(sfdisk --label ${parscheme} -T | tail -n +3 | sed -r 's/^\s+//' | sed -r 's/\s+/:/'))
+  _describe -V "${parscheme:u} partition type" partypes
+}
+
+function _parse_options() {
+  for word in "$@"; do
+    if [[ "$word" == '--gpt' ]]; then
+      uservars[parscheme]=gpt
+    fi
+  done
 }
 
 function _find_action() {
@@ -139,7 +159,8 @@ typeset _bootiso_format_opts=(
   '(--device -d)'{--device,-d}"[pick <DEVICE> block file as target USB drive]:device:_list_devices"
   '(-L --label --dd --icopy)'{-L,--label}"[set partition label to <LABEL>]:label:(${USER:u}_)"
   '(-t --type --dd --icopy)'{-t,--type}"[format to <FSTYPE>]:fstype:(${filesystems[*]})"
-  '--mbr[write MBR partition table instead of GPT]'
+  '--partype[Enforce a specific MBR partition type, or GPT partition type when --gpt modifier is set]:partype:_list_partypes'
+  '--gpt[write GPT partition table instead of MBR]'
 )
 
 typeset _bootiso_inspect_opts=(
@@ -163,16 +184,8 @@ typeset _bootiso_list_usb_opts=(
   "--no-usb-check[don't assert that selected device is connected through USB bus]"
 )
 
-typeset _bootiso_actions=(
-  "$_bootiso_format_action[@]"
-  "$_bootiso_help_action[@]"
-  "$_bootiso_inspect_action[@]"
-  "$_bootiso_list_usb_action[@]"
-  "$_bootiso_probe_action[@]"
-  "$_bootiso_version_action[@]"
-)
-
 imagesspec="*: :_image_files"
+_parse_options "$words[@]"
 action=$(_find_action "$words[@]")
 case "$action" in
 format)

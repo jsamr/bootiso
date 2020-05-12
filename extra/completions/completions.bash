@@ -59,6 +59,14 @@ __bootiso_expects_image() {
   echo true
 }
 
+__bootiso_check_options() {
+  for arg in "${COMP_WORDS[@]}"; do
+    if [[ "$arg" == '--gpt' ]]; then
+      user_vars[parscheme]=gpt
+    fi
+  done
+}
+
 __bootiso_check_action() {
   if [[ $act == default ]]; then
     for arg in "${COMP_WORDS[@]}"; do
@@ -120,6 +128,9 @@ __bootiso_handle_opt_arg() {
     -d | --device)
       mapfile -t COMPREPLY < <(compgen -W "$(lsblk -pnrdo name)" -- "${cur}")
       ;;
+    --partype)
+      mapfile -t COMPREPLY < <(compgen -W "$(sfdisk --label ${user_vars[parscheme]} -T | tail -n +3 | awk '{ print $1 }')" -- "${cur}")
+      ;;
     *)
       echo "Error, unexpected option argument ${arg}"
       exit 1
@@ -157,12 +168,15 @@ __bootiso_compl_opt_flags() {
 __bootiso_start() {
   local cur prev short_actions act last_opt_arg hashfileregex imagefileregex argtype expectsoperand
   local -a one_word_flags two_word_flags filsystems
-  local -A short_actions long_actions
+  local -A short_actions long_actions user_vars
   act=default
   expectsoperand=false
   filsystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs)
   hashfileregex='\.(md5sum|sha1sum|sha256sum|sha512sum)$'
   imagefileregex='\.(iso|img)$'
+  user_vars=(
+    [parscheme]=mbr
+  )
   short_actions=(
     [-f]=format
     [-p]=probe
@@ -182,6 +196,7 @@ __bootiso_start() {
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD - 1]}"
   __bootiso_check_action
+  __bootiso_check_options
   if [[ "$prev" != "--" ]]; then
     case "$cur" in
     -- | --*)
@@ -200,13 +215,13 @@ __bootiso_start() {
   case "$act" in
   default)
     expectsoperand=$(__bootiso_expects_image)
-    one_word_flags=("--dd,--icopy" "--mrsync" "-a,--autoselect" "-H,--no-hash-check" "-J,--no-eject" "-M,--no-mime-check" "-y,--asume-yes" "--force-hash-check" "--local-bootloader" "--no-wimsplit" "--no-size-check" "--no-usb-check" "--mbr")
-    two_word_flags=("-d,--device" "-L,--label" "-t,--type" "-H,--hash-file" "--remote-bootloader")
+    one_word_flags=("--dd,--icopy" "--mrsync" "-a,--autoselect" "-H,--no-hash-check" "-J,--no-eject" "-M,--no-mime-check" "-y,--asume-yes" "--force-hash-check" "--local-bootloader" "--no-wimsplit" "--no-size-check" "--no-usb-check" "--gpt")
+    two_word_flags=("-d,--device" "-L,--label" "-t,--type" "-H,--hash-file" "--remote-bootloader" "--partype")
     ;;
   format)
     expectsoperand=false
-    one_word_flags=("-a,--autoselect" "-y,--asume-yes" "--no-usb-check" "--mbr")
-    two_word_flags=("-d,--device" "-L,--label" "-t,--type")
+    one_word_flags=("-a,--autoselect" "-y,--asume-yes" "--no-usb-check" "--gpt")
+    two_word_flags=("-d,--device" "-L,--label" "-t,--type" "--partype")
     ;;
   inspect)
     expectsoperand=$(__bootiso_expects_image)
