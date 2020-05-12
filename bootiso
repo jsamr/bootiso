@@ -70,6 +70,7 @@ typeset -Ar userVarsCompatibilityMatrix=(
   ['label']='install-mount-rsync format'
   ['remote-bootloader']='install-mount-rsync'
   ['partype']='format install-mount-rsync'
+  ['dd-bs']='install-image-copy'
 )
 typeset -Ar userFlagsCompatibilityMatrix=(
   ['assume-yes']='install-auto install-mount-rsync install-image-copy format'
@@ -207,6 +208,7 @@ typeset shouldMakePartition
 typeset noDeviceEjection
 typeset localBootloader
 typeset enforceGPT
+typeset ddBusSize
 
 # See console_codes GNU-Linux man page
 typeset setRed="\e[31m"
@@ -881,6 +883,14 @@ parseArguments() {
         echowarn "$(boldify '-b, --bootloader') has been removed in v3.0.0. Bootloader installation is now automatic."
         shift
         ;;
+      --dd-bs)
+        if (($# < 2)); then
+          failAndExit "${exitStatus[SYNOPSISNC]}" \
+            "Missing value for '$1' flag. Please provide a number of bytes, see dd(1)."
+        fi
+        setUserVar 'dd-bs' "$2"
+        shift 2
+        ;;
       --local-bootloader)
         enableUserFlag 'local-bootloader'
         shift
@@ -1395,7 +1405,7 @@ copyWithDD() {
     statusFile=$(createTempFile "bootiso-status")
     temporaryAssets+=("$statusFile")
     (
-      dd if="$selectedIsoFile" of="$selectedDevice" bs=4MB status=none
+      dd if="$selectedIsoFile" of="$selectedDevice" bs="$ddBusSize" status=none
       echo "$?" >"$statusFile"
     ) &
     pid=$!
@@ -1693,6 +1703,10 @@ checkUserVars() {
       "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader') doesn't follow MAJOR.MINOR pattern." \
       "Valid examples are 4.10, 6.02"
   fi
+  # Check dd-bs
+  if [[ -n "${userVars[dd-bs]}" && ! ${userVars[dd-bs]} =~ ^[0-9]+[kMGT]?$ ]]; then
+    failAndExit "${exitStatus[SYNOPSISNC]}" "$(boldify '--dd-bs') argument must be a valid block size quantifier, e.g. 512k, 2M."
+  fi
 }
 
 checkUserFlags() {
@@ -1808,6 +1822,7 @@ assignInternalVariables() {
   selectedDevice=${userVars['device']:-''}
   partitionLabel=${userVars['label']:-''}
   selectedBootloaderVersion=${userVars['remote-bootloader']:-'auto'}
+  ddBusSize=${userVars['dd-bs']:-'4M'}
   # Action-dependent flags
   case $action in
   install-*)
