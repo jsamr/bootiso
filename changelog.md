@@ -5,12 +5,15 @@
 - Add linux manual `man` pages, see [online version](https://jsamr.github.io/bootiso)
 - (*experimental*) Add `bash` and `zsh` completion scripts with image files completions in current and `$XDG_DOWNLOAD_DIR` (default ~/Downloads) folder
 - (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
-- Semantic exit status, cf [#DIAGNOSTICS](https://jsamr.github.io/bootiso/#DIAGNOSTICS)
-- GPT partition tables support: they are “defaulted”, except in Mount-Rsync mode with legacy BIOS boot
-- Add `--mbr` modifier to enforce MBR partition tables
+- (*experimental*) Add `--gpt` modifier to enforce GPT partition tables (requires `--format` or `--mrsync`)
+- Semantic exit status, cf [#EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)
+- Add `--partype` modifier to set partition table type ID, not to be confused with file-system `--type` option (requires `--format` or `--mrsync`). This is especially useful in Mount-Rsync mode and GPT partition scheme where the booting system might otherwise refuse to read the partition. See `sfdisk -T`.
 
 **Enhancements**
 
+- Semantics for `--mrsync` and `--dd` have changed:
+  1. It is now forbidden to use the first with hybrid images and the second with non-hybrid.
+  2. These options are now required for any modifier which applies specifically to one install mode. For example, to use `--gpt` during install action, `--mrsync` must be set.
 - Sensible default label with format action: `${USER}_${VENDOR}` with USER read from SUDO_USER and VENDOR from lsblk VENDOR attribute
 - Add `--icopy` alias for `--dd`
 - Support `eopkg` package manager (Solus)
@@ -22,12 +25,11 @@
 
 **Bugfixes**
 
-- Fix a `sync` call in background which lead to corrupted image installs, [#48](https://github.com/jsamr/bootiso/issues/48)
-- Fix broken Windows USB boot caused by MBR, [#15](https://github.com/jsamr/bootiso/issues/15)
+- Fix a `sync` call in background which lead to corrupted image installs, see [#48](https://github.com/jsamr/bootiso/issues/48) and [#15](https://github.com/jsamr/bootiso/issues/15)
 
 **Dependencies**
 
-*for package maintainers, please rely now on [install.md#deps](install.md#deps)*
+*for package maintainers, please rely now on [install.md#Dependencies](install.md#deps)*
 
 - Dropped unecessary `parted`
 - Add `jq` to read sfdisk partition table reports
