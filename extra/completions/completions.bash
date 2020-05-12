@@ -120,6 +120,9 @@ __bootiso_handle_files() {
 __bootiso_handle_opt_arg() {
   if [[ -n "$last_opt_arg" ]]; then
     case "$last_opt_arg" in
+    --dd-bs)
+      mapfile -t COMPREPLY < <(compgen -W "32k 64k 512k 1M 2M 4M 8M" -- "${cur}")
+      ;;
     -L | --label)
       COMPREPLY=("${USER^^}_")
       compopt -o nospace
@@ -188,6 +191,7 @@ __bootiso_start() {
   local -a one_word_install_opts=("--dd,--icopy" "--mrsync" "-J,--no-eject" "--no-size-check")
   local -a one_word_mrsync_install_opts=("--local-bootloader" "--no-wimsplit")
   local -a two_word_mrsync_install_opts=("--remote-bootloader")
+  local -a two_word_icopy_install_opts=("--dd-bs")
   act=default
   expectsoperand=false
   filsystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs)
@@ -255,6 +259,8 @@ __bootiso_start() {
       )
     elif [[ "${user_vars[installmode]}" == auto ]]; then
       one_word_flags+=("${action_flags[@]}")
+    elif [[ "${user_vars[installmode]}" == icopy ]]; then
+      two_word_flags+=("${two_word_icopy_install_opts[@]}")
     fi
     ;;
   format)

@@ -192,6 +192,10 @@ typeset _bootiso_mrsync_install_opts=(
   '(--dd --icopy)--no-wimsplit[prevent splitting /sources/install.wim file in Windows ISOs]'
 )
 
+typeset _bootiso_icopy_install_opts=(
+  "--dd-bs[set maximum block-size for dd utility]:block size:(32k 64k 512k 1M 2M 4M 8M)"
+)
+
 typeset _bootiso_list_usb_opts=(
   "--no-usb-check[don't assert that selected device is connected through USB bus]"
 )
@@ -227,6 +231,8 @@ default)
   )
   if [[ "$uservars[installmode]" == mrsync ]]; then
     arguments+=("$_bootiso_advanced_format_opts[@]" "$_bootiso_mrsync_install_opts[@]")
+  elif [[ "$uservars[installmode]" == icopy ]]; then
+    arguments+=("$_bootiso_icopy_install_opts[@]")
   fi
   if ! _args_contain_image_file && [[ "$uservars[installmode]" == auto ]]; then
     arguments+=(
