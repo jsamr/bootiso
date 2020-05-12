@@ -7,13 +7,15 @@
 - (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
 - (*experimental*) Add `--gpt` modifier to enforce GPT partition tables (requires `--format` or `--mrsync`)
 - Semantic exit status, cf [#EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)
-- Add `--partype` modifier to set partition table type ID, not to be confused with file-system `--type` option (requires `--format` or `--mrsync`). This is especially useful in Mount-Rsync mode and GPT partition scheme where the booting system might otherwise refuse to read the partition. See `sfdisk -T`.
+- Add `--partype` modifier to set partition table type ID, not to be confused with file-system `--type` option (requires `--format` or `--mrsync`). This is especially useful in “Mount-Rsync” mode and GPT partition scheme where the booting system might otherwise refuse to read filesystem. See `sfdisk --list-types --label {gpt|dos}`.
+- Add `--dd-bs <block-size>` support for “Image-Copy” mode
 
 **Enhancements**
 
 - Semantics for `--mrsync` and `--dd` have changed:
-  1. It is now forbidden to use the first with hybrid images and the second with non-hybrid.
-  2. These options are now required for any modifier which applies specifically to one install mode. For example, to use `--gpt` during install action, `--mrsync` must be set.
+  1. Those flags now “assert” rather then “force“ the install mode.
+  2. It is now forbidden to use the “Mount-Rsync” with hybrid images and “Image-Copy” with non-hybrid.
+  3. These options are now required for any modifier which applies specifically to them. For example, to use `--gpt` during install action, `--mrsync` must be set.
 - Sensible default label with format action: `${USER}_${VENDOR}` with USER read from SUDO_USER and VENDOR from lsblk VENDOR attribute
 - Add `--icopy` alias for `--dd`
 - Support `eopkg` package manager (Solus)
