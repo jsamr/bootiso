@@ -131,7 +131,7 @@ __bootiso_handle_opt_arg() {
       COMPREPLY=("${USER^^}_")
       compopt -o nospace
       ;;
-    -t | --type)
+    -t | --type | --data-part-fstype)
       mapfile -t COMPREPLY < <(compgen -W "${filsystems[*]}" -- "${cur}")
       ;;
     --remote-bootloader)
@@ -195,7 +195,8 @@ __bootiso_start() {
   local -a one_word_install_opts=("--dd,--icopy" "--mrsync" "-J,--no-eject" "--no-size-check")
   local -a one_word_mrsync_install_opts=("--local-bootloader" "--no-wimsplit")
   local -a two_word_mrsync_install_opts=("--remote-bootloader")
-  local -a two_word_icopy_install_opts=("--dd-bs")
+  local -a one_word_icopy_install_opts=("-D,--data-part")
+  local -a two_word_icopy_install_opts=("--dd-bs" "--data-part-fstype")
   act=default
   expectsoperand=false
   filsystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs)
@@ -264,7 +265,10 @@ __bootiso_start() {
     elif [[ "${user_vars[installmode]}" == auto ]]; then
       one_word_flags+=("${action_flags[@]}")
     elif [[ "${user_vars[installmode]}" == icopy ]]; then
-      two_word_flags+=("${two_word_icopy_install_opts[@]}")
+      two_word_flags+=(
+        "${one_word_icopy_install_opts[@]}"
+        "${two_word_icopy_install_opts[@]}"
+        )
     fi
     ;;
   format)

@@ -190,8 +190,8 @@ typeset _bootiso_inspect_opts=(
 )
 
 typeset _bootiso_install_opts=(
-  '(--mrsync --dd --icopy)'{--dd,--icopy}"[enforce 'Image-Copy' install mode]"
-  "(--dd --icopy)--mrsync[enforce 'Mount-Rsync' install mode]"
+  '(--mrsync --dd --icopy)'{--dd,--icopy}"[assert 'Image-Copy' install mode]"
+  "(--dd --icopy)--mrsync[assert 'Mount-Rsync' install mode]"
   '(-J --no-eject)'{-J,--no-eject}"[don't eject device after unmounting]"
   "--no-size-check[don't assert that selected device size is larger than <imagefile>]"
 )
@@ -204,6 +204,8 @@ typeset _bootiso_mrsync_install_opts=(
 
 typeset _bootiso_icopy_install_opts=(
   "--dd-bs[set maximum block-size for dd utility]:block size:(32k 64k 512k 1M 2M 4M 8M)"
+  {-D,--data-part}"[add a supplementary data partition after installation]"
+  "--data-part-fstype[change filesystem type for the supplementary data partition]:fstype:(${filesystems[*]})"
 )
 
 typeset _bootiso_list_usb_opts=(
