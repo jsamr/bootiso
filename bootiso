@@ -59,7 +59,7 @@ typeset -Ar commandPackages=(
   ['date']='coreutils'
   ['tr']='coreutils'
 )
-typeset shortOptions='bydJahlMftLp'
+typeset shortOptions='bydJahlMftLpD'
 typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
 typeset -Ar userVarsCompatibilityMatrix=(
   ['iso-file']='install-auto install-mount-rsync install-image-copy inspect probe'
@@ -70,6 +70,7 @@ typeset -Ar userVarsCompatibilityMatrix=(
   ['remote-bootloader']='install-mount-rsync'
   ['partype']='format install-mount-rsync'
   ['dd-bs']='install-image-copy'
+  ['data-part-fstype']='install-image-copy'
 )
 typeset -Ar userFlagsCompatibilityMatrix=(
   ['assume-yes']='install-auto install-mount-rsync install-image-copy format'
@@ -81,6 +82,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
   ['no-usb-check']='install-auto install-mount-rsync install-image-copy list-usb-drives probe format'
   ['no-size-check']='install-auto install-mount-rsync install-image-copy'
   ['gpt']='format install-mount-rsync'
+  ['data-part']='install-image-copy'
   # Mount-Rsync specials
   ['local-bootloader']='install-mount-rsync'
   ['no-wimsplit']='install-mount-rsync'
@@ -141,6 +143,7 @@ typeset -A userFlags=(
   ['no-hash-check']=''
   ['force-hash-check']=''
   ['no-wimsplit']=''
+  ['data-part']=''
 )
 typeset -A userVars=(
   ['iso-file']=''
@@ -150,6 +153,7 @@ typeset -A userVars=(
   ['label']=''
   ['remote-bootloader']=''
   ['partype']=''
+  ['data-part-fstype']=''
 )
 
 typeset -A exitStatus=(
@@ -208,6 +212,8 @@ typeset noDeviceEjection
 typeset localBootloader
 typeset enforceGPT
 typeset ddBusSize
+typeset enableDataPart
+typeset dataPartFstype
 
 # See console_codes GNU-Linux man page
 typeset setRed="\e[31m"
@@ -736,16 +742,16 @@ configureLabel() {
   # Fallback to "USER_VENDOR" if format
   if [[ "$action" == format ]]; then
     user=${SUDO_USER:-$USER}
-    vendor=$(lsblk -dno VENDOR "$selectedDevice" 2> /dev/null)
+    vendor=$(lsblk -dno VENDOR "$selectedDevice" 2>/dev/null)
     vendor=${vendor:-FLASH}
     partitionLabel=${partitionLabel:-"${user^^}_${vendor^^}"}
   else
-    partitionLabel=${partitionLabel:-BOOTISO}
+    partitionLabel=${partitionLabel:-''}
   fi
-  if [ -z "${userVars['label']}" ]; then
+  if [[ -z "${userVars['label']}" && -n "$partitionLabel" ]]; then
     echogood "Partition label automatically set to '$partitionLabel'." \
       "You can explicitly set the label with $(boldify '-L, --label')."
-  else
+  elif [[ -n "$partitionLabel" ]]; then
     echogood "Partition label manually set to '$partitionLabel'."
   fi
 
@@ -886,6 +892,10 @@ parseArguments() {
         setUserVar 'dd-bs' "$2"
         shift 2
         ;;
+      -D | --data-part)
+        enableUserFlag 'data-part'
+        shift
+        ;;
       --local-bootloader)
         enableUserFlag 'local-bootloader'
         shift
@@ -925,6 +935,13 @@ parseArguments() {
           failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a filesystem type."
         fi
         setUserVar 'type' "${2,,}" #lowercased
+        shift 2
+        ;;
+      --data-part-fstype)
+        if (($# < 2)); then
+          failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a filesystem type."
+        fi
+        setUserVar 'data-part-fstype' "${2,,}" #lowercased
         shift 2
         ;;
       -L | --label)
@@ -1179,6 +1196,69 @@ shouldWipeUSBKey() {
   fi
 }
 
+# $1: fstype
+# $2: target partition
+# $3: partition label
+formatPartition() {
+  # These options always end up with the label flag setter
+  local -Ar mkfsOpts=(
+    ['vfat']="-v -F 32 -n" # Fat32 mode
+    ['exfat']="-n"
+    ['ntfs']="-Q -c 4096 -L" # Quick mode + cluster size = 4096 for Syslinux support
+    ['ext2']="-O ^64bit -L"  # Disabling pure 64 bits compression for syslinux compatibility
+    ['ext3']="-O ^64bit -L"  # see https://www.syslinux.org/wiki/index.php?title=Filesystem#ext
+    ['ext4']="-O ^64bit -L"
+    ['f2fs']="-l"
+  )
+  # format
+  echogood "Creating $1 partition on '$2'..."
+  # shellcheck disable=SC2086
+  "mkfs.$filesystemType" ${mkfsOpts[$1]} "$3" "$2" |&
+    indentAll ||
+    failAndExit "${exitStatus[INTERNALIO]}" "Failed to create $1 partition on USB device."
+}
+
+# $1 partScheme
+# $2 fsType
+partTypeFromFSType() {
+  local partScheme=$1
+  local fsType=$2
+  local -A gptTypeCodes=(
+    ['vfat']="${gptPartitionCodes[wdp]}"
+    ['exfat']="${gptPartitionCodes[wdp]}"
+    ['ntfs']="${gptPartitionCodes[wdp]}"
+    ['ext2']="${gptPartitionCodes[lfd]}"
+    ['ext3']="${gptPartitionCodes[lfd]}"
+    ['ext4']="${gptPartitionCodes[lfd]}"
+    ['f2fs']="${gptPartitionCodes[lfd]}"
+  )
+  local -A mbrTypeCodes=(['vfat']='c' ['exfat']='7' ['ntfs']='7' ['ext2']='83' ['ext3']='83' ['ext4']='83' ['f2fs']='83')
+  case "$partScheme" in
+  dos | mbr) echo "${mbrTypeCodes[$fsType]}" ;;
+  gpt) echo "${gptTypeCodes[$fsType]}" ;;
+  *) failAndExit "${exitStatus[INTERNALST]}" "unhandled partition scheme: $partScheme" ;;
+  esac
+}
+
+# Return status is
+# 0: OK
+# 1: failed appending partition table
+# 2: failed formating partition
+addDataPartition() {
+  local dataPartition diskReport sectorSize partSize humanSize partScheme partType
+  diskReport=$(sfdisk -lJ "$selectedDevice")
+  partScheme=$(echo "$diskReport" | jq -r '.partitiontable.label')
+  partType=$(partTypeFromFSType "$partScheme" "$dataPartFstype")
+  sfdisk --append "$selectedDevice" < <(echo "-,-,$partType") || return 1
+  diskReport=$(sfdisk -lJ "$selectedDevice")
+  dataPartition=$(echo "$diskReport" | jq -r '.partitiontable.partitions[-1].node')
+  formatPartition "$dataPartFstype" "$dataPartition" "DATA" || return 2
+  sectorSize=$(echo "$diskReport" | jq -r '.partitiontable.sectorsize')
+  partSize=$(echo "$diskReport" | jq -r '.partitiontable.partitions[-1].size')
+  humanSize=$(numfmt --to=iec-i --suffix=B $((sectorSize * partSize)))
+  echogood "Created $dataPartFstype data partition $dataPartition of size $humanSize"
+}
+
 # $1: partType - MBR or GPT
 # $2: notBootable - true or false
 createPartitionTable() {
@@ -1187,7 +1267,6 @@ createPartitionTable() {
   local sfdiskVersion
   local tableType=$1
   local notBootable=$2
-  local -A gptTypeCodes mbrTypeCodes
   sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+')
   makeSfdiskCommand() {
     # Retrocompatibility for 'old' sfdisk versions
@@ -1196,32 +1275,23 @@ createPartitionTable() {
     fi
   }
   initGPT() {
+    local _partitionType=${partitionType:-$(partTypeFromFSType gpt "$filesystemType")}
     partitionOptions="label: gpt\n"
-    gptTypeCodes=(
-      ['vfat']="${gptPartitionCodes[wdp]}"
-      ['exfat']="${gptPartitionCodes[wdp]}"
-      ['ntfs']="${gptPartitionCodes[wdp]}"
-      ['ext2']="${gptPartitionCodes[lfd]}"
-      ['ext3']="${gptPartitionCodes[lfd]}"
-      ['ext4']="${gptPartitionCodes[lfd]}"
-      ['f2fs']="${gptPartitionCodes[lfd]}"
-    )
     if [ "$notBootable" == false ]; then
+      # Windows UEFI boot partitions must be of type "Windows Data Partition",
+      # otherwise bug with "Drivers not found"
       if [[ "${isoInspection['supportsEFIBoot']}" == true && "${isoInspection['hasWimFile']}" == false ]]; then
-        # Windows UEFI boot partitions must be of type "Windows Data Partition",
-        # otherwise bug with "Drivers not found"
         # Set typecode to EFI System Partition
-        gptTypeCodes[vfat]="${gptPartitionCodes[efi]}"
+        _partitionType="${gptPartitionCodes[efi]}"
       else
         failAndExit "${exitStatus[INTERNALST]}" "GPT partition tables are not compatible with legacy BIOS boot."
       fi
     fi
-    partitionOptions+="type=${partitionType:-${gptTypeCodes[$filesystemType]}}"
+    partitionOptions+="type=${_partitionType}"
   }
   initMBR() {
     partitionOptions="label: dos\n"
-    mbrTypeCodes=(['vfat']='c' ['exfat']='7' ['ntfs']='7' ['ext2']='83' ['ext3']='83' ['ext4']='83' ['f2fs']='83')
-    partitionOptions+="$selectedPartition : start=2048, type=${partitionType:-${mbrTypeCodes[$filesystemType]}}"
+    partitionOptions+="$selectedPartition : start=2048, type=${partitionType:-$(partTypeFromFSType mbr "$filesystemType")}}"
   }
   makeSfdiskCommand
   case "$tableType" in
@@ -1243,16 +1313,6 @@ createPartitionTable() {
 #     default false
 partitionUSB() {
   local tableType notBootable=${1:-false}
-  # These options always end up with the label flag setter
-  local -Ar mkfsOpts=(
-    ['vfat']="-v -F 32 -n" # Fat32 mode
-    ['exfat']="-n"
-    ['ntfs']="-Q -c 4096 -L" # Quick mode + cluster size = 4096 for Syslinux support
-    ['ext2']="-O ^64bit -L"  # Disabling pure 64 bits compression for syslinux compatibility
-    ['ext3']="-O ^64bit -L"  # see https://www.syslinux.org/wiki/index.php?title=Filesystem#ext
-    ['ext4']="-O ^64bit -L"
-    ['f2fs']="-l"
-  )
   unmountPartitions() {
     local partition
     # unmount any partition on selected device
@@ -1276,14 +1336,7 @@ partitionUSB() {
         "You can check the availability of USB drives with $(boldify "$scriptName -l")."
     syncdev
   }
-  formatPartition() {
-    # format
-    echogood "Creating $filesystemType partition on '$selectedPartition'..."
-    # shellcheck disable=SC2086
-    "mkfs.$filesystemType" ${mkfsOpts[$filesystemType]} "$partitionLabel" "$selectedPartition" |&
-      indentAll ||
-      failAndExit "${exitStatus[INTERNALIO]}" "Failed to create $filesystemType partition on USB device."
-  }
+
   if shouldWipeUSBKey; then
     unmountPartitions
     eraseDevice
@@ -1294,7 +1347,7 @@ partitionUSB() {
         tableType=MBR
       fi
       createPartitionTable $tableType "$notBootable"
-      formatPartition
+      formatPartition "$filesystemType" "$selectedPartition" "$partitionLabel"
     fi
   else
     failAndExit "${exitStatus[USERABORT]}" "Canceling operation."
@@ -1665,41 +1718,54 @@ checkAction() {
   fi
 }
 
+# $1: fsType
+normalizeFSType() {
+  local fsType="${1:-vfat}"
+  if [ "${fsType,,}" == fat32 ]; then
+    echo vfat
+  else
+    echo "$fsType"
+  fi
+}
+
+# $1: fsType
+checkFSType() {
+  local fsType="$1"
+  if ! containsElement "$fsType" "${supportedFS[@]}"; then
+    failAndExit "${exitStatus[SYNOPSISNC]}" "Filesystem type '$fsType' not supported." \
+      "Supported FS types: $(joinBy "," "${supportedFS[*]}")."
+  fi
+  if ! command -v "mkfs.$fsType" &>/dev/null; then
+    failAndExit "${exitStatus[MISDEP]}" \
+      "Program 'mkfs.$fsType' could not be found on your system." \
+      "Please install it and retry."
+  fi
+}
+
 checkUserVars() {
-  # check partition type
-  if [ ! -z "${userVars['type']}" ]; then
-    if [ "${userVars['type'],,}" == fat32 ]; then
-      userVars['type']=vfat
-    fi
-    local fsType=${vfat:-${userVars['type']}}
-    if ! containsElement "$fsType" "${supportedFS[@]}"; then
-      failAndExit "${exitStatus[SYNOPSISNC]}" "FS type '$fsType' not supported." \
-        "Supported FS types: $(joinBy "," "${supportedFS[*]}")."
-    fi
-    if ! containsElement "$action" "install-mount-rsync" "format"; then
-      failAndExit "${exitStatus[SYNOPSISNC]}" "Cannot set partition type with action $(boldify "$action")." \
-        "$(boldify '-t, --type') is compatible with $(boldify format) and $(boldify install) 'Mount-Rsync' only."
-    fi
-    if ! command -v "mkfs.$fsType" &>/dev/null; then
-      failAndExit "${exitStatus[MISDEP]}" \
-        "Program 'mkfs.$fsType' could not be found on your system." \
-        "Please install it and retry."
-    fi
+  # check partition types
+  if [ -n "${userVars[type]}" ]; then
+    userVars['type']=$(normalizeFSType "${userVars[type]}")
+    checkFSType "${userVars[type]}"
+  fi
+  if [ -n "${userVars['data-part-fstype']}" ]; then
+    userVars['data-part-fstype']=$(normalizeFSType "${userVars['data-part-fstype']}")
+    checkFSType "${userVars['data-part-fstype']}"
   fi
   # check device
-  if [ ! -z "${userVars['device']}" ]; then
-    if [[ ! "${userVars['device']}" =~ '/dev/' ]] && [ -e "/dev/${userVars['device']}" ]; then
-      userVars['device']="/dev/${userVars['device']}"
+  if [ -n "${userVars[device]}" ]; then
+    if [[ ! "${userVars[device]}" =~ '/dev/' ]] && [ -e "/dev/${userVars[device]}" ]; then
+      userVars[device]="/dev/${userVars[device]}"
     fi
-    assertDeviceIsOK "${userVars['device']}"
+    assertDeviceIsOK "${userVars[device]}"
   fi
-  if [ ! -z "${userVars['remote-bootloader']}" ] && [[ ! "${userVars['remote-bootloader']}" =~ ^[0-9]+\.[0-9]+$ ]]; then
+  if [ -n "${userVars['remote-bootloader']}" ] && [[ ! "${userVars['remote-bootloader']}" =~ ^[0-9]+\.[0-9]+$ ]]; then
     failAndExit "${exitStatus[SYNOPSISNC]}" \
       "Remote bootloader version '${userVars['remote-bootloader']}' set with $(boldify '--remote-bootloader') doesn't follow MAJOR.MINOR pattern." \
       "Valid examples are 4.10, 6.02"
   fi
   # Check dd-bs
-  if [[ -n "${userVars[dd-bs]}" && ! ${userVars[dd-bs]} =~ ^[0-9]+[kMGT]?$ ]]; then
+  if [[ -n "${userVars['dd-bs']}" && ! ${userVars['dd-bs']} =~ ^[0-9]+[kMGT]?$ ]]; then
     failAndExit "${exitStatus[SYNOPSISNC]}" "$(boldify '--dd-bs') argument must be a valid block size quantifier, e.g. 512k, 2M."
   fi
 }
@@ -1720,12 +1786,15 @@ checkUserFlags() {
   # warnings (only with sudo)
   if ((EUID == 0)); then
     # Eject format
-    if [ "${userFlags['no-eject']}" == true ] && [ "$action" == "format" ]; then
+    if [ "${userFlags['no-eject']}" == true ] && [ "$action" == format ]; then
       echowarn "You don't need to prevent device ejection through $(boldify '-J') flag with 'format'."
     fi
     # Warn autoselecting while assume yes is false
-    if [ "${userFlags['autoselect']}" == 'true' ] && [ "${userFlags['assume-yes']}" == false ]; then
+    if [ "${userFlags['autoselect']}" == true ] && [ "${userFlags['assume-yes']}" == false ]; then
       echowarn "$(boldify '-a, --autoselect') is enabled by default when $(boldify '-y, --asume-yes') is not set."
+    fi
+    if [[ -n "${userVars['data-part-fstype']}" && -z "${userFlags['data-part']}" ]]; then
+      echowarn "You set $(boldify '--data-part-fstype') option but forgot $(boldify -D). No data partition will be added."
     fi
   fi
 }
@@ -1810,14 +1879,16 @@ assignInternalVariables() {
   disableHashCheck=${userFlags['no-hash-check']:-'false'}
   forceHashCheck=${userFlags['force-hash-check']:-'false'}
   disableWimsplit=${userFlags['no-wimsplit']:-'false'}
+  enableDataPart=${userFlags['data-part']:-'false'}
   # Vars flags
   filesystemType=${userVars['type']:-'vfat'}
   partitionType=${userVars['partype']}
   hashFile=${userVars['hash-file']:-''}
-  selectedDevice=${userVars['device']:-''}
+  selectedDevice=${userVars[device]:-''}
   partitionLabel=${userVars['label']:-''}
   selectedBootloaderVersion=${userVars['remote-bootloader']:-'auto'}
   ddBusSize=${userVars['dd-bs']:-'4M'}
+  dataPartFstype=${userVars['data-part-fstype']:-'vfat'}
   # Action-dependent flags
   case $action in
   install-*)
@@ -2130,7 +2201,7 @@ execProbe() {
 execWithRsync() {
   if [ "${isoInspection[isHybrid]}" == true ]; then
     failAndExit "${exitStatus[ASSERTFAIL]}" "You cannot set Mount-Rsync mode with a hybrid image file." \
-      "Hybrid ISO or disk image files eventually contain multiple partitions and Mount-Rsync mode can only work with one."\
+      "Hybrid ISO or disk image files eventually contain multiple partitions and Mount-Rsync mode can only work with one." \
       "If you think this image file is not hybrid and this is a bug, please report at " \
       "${ticketsurl}."
   fi
@@ -2152,13 +2223,21 @@ execWithDD() {
   if [ "${isoInspection[isHybrid]}" == false ]; then
     failAndExit "${exitStatus[ASSERTFAIL]}" "You cannot set Image-Copy mode with a non-hybrid, 'El-Torito' image file." \
       "El-Torito image files don't have a partition table; and thus target device will not be recognized" \
-      "by any boot system as a boot candidate. If you think this image file is hybrid and this is a bug, please report at "\
+      "by any boot system as a boot candidate. If you think this image file is hybrid and this is a bug, please report at " \
       "${ticketsurl}."
   fi
   shouldMakePartition=false
   runSecurityAssessments
   partitionUSB false
   copyWithDD
+  if [[ "$enableDataPart" == true ]]; then
+    addDataPartition
+    case "$?" in
+    1) echoerr "Could not append partition table to add data partition" ;;
+    2) echoerr "Could not format data partition" ;;
+    esac
+  fi
+
 }
 
 execAuto() {
