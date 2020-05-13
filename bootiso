@@ -20,7 +20,7 @@ fi
 
 # program constrains definitions
 typeset -ar commandDependencies=('lsblk' 'column' 'sfdisk' 'mkfs' 'blkid' 'wipefs' 'blockdev' 'grep' 'file' 'awk' 'mlabel' 'syslinux' 'rsync'
-  'partprobe' 'curl' 'cat' 'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum' 'sha256sum' 'sha512sum' 'cut' 'jq')
+  'partx' 'curl' 'cat' 'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum' 'sha256sum' 'sha512sum' 'cut' 'jq')
 typeset -Ar commandPackages=(
   ['lsblk']='util-linux'
   ['mount']='util-linux'
@@ -32,6 +32,7 @@ typeset -Ar commandPackages=(
   ['blockdev']='util-linux'
   ['column']='util-linux'
   ['blockdev']='util-linux'
+  ['partx']='util-linux'
   ['grep']='grep'
   ['sed']='sed'
   ['file']='file'
@@ -39,7 +40,6 @@ typeset -Ar commandPackages=(
   ['mlabel']='mtools'
   ['syslinux']='syslinux'
   ['rsync']='rsync'
-  ['partprobe']='parted'
   ['curl']='curl'
   ['tar']='tar'
   ['bc']='bc'
@@ -1236,7 +1236,7 @@ createPartitionTable() {
   echogood "Creating $tableType partition table with 'sfdisk' v$sfdiskVersion..."
   echo -e "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "${exitStatus[INTERNALIO]}" \
     "Failed to write USB device $tableType partition table."
-  partprobe "$selectedDevice" # Refresh partition table
+  partx -u "$selectedDevice" # Refresh partition table
   syncdev
 }
 
