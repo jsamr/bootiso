@@ -879,10 +879,6 @@ parseArguments() {
         shift
         ;;
       # OPTIONS
-      -b | --bootloader)
-        echowarn "$(boldify '-b, --bootloader') has been removed in v3.0.0. Bootloader installation is now automatic."
-        shift
-        ;;
       --dd-bs)
         if (($# < 2)); then
           failAndExit "${exitStatus[SYNOPSISNC]}" \
