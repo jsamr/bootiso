@@ -682,9 +682,13 @@ target filesystem:
 If legacy BIOS boot doesn't work, be advised that
 UEFI-compliant boot systems have a Compatibility Support Module (CSM) option to enable legacy BIOS boot.
 .It
-Remote
-.Xr syslinux
-booloader feature only work in x64 systems.
+If
+.Nm
+does not detect your USB device, you can try running
+.Pp
+.D1 Sy udevadm settle
+.Pp
+and try again.
 .It
 If the
 .Ar imagefile
@@ -697,11 +701,11 @@ This is especially prevalent with GPT partition tables.
 .
 .Sh COPYRIGHT
 Copyright Jules Sam. Randolph.
-License MIT
+.Pp
+MIT License
 .UR https://opensource.org/licenses/MIT
 \%https://opensource.org/licenses/MIT
 .ER
-.BR
 This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
 .Sh SEE ALSO
 .\" Should be sorted by section and alphabetically

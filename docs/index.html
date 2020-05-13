@@ -558,8 +558,12 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
   <li>If legacy BIOS boot doesn't work, be advised that UEFI-compliant boot
       systems have a Compatibility Support Module (CSM) option to enable legacy
       BIOS boot.</li>
-  <li>Remote <a class="Xr">syslinux</a> booloader feature only work in x64
-      systems.</li>
+  <li>If <code class="Nm">bootiso</code> does not detect your USB device, you
+      can try running
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><b class="Sy">udevadm settle</b></div>
+    <p class="Pp">and try again.</p>
+  </li>
   <li>If the <var class="Ar">imagefile</var> has UEFI support and the boot fails
       on a UEFI-compatible machine, one can try different partition types with
       <code class="Cm">--partype</code> modifier, because some systems will
@@ -569,9 +573,10 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="COPYRIGHT"><a class="permalink" href="#COPYRIGHT">COPYRIGHT</a></h1>
-Copyright Jules Sam. Randolph. License MIT https://opensource.org/licenses/MIT
-  This is free software: you are free to change and redistribute it. There is NO
-  WARRANTY, to the extent permitted by law.
+Copyright Jules Sam. Randolph.
+<p class="Pp">MIT License https://opensource.org/licenses/MIT This is free
+    software: you are free to change and redistribute it. There is NO WARRANTY,
+    to the extent permitted by law.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
