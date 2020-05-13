@@ -7,23 +7,27 @@
 - (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
 - (*experimental*) Add `--gpt` modifier to enforce GPT partition tables (requires `--format` or `--mrsync`)
 - Semantic exit status, cf [#EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)
-- Add `--partype` modifier to set partition table type ID, not to be confused with file-system `--type` option (requires `--format` or `--mrsync`). This is especially useful in “Mount-Rsync” mode and GPT partition scheme where the booting system might otherwise refuse to read filesystem. See `sfdisk --list-types --label {gpt|dos}`.
+- Add `--partype` modifier to set partition table type ID, not to be confused with file-system `--type` option (requires `--format` or `--mrsync`). This is especially useful in “Mount-Rsync” mode with GPT partition scheme where the booting system might otherwise refuse to read filesystem. See `sfdisk --list-types --label {gpt|dos}`.
 - Add `--dd-bs <block-size>` support for “Image-Copy” mode
 
-**Enhancements**
+**BREAKING**
 
 - Semantics for `--mrsync` and `--dd` have changed:
   1. Those flags now “assert” rather then “force“ the install mode.
   2. It is now forbidden to use the “Mount-Rsync” with hybrid images and “Image-Copy” with non-hybrid.
   3. These options are now required for any modifier which applies specifically to them. For example, to use `--gpt` during install action, `--mrsync` must be set.
+- Replace `SYSLINUX_LIB_ROOT` env with `BOOTISO_SYSLINUX_LIB_ROOT`
+
+**Enhancements**
+
+- `Makefile` and generic install instructions
 - Sensible default label with format action: `${USER}_${VENDOR}` with USER read from SUDO_USER and VENDOR from lsblk VENDOR attribute
 - Add `--icopy` alias for `--dd`
 - Support `eopkg` package manager (Solus)
 - Rewrite of `--help` action with text wrapping and columns for better readability
 - Explicit compliance with ECMA-48 SGR sequences
-- `Makefile` and generic install instructions
-- Don't assume `sudo` or `gksu` are installed when privilege escalation is required
-- Replaced deprecated `mkfs` from util-linux with the `.` counterparts
+- Don't assume `sudo` or `gksu` are installed when privilege access is required
+- Replaced deprecated `mkfs` from util-linux with `mkfs.*` counterparts
 - Allow `--no-mime-check` with inspect and probe actions
 
 **Bugfixes**
