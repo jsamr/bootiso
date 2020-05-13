@@ -177,7 +177,7 @@ typeset _bootiso_format_opts=(
 # Options for format and install in Mount-Rsync mode
 typeset _bootiso_advanced_format_opts=(
   '(-L --label --dd --icopy)'{-L,--label}"[set partition label to <label>]:label:(${USER:u}_)"
-  '(-t --type --dd --icopy)'{-t,--type}"[format to <fstype>]:fstype:(${filesystems[*]})"
+  '(-F --fs --dd --icopy)'{-F,--fs}"[format to <fstype>]:fstype:(${filesystems[*]})"
   '--partype[Enforce a specific MBR or GPT partition type, see sfdisk -T]:partype:_list_partypes'
   '--gpt[write GPT partition table instead of MBR]'
 )
@@ -204,7 +204,7 @@ typeset _bootiso_mrsync_install_opts=(
 
 typeset _bootiso_icopy_install_opts=(
   "--dd-bs[set maximum block-size for dd utility]:block size:(32k 64k 512k 1M 2M 4M 8M)"
-  {-D,--data-part}"[add a supplementary data partition after installation]"
+  '(-D --data-part)'{-D,--data-part}"[add a supplementary data partition after installation]"
   "--data-part-fstype[change filesystem type for the supplementary data partition]:fstype:(${filesystems[*]})"
 )
 

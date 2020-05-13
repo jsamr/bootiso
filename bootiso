@@ -262,11 +262,11 @@ typeset actionFlagsTable="
 typeset modifierFlagsTable="
 -a, --autoselect|In combination with -y, autoselect USB drive when only one is connected.
 -d, --device <device>|Pick <device> block file as target USB drive.
+-F, --fstype <fstype>|Format to <fstype>.
 -H, --no-hash-check|Don't search for hash files and check <imagefile> integrity.
 -J, --no-eject|Don't eject drive after unmounting.
 -L, --label <label>|Set partition label to <label>.
 -M, --no-mime-check|Don't check <imagefile> mime-type.
--t, --type <fstype>|Format to <fstype>.
 -y, --assume-yes|Don't prompt for confirmation before erasing drive.
 "
 
@@ -930,7 +930,7 @@ parseArguments() {
         setUserVar 'partype' "${2}"
         shift 2
         ;;
-      -t | --type)
+      -t | --type | -F | --fs)
         if (($# < 2)); then
           failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a filesystem type."
         fi
