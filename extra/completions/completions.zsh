@@ -178,7 +178,7 @@ typeset _bootiso_format_opts=(
 typeset _bootiso_advanced_format_opts=(
   '(-L --label --dd --icopy)'{-L,--label}"[set partition label to <label>]:label:(${USER:u}_)"
   '(-F --fs --dd --icopy)'{-F,--fs}"[format to <fstype>]:fstype:(${filesystems[*]})"
-  '--partype[Enforce a specific MBR or GPT partition type, see sfdisk -T]:partype:_list_partypes'
+  '--part-type[enforce a specific MBR or GPT partition type, see sfdisk -T]:partype:_list_partypes'
   '--gpt[write GPT partition table instead of MBR]'
 )
 

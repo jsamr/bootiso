@@ -64,11 +64,11 @@ Each line depicts an action, with the exception of the first three lines which
       <span class="No">...</span>] [<code class="Fl">-L</code>
       <var class="Ar">label</var>] [<code class="Fl">-F</code>
       <var class="Ar">fstype</var>] [<code class="Cm">--gpt</code>]
-      [<code class="Cm">--no-wimsplit</code>] [<code class="Cm">--partype</code>
-      <var class="Ar">typeid</var>] [<code class="Cm">--local-bootloader</code>
-      | <code class="Cm">--remote-bootloader</code>
-      <var class="Ar">version</var>] [<code class="Cm">--</code>]
-      <var class="Ar">imagefile</var></td>
+      [<code class="Cm">--no-wimsplit</code>]
+      [<code class="Cm">--part-type</code> <var class="Ar">typeid</var>]
+      [<code class="Cm">--local-bootloader</code> |
+      <code class="Cm">--remote-bootloader</code> <var class="Ar">version</var>]
+      [<code class="Cm">--</code>] <var class="Ar">imagefile</var></td>
   </tr>
 </table>
 <br/>
@@ -80,7 +80,7 @@ Each line depicts an action, with the exception of the first three lines which
       [<code class="Fl">-L</code> <var class="Ar">label</var>]
       [<code class="Fl">-F</code> <var class="Ar">fstype</var>]
       [<code class="Cm">--gpt</code>] [<code class="Cm">--no-usb-check</code>]
-      [<code class="Cm">--partype</code> <var class="Ar">typeid</var>]</td>
+      [<code class="Cm">--part-type</code> <var class="Ar">typeid</var>]</td>
   </tr>
 </table>
 <br/>
@@ -268,9 +268,9 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     <p class="Pp"><b class="Sy">Important Notice:</b> Booting systems are
         generally more sensible to GPT partition types compared to MBR partition
         types. It is thus advised that you explicitly set the partition type
-        with <code class="Cm">--partype</code> modifier when enforcing GPT. This
-        is however not required for Windows images which have a special handling
-        by <code class="Nm">bootiso</code>.</p>
+        with <code class="Cm">--part-type</code> modifier when enforcing GPT.
+        This is however not required for Windows images which have a special
+        handling by <code class="Nm">bootiso</code>.</p>
   </dd>
   <dt><a class="permalink" href="#H,"><code class="Fl" id="H,">-H,</code></a>
     <code class="Cm">--no-hash-check</code></dt>
@@ -311,7 +311,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dd>Prevent splitting <span class="Pa">/sources/install.wim</span> file in
       Windows ISOs. Requires <code class="Cm">--mrsync</code> install
     modifier.</dd>
-  <dt><a class="permalink" href="#--partype"><code class="Cm" id="--partype">--partype</code></a>
+  <dt><a class="permalink" href="#--part-type"><code class="Cm" id="--part-type">--part-type</code></a>
     <var class="Ar">typeid</var></dt>
   <dd>Set a specific MBR partition type, or GPT partition type when
       <code class="Cm">--gpt</code> modifier is set. Requires
@@ -338,7 +338,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
     <var class="Ar">fstype</var>, <code class="Cm">--type</code>
     <var class="Ar">fstype</var></dt>
   <dd>Depecated because of potential confusion with
-      <code class="Cm">--partype</code>. Use <code class="Fl">-F</code>,
+      <code class="Cm">--part-type</code>. Use <code class="Fl">-F</code>,
       <code class="Cm">--fs</code> instead.</dd>
   <dt><a class="permalink" href="#L"><code class="Fl" id="L">-L</code></a>
     <var class="Ar">label</var>, <code class="Cm">--label</code>
@@ -581,7 +581,7 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
   </li>
   <li>If the <var class="Ar">imagefile</var> has UEFI support and the boot fails
       on a UEFI-compatible machine, one can try different partition types with
-      <code class="Cm">--partype</code> modifier, because some systems will
+      <code class="Cm">--part-type</code> modifier, because some systems will
       assume specific types and refuse to load data otherwise. This is
       especially prevalent with GPT partition tables.</li>
 </ul>

@@ -68,7 +68,7 @@ typeset -Ar userVarsCompatibilityMatrix=(
   ['type']='install-mount-rsync format'
   ['label']='install-mount-rsync format'
   ['remote-bootloader']='install-mount-rsync'
-  ['partype']='format install-mount-rsync'
+  ['part-type']='format install-mount-rsync'
   ['dd-bs']='install-image-copy'
   ['data-part-fstype']='install-image-copy'
 )
@@ -152,7 +152,7 @@ typeset -A userVars=(
   ['type']=''
   ['label']=''
   ['remote-bootloader']=''
-  ['partype']=''
+  ['part-type']=''
   ['data-part-fstype']=''
 )
 
@@ -923,11 +923,11 @@ parseArguments() {
         setUserVar 'device' "$2"
         shift 2
         ;;
-      --partype)
+      --part-type)
         if (($# < 2)); then
           failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a partition type."
         fi
-        setUserVar 'partype' "${2}"
+        setUserVar 'part-type' "${2}"
         shift 2
         ;;
       -t | --type | -F | --fs)
@@ -1882,7 +1882,7 @@ assignInternalVariables() {
   enableDataPart=${userFlags['data-part']:-'false'}
   # Vars flags
   filesystemType=${userVars['type']:-'vfat'}
-  partitionType=${userVars['partype']}
+  partitionType=${userVars['part-type']}
   hashFile=${userVars['hash-file']:-''}
   selectedDevice=${userVars[device]:-''}
   partitionLabel=${userVars['label']:-''}

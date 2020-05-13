@@ -143,7 +143,7 @@ __bootiso_handle_opt_arg() {
     -d | --device)
       mapfile -t COMPREPLY < <(compgen -W "$(lsblk -pnrdo name)" -- "${cur}")
       ;;
-    --partype)
+    --part-type)
       mapfile -t COMPREPLY < <(compgen -W "$(sfdisk --label ${user_vars[parscheme]} -T | tail -n +3 | awk '{ print $1 }')" -- "${cur}")
       ;;
     *)
@@ -188,7 +188,7 @@ __bootiso_start() {
   local -a one_word_format_opts=("-a,--autoselect" "-y,--asume-yes")
   local -a two_word_format_opts=("-d,--device")
   local -a one_word_advanced_format_opts=("--gpt")
-  local -a two_word_advanced_format_opts=("-L,--label" "-F,--fs" "--partype")
+  local -a two_word_advanced_format_opts=("-L,--label" "-F,--fs" "--part-type")
   local -a one_word_inspect_opts=("--no-hash-check" "--force-hash-check" "-M,--no-mime-check")
   local -a two_word_inspect_opts=("--hash-file")
   local -a one_word_list_usb_opts=("--no-usb-check")

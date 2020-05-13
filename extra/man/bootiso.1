@@ -56,7 +56,7 @@ one is printed.
 .Op Fl F Ar fstype
 .Op Cm --gpt
 .Op Cm --no-wimsplit
-.Op Cm --partype Ar typeid
+.Op Cm --part-type Ar typeid
 .Op Cm --local-bootloader | Cm --remote-bootloader Ar version
 .Op Cm --
 .Ar imagefile
@@ -70,7 +70,7 @@ one is printed.
 .Op Fl F Ar fstype
 .Op Cm --gpt
 .Op Cm --no-usb-check
-.Op Cm --partype Ar typeid
+.Op Cm --part-type Ar typeid
 .
 .\" Inspect action
 .Nm bootiso
@@ -311,7 +311,7 @@ action.
 .Sy Important Notice:
 Booting systems are generally more sensible to GPT partition types compared to MBR
 partition types. It is thus advised that you explicitly set the partition type with
-.Cm --partype
+.Cm --part-type
 modifier when enforcing GPT. This is however not required for Windows images which have
 a special handling by
 .Nm .
@@ -366,7 +366,7 @@ Prevent splitting
 file in Windows ISOs. Requires
 .Cm --mrsync
 install modifier.
-.It Cm --partype Ar typeid
+.It Cm --part-type Ar typeid
 Set a specific MBR partition type, or GPT partition type when
 .Cm --gpt
 modifier is set. Requires
@@ -393,7 +393,7 @@ install modifier.
 .
 .It Fl t Ar "fstype", Cm --type Ar fstype
 Depecated because of potential confusion with
-.Cm "--partype".
+.Cm "--part-type".
 Use
 .Fl "F", Cm --fs
 instead.
@@ -714,7 +714,7 @@ and try again.
 If the
 .Ar imagefile
 has UEFI support and the boot fails on a UEFI-compatible machine, one can try different partition types with
-.Cm --partype
+.Cm --part-type
 modifier, because some systems will assume specific types and refuse to load data otherwise.
 This is especially prevalent with GPT partition tables.
 .El
