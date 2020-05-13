@@ -102,17 +102,21 @@ _bootiso_suggest_files_from_list() {
 }
 
 __bootiso_handle_files() {
-  local downloads="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
-  local -a dwnldirfiles currdirfiles
-  mapfile -t dwnldirfiles < <(find "$downloads" -maxdepth 1 -type f -regextype posix-extended -regex ".*$imagefileregex")
-  mapfile -t currdirfiles < <(find "$PWD" -maxdepth 1 -type f -regextype posix-extended -regex ".*$imagefileregex")
+  local lookupdir xdgdownloaddir
+  local -a lookupdirfiles currdirfiles
+  xdgdownloaddir=${XDG_DOWNLOAD_DIR:-$HOME/Downloads}
+  lookupdir="${BOOTISO_IMAGES_COMPLETIONS_PATH:-$xdgdownloaddir}"
   mapfile -t COMPREPLY < <(compgen -f -- "${cur}" | command grep -E "$1")
-  if [[ ${#currdirfiles[@]} -eq 0 && ${cur} == '' ]]; then
-    if [[ ${#dwnldirfiles[@]} -eq 0 ]]; then
-      mapfile -t COMPREPLY < <(compgen -A directory -- "${cur}")
-      compopt -o nospace
-    else
-      _bootiso_suggest_files_from_list "${dwnldirfiles[@]}"
+  if [[ -d "$lookupdir" ]]; then
+    mapfile -t lookupdirfiles < <(find "$lookupdir" -maxdepth 1 -type f -regextype posix-extended -regex ".*$imagefileregex")
+    mapfile -t currdirfiles < <(find "$PWD" -maxdepth 1 -type f -regextype posix-extended -regex ".*$imagefileregex")
+    if [[ ${#currdirfiles[@]} -eq 0 && ${cur} == '' ]]; then
+      if [[ ${#lookupdirfiles[@]} -eq 0 ]]; then
+        mapfile -t COMPREPLY < <(compgen -A directory -- "${cur}")
+        compopt -o nospace
+      else
+        _bootiso_suggest_files_from_list "${lookupdirfiles[@]}"
+      fi
     fi
   fi
 }

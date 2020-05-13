@@ -26,17 +26,22 @@ function _args_contain_image_file() {
 function _find_generic_files() {
   local -a expl currdirfiles lookupdirfiles
   local -a files
-  local fileregex="$1"
+  local fileregex="$1" lookupdir xdgdownloaddir
   # We need to transorm regex to pattern because _files function doesn't support regexes.
   local filepattern="${${1/\\/*}/\$/}"
-  local lookupdir="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
   local pwd="$PWD"
+  xdgdownloaddir=${XDG_DOWNLOAD_DIR:-$HOME/Downloads}
+  lookupdir="${BOOTISO_IMAGES_COMPLETIONS_PATH:-$xdgdownloaddir}"
   _description -1V tag expl "$2"
-  IFS=$'\n' currdirfiles=($(find "$pwd" -maxdepth 1 -type f -regextype posix-extended -regex ".*$fileregex"))
-  IFS=$'\n' lookupdirfiles=($(find "$lookupdir" -maxdepth 1 -type f -regextype posix-extended -regex ".*$fileregex"))
-  files=("$currdirfiles[@]" "$lookupdirfiles[@]") 
-  if [[ -z $words[CURRENT] && ${#currdirfiles[@]} -eq 0 && ${#lookupdirfiles[@]} -gt 0 ]]; then
-    _files "$expl[@]" -g "$lookupdir/$filepattern"
+  if [[ -d "$lookupdir" ]]; then
+    IFS=$'\n' currdirfiles=($(find "$pwd" -maxdepth 1 -type f -regextype posix-extended -regex ".*$fileregex"))
+    IFS=$'\n' lookupdirfiles=($(find "$lookupdir" -maxdepth 1 -type f -regextype posix-extended -regex ".*$fileregex"))
+    files=("$currdirfiles[@]" "$lookupdirfiles[@]") 
+    if [[ -z $words[CURRENT] && ${#currdirfiles[@]} -eq 0 && ${#lookupdirfiles[@]} -gt 0 ]]; then
+      _files "$expl[@]" -g "$lookupdir/$filepattern"
+    else
+      _files "$expl[@]" -g "$filepattern"
+    fi
   else
     _files "$expl[@]" -g "$filepattern"
   fi
