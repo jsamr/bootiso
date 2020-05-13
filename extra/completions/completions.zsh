@@ -261,5 +261,7 @@ default)
 esac
 if ! _args_contain_image_file && [[ $expectsimage == true ]]; then
   _arguments -s -S "$arguments[@]" "$imagesspec"
+else
+  _arguments -s -S "$arguments[@]"
 fi
 return 0
