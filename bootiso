@@ -1290,8 +1290,9 @@ createPartitionTable() {
     partitionOptions+="type=${_partitionType}"
   }
   initMBR() {
+    local _partitionType=${partitionType:-$(partTypeFromFSType mbr "$filesystemType")}
     partitionOptions="label: dos\n"
-    partitionOptions+="$selectedPartition : start=2048, type=${partitionType:-$(partTypeFromFSType mbr "$filesystemType")}}"
+    partitionOptions+="$selectedPartition : start=2048, type=$_partitionType"
   }
   makeSfdiskCommand
   case "$tableType" in
@@ -2103,12 +2104,12 @@ inspectISOBootCapabilities() {
     fi
     echogood "A SYSLINUX booloader will be installed on your USB device."
   fi
-  if [[ "$syslinuxCompatible" == false && "$uefiCompatible" == false ]]; then
-    failAndExit "${exitStatus[MISBOOTCAP]}" \
-      "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
-      "Therefore, it cannot result in any successful booting with $scriptName." \
-      "Consider following the documentation provided with this image file."
-  fi
+  # if [[ "$syslinuxCompatible" == false && "$uefiCompatible" == false ]]; then
+  #   failAndExit "${exitStatus[MISBOOTCAP]}" \
+  #     "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
+  #     "Therefore, it cannot result in any successful booting with $scriptName." \
+  #     "Consider following the documentation provided with this image file."
+  # fi
 }
 
 checkSyslinuxInstall() {
