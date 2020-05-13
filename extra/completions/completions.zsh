@@ -2,12 +2,14 @@
 
 setopt extended_glob
 
-typeset action imagesspec hashpattern imagepattern hasimage=false expectsimage=false
+typeset action imagesspec hashfileregex imagefileregex hasimage=false expectsimage=false
 typeset -a filesystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs) arguments
 typeset -A uservars
 
-hashpattern="*.(md5sum|sha1sum|sha256sum|sha512sum)"
-imagepattern="*.(iso|img)"
+# Those regexes should stay simple, because of regex to
+# pattern transformation in _find_generic_files
+hashfileregex='\.(md5sum|sha1sum|sha256sum|sha512sum)$'
+imagefileregex='\.(iso|img)$'
 uservars=(
   [parscheme]=mbr
   [installmode]=auto #mrsync or icopy
@@ -15,36 +17,39 @@ uservars=(
 
 function _args_contain_image_file() {
   for word in "$words[@]"; do
-    eval "case '$word' in; $imagepattern) return 0; esac"
+    eval "if [[ '$word' =~ '$imagefileregex' ]]; then return 0; fi"
   done
   return 1
 }
 
-# $1: pattern, $2: label
+# $1: regex, $2: label
 function _find_generic_files() {
-  local -a expl currdirfiles dwnldirfiles
-  local iso_pattern="$1"
-  local downloads="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
-  local args_has_image
-  _args_contain_image_file
-  if ! _args_contain_image_file; then
-    _description -1V tag expl "$2"
-    currdirfiles=$(find "$PWD" -maxdepth 1 -type f -iname "$iso_pattern")
-    dwnldirfiles=$(find "$downloads" -maxdepth 1 -type f -iname "$iso_pattern")
-    if [[ -z $words[CURRENT] && ${#currdirfiles} -eq 0 && ${#dwnldirfiles} -gt 0 ]]; then
-      _files "$expl[@]" -g "$downloads/$iso_pattern"
-    else
-      _files "$expl[@]" -g "$iso_pattern"
-    fi
+  local -a expl currdirfiles lookupdirfiles
+  local -a files
+  local fileregex="$1"
+  # We need to transorm regex to pattern because _files function doesn't support regexes.
+  local filepattern="${${1/\\/*}/\$/}"
+  local lookupdir="${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
+  local pwd="$PWD"
+  _description -1V tag expl "$2"
+  IFS=$'\n' currdirfiles=($(find "$pwd" -maxdepth 1 -type f -regextype posix-extended -regex ".*$fileregex"))
+  IFS=$'\n' lookupdirfiles=($(find "$lookupdir" -maxdepth 1 -type f -regextype posix-extended -regex ".*$fileregex"))
+  files=("$currdirfiles[@]" "$lookupdirfiles[@]") 
+  if [[ -z $words[CURRENT] && ${#currdirfiles[@]} -eq 0 && ${#lookupdirfiles[@]} -gt 0 ]]; then
+    _files "$expl[@]" -g "$lookupdir/$filepattern"
+  else
+    _files "$expl[@]" -g "$filepattern"
   fi
 }
 
 function _hash_files() {
-  _find_generic_files "$hashpattern" "hashsum"
+  _find_generic_files "$hashfileregex" "hashsum"
 }
 
 function _image_files() {
-  _find_generic_files "$imagepattern" "images"
+  if ! _args_contain_image_file; then
+    _find_generic_files "$imagefileregex" "images"
+  fi
 }
 
 function _list_devices() {
@@ -205,6 +210,7 @@ _parse_options "$words[@]"
 action=$(_find_action "$words[@]")
 case "$action" in
 format)
+  expectsimage=false
   arguments+=("$_bootiso_format_action[@]" "$_bootiso_format_opts[@]" "$_bootiso_advanced_format_opts[@]")
   ;;
 inspect)
@@ -212,11 +218,12 @@ inspect)
   arguments+=("$_bootiso_inspect_action[@]" "$_bootiso_inspect_opts[@]")
   ;;
 'list-usb-drives')
+  expectsimage=false
   arguments+=("$_bootiso_list_usb_action[@]" "$_bootiso_list_usb_opts[@]")
   ;;
 probe)
   expectsimage=true
-  arguments+=("$_bootiso_probe_action[@]" "$_bootiso_inspect_opts[@]" "$_bootiso_list_usb_opts[@]" "$imagesspec")
+  arguments+=("$_bootiso_probe_action[@]" "$_bootiso_inspect_opts[@]" "$_bootiso_list_usb_opts[@]")
   ;;
 default)
   expectsimage=true
@@ -249,7 +256,5 @@ default)
 esac
 if ! _args_contain_image_file && [[ $expectsimage == true ]]; then
   _arguments -s -S "$arguments[@]" "$imagesspec"
-else
-  _arguments -s "$arguments[@]"
 fi
 return 0
