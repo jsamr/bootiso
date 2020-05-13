@@ -93,7 +93,7 @@ typeset mountRoot=/mnt
 typeset tempRoot=/var/tmp/bootiso
 typeset cacheRoot=/var/cache/bootiso
 typeset selectedPartition
-typeset elTorinoMountPoint
+typeset elToritoMountPoint
 typeset usbMountPoint
 typeset startTime
 typeset endTime
@@ -449,9 +449,9 @@ unmountPartition() {
   fi
 }
 
-umountElTorino() {
-  if isMounted "$elTorinoMountPoint"; then
-    if ! umount "$elTorinoMountPoint" |& indentAll; then
+umountElTorito() {
+  if isMounted "$elToritoMountPoint"; then
+    if ! umount "$elToritoMountPoint" |& indentAll; then
       echowarn "Could not unmount image mount point."
     fi
   fi
@@ -1352,7 +1352,7 @@ copyWithRsync() {
   rsyncWithProgress() {
     local -i i=1
     local statusFile
-    local wimFile="$elTorinoMountPoint/sources/install.wim"
+    local wimFile="$elToritoMountPoint/sources/install.wim"
     local rsyncOptions=""
     local status
     statusFile=$(createTempFile "bootiso-rsync-status")
@@ -1367,7 +1367,7 @@ copyWithRsync() {
     fi
     (
       # shellcheck disable=SC2086
-      rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$elTorinoMountPoint"/. "$usbMountPoint"
+      rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$elToritoMountPoint"/. "$usbMountPoint"
       status=$?
       cleanProgress
       if ((status == 0)) && [ -f "$wimFile" ] && [ "$disableWimsplit" == false ]; then
@@ -1787,7 +1787,7 @@ cleanup() {
   }
   if ((EUID == 0)); then
     local asset
-    umountElTorino
+    umountElTorito
     umountUSB
     for asset in "${temporaryAssets[@]}"; do
       removeTempAsset "$asset"
@@ -1926,7 +1926,7 @@ inspectPartition() {
 }
 
 # $1: mountPoint
-mountElTorinoFile() {
+mountElToritoFile() {
   local mountPoint="$1"
   if ! mount -r -o loop -- "$selectedIsoFile" "$mountPoint" >/dev/null; then
     failAndExit "${exitStatus[INTERNALIO]}" "Could not mount image file."
@@ -1978,10 +1978,10 @@ inspectHybridImage() {
   isoInspection[supportsEFIBoot]="$supportsEFIBoot"
 }
 
-inspectElTorinoImage() {
+inspectElToritoImage() {
   local mountPoint
   mountPoint=$(createMountFolder iso) || exit "$?"
-  mountElTorinoFile "$mountPoint"
+  mountElToritoFile "$mountPoint"
   inspectPartition "$mountPoint" true
   unmountPartition "$mountPoint"
 }
@@ -2000,7 +2000,7 @@ inspectImageFile() {
   if [[ $isHybrid == true ]]; then
     inspectHybridImage
   else
-    inspectElTorinoImage
+    inspectElToritoImage
   fi
   isoInspection[isHybrid]=$isHybrid
 }
@@ -2138,8 +2138,8 @@ execWithRsync() {
   checkSyslinuxInstall
   inspectISOBootCapabilities
   runSecurityAssessments
-  elTorinoMountPoint=$(createMountFolder iso) || exit "$?"
-  mountElTorinoFile "$elTorinoMountPoint"
+  elToritoMountPoint=$(createMountFolder iso) || exit "$?"
+  mountElToritoFile "$elToritoMountPoint"
   partitionUSB false
   mountUSB
   copyWithRsync
@@ -2150,8 +2150,8 @@ execWithRsync() {
 
 execWithDD() {
   if [ "${isoInspection[isHybrid]}" == false ]; then
-    failAndExit "${exitStatus[ASSERTFAIL]}" "You cannot set Image-Copy mode with a non-hybrid, 'El-Torino' image file." \
-      "El-Torino image files don't have a partition table; and thus target device will not be recognized" \
+    failAndExit "${exitStatus[ASSERTFAIL]}" "You cannot set Image-Copy mode with a non-hybrid, 'El-Torito' image file." \
+      "El-Torito image files don't have a partition table; and thus target device will not be recognized" \
       "by any boot system as a boot candidate. If you think this image file is hybrid and this is a bug, please report at "\
       "${ticketsurl}."
   fi
