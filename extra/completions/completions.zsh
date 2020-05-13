@@ -205,7 +205,7 @@ typeset _bootiso_mrsync_install_opts=(
 typeset _bootiso_icopy_install_opts=(
   "--dd-bs[set maximum block-size for dd utility]:block size:(32k 64k 512k 1M 2M 4M 8M)"
   '(-D --data-part)'{-D,--data-part}"[add a supplementary data partition after installation]"
-  "--data-part-fstype[change filesystem type for the supplementary data partition]:fstype:(${filesystems[*]})"
+  "--data-part-fs[change filesystem type for the supplementary data partition]:fstype:(${filesystems[*]})"
 )
 
 typeset _bootiso_list_usb_opts=(

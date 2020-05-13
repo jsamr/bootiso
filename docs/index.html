@@ -52,7 +52,7 @@ Each line depicts an action, with the exception of the first three lines which
     <td><code class="Cm">--icopy</code> [<var class="Ar">INSTALLMODS</var>
       <span class="No">...</span>] [<code class="Cm">--dd-bs</code>
       <var class="Ar">blocksize</var>] [<code class="Fl">-D</code>
-      [<code class="Cm">--data-part-fstype</code> <var class="Ar">fstype</var>]]
+      [<code class="Cm">--data-part-fs</code> <var class="Ar">fstype</var>]]
       [<code class="Cm">--</code>] <var class="Ar">imagefile</var></td>
   </tr>
 </table>
@@ -230,7 +230,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
         <var class="Ar">imagefiles</var> containing MBR or GPT partition
         schemes.</p>
   </dd>
-  <dt><a class="permalink" href="#--data-part-fstype"><code class="Cm" id="--data-part-fstype">--data-part-fstype</code></a>
+  <dt><a class="permalink" href="#--data-part-fs"><code class="Cm" id="--data-part-fs">--data-part-fs</code></a>
     <var class="Ar">fstype</var></dt>
   <dd>Change filesystem type for the supplementary data partition. Default is
       FAT32. Requires <code class="Cm">--icopy</code> or

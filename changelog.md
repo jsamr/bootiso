@@ -7,7 +7,7 @@
 - (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
 - (*experimental*) Add `--gpt` modifier to enforce GPT partition tables (requires `--format` or `--mrsync`)
 - New `-D,--data-part` modifier to add a data partition. Requires “Image-Copy” mode, [#1](https://github.com/jsamr/bootiso/issues/1).
-- New `--data-part-fstype <fstype>` modifier to change data partition filesystem
+- New `--data-part-fs <fstype>` modifier to change data partition filesystem
 - New `--partype` modifier to set partition table type ID (requires `--format` or `--mrsync`). This is especially useful in “Mount-Rsync” mode with GPT partition scheme where the booting system might otherwise refuse to read filesystem. See `sfdisk --list-types --label {gpt|dos}`.
 - New `--dd-bs <block-size>` support for “Image-Copy” mode
 - New `BOOTISO_IMAGES_COMPLETIONS_PATH` environment to help completion scripts suggesting files from a preferred folder. If not set, the completion scripts will still look for files in `XDG_DOWNLOAD_DIR` or `~/Downloads`. This behavior only applies when no files are matched in current working directory.

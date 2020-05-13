@@ -44,7 +44,7 @@ one is printed.
 .Op Cm --dd-bs Ar blocksize
 .Oo
 .Fl D
-.Op Cm --data-part-fstype Ar fstype
+.Op Cm --data-part-fs Ar fstype
 .Oc
 .Op Cm --
 .Ar imagefile
@@ -252,7 +252,7 @@ install modifier.
 This will only work with
 .Ar imagefiles
 containing MBR or GPT partition schemes.
-.It Cm --data-part-fstype Ar fstype
+.It Cm --data-part-fs Ar fstype
 Change filesystem type for the supplementary data partition.
 Default is FAT32. Requires
 .Cm --icopy

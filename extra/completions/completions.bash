@@ -131,7 +131,7 @@ __bootiso_handle_opt_arg() {
       COMPREPLY=("${USER^^}_")
       compopt -o nospace
       ;;
-    -F | --fs | --data-part-fstype)
+    -F | --fs | --data-part-fs)
       mapfile -t COMPREPLY < <(compgen -W "${filsystems[*]}" -- "${cur}")
       ;;
     --remote-bootloader)
@@ -196,7 +196,7 @@ __bootiso_start() {
   local -a one_word_mrsync_install_opts=("--local-bootloader" "--no-wimsplit")
   local -a two_word_mrsync_install_opts=("--remote-bootloader")
   local -a one_word_icopy_install_opts=("-D,--data-part")
-  local -a two_word_icopy_install_opts=("--dd-bs" "--data-part-fstype")
+  local -a two_word_icopy_install_opts=("--dd-bs" "--data-part-fs")
   act=default
   expectsoperand=false
   filsystems=(vfat fat exfat ntfs ext2 ext3 ext4 f2fs)

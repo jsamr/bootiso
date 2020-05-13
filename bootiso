@@ -937,7 +937,7 @@ parseArguments() {
         setUserVar 'type' "${2,,}" #lowercased
         shift 2
         ;;
-      --data-part-fstype)
+      --data-part-fs)
         if (($# < 2)); then
           failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a filesystem type."
         fi
@@ -1794,7 +1794,7 @@ checkUserFlags() {
       echowarn "$(boldify '-a, --autoselect') is enabled by default when $(boldify '-y, --asume-yes') is not set."
     fi
     if [[ -n "${userVars['data-part-fstype']}" && -z "${userFlags['data-part']}" ]]; then
-      echowarn "You set $(boldify '--data-part-fstype') option but forgot $(boldify -D). No data partition will be added."
+      echowarn "You set $(boldify '--data-part-fs') option but forgot $(boldify -D). No data partition will be added."
     fi
   fi
 }
