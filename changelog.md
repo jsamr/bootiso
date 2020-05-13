@@ -3,12 +3,13 @@
 **Features**
 
 - Add linux manual `man` pages, see [online version](https://jsamr.github.io/bootiso)
-- (*experimental*) Add `bash` and `zsh` completion scripts with image files completions in current and `$XDG_DOWNLOAD_DIR` (default ~/Downloads) folder
+- (*experimental*) Add `bash` and `zsh` completion scripts
 - (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
 - (*experimental*) Add `--gpt` modifier to enforce GPT partition tables (requires `--format` or `--mrsync`)
 - Semantic exit status, cf [#EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)
 - Add `--partype` modifier to set partition table type ID, not to be confused with file-system `--type` option (requires `--format` or `--mrsync`). This is especially useful in “Mount-Rsync” mode with GPT partition scheme where the booting system might otherwise refuse to read filesystem. See `sfdisk --list-types --label {gpt|dos}`.
 - Add `--dd-bs <block-size>` support for “Image-Copy” mode
+- Add `BOOTISO_IMAGES_COMPLETIONS_PATH` environment to help completion scripts suggesting files from a preferred folder. If not set, the completion scripts will still look for files in `XDG_DOWNLOAD_DIR` or `~/Downloads`. This behavior only applies when no files are matched in current working directory.
 
 **BREAKING**
 
