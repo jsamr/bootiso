@@ -369,7 +369,9 @@ install modifier.
 .It Cm --part-type Ar typeid
 Set a specific MBR partition type, or GPT partition type when
 .Cm --gpt
-modifier is set. Requires
+modifier is set. Not to be confused with filesystem modifier
+.Cm "--fs".
+Requires
 .Cm --mrsync
 install modifier or
 .Sy format
@@ -409,11 +411,6 @@ Requires
 install modifier or
 .Sy format
 action.
-.Pp
-.Sy Note:
-It cannot work in
-.Dq Image-Copy
-install mode.
 .It Fl y, Cm --assume-yes
 Don't prompt for confirmation before erasing and partitioning USB
 device.

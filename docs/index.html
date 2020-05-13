@@ -314,7 +314,8 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dt><a class="permalink" href="#--part-type"><code class="Cm" id="--part-type">--part-type</code></a>
     <var class="Ar">typeid</var></dt>
   <dd>Set a specific MBR partition type, or GPT partition type when
-      <code class="Cm">--gpt</code> modifier is set. Requires
+      <code class="Cm">--gpt</code> modifier is set. Not to be confused with
+      filesystem modifier <code class="Cm">--fs</code>. Requires
       <code class="Cm">--mrsync</code> install modifier or
       <b class="Sy">format</b> action.
     <p class="Pp">List available types for GPT or MBR with the following
@@ -347,10 +348,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
       <code class="Nm">bootiso</code> will cut labels which are too long
       regarding the selected filesystem limitations. Requires
       <code class="Cm">--mrsync</code> install modifier or
-      <b class="Sy">format</b> action.
-    <p class="Pp"><b class="Sy">Note:</b> It cannot work in
-        &#x201C;Image-Copy&#x201D; install mode.</p>
-  </dd>
+      <b class="Sy">format</b> action.</dd>
   <dt><a class="permalink" href="#y,"><code class="Fl" id="y,">-y,</code></a>
     <code class="Cm">--assume-yes</code></dt>
   <dd>Don't prompt for confirmation before erasing and partitioning USB
