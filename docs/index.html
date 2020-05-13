@@ -27,7 +27,7 @@
 Each line depicts an action, with the exception of the first three lines which
   describe <b class="Sy">install</b> action modes. Respectively,
   &#x201C;Automatic,&#x201D; &#x201C;Image-Copy&#x201D; and
-  &#x201C;Mount-Rsync&#x201D; modes. In the former two,
+  &#x201C;Mount-Rsync&#x201D; modes. In the latest two,
   <var class="Ar">INSTALLMODS</var> refers to an option enumerated in the first
   &#x201C;Automatic&#x201D; synopsis line. When both short and long options
   exist, only one is printed.
@@ -442,13 +442,20 @@ These modifiers only apply to default <b class="Sy">install</b> action (see
 <section class="Sh">
 <h1 class="Sh" id="ENVIRONMENT"><a class="permalink" href="#ENVIRONMENT">ENVIRONMENT</a></h1>
 <dl class="Bl-tag">
-  <dt><a class="permalink" href="#BOOTISO_SYSLINUX_LIB_ROOT"><code class="Ev" id="BOOTISO_SYSLINUX_LIB_ROOT">BOOTISO_SYSLINUX_LIB_ROOT</code></a></dt>
-  <dd>Set syslinux assets root, where MBR program file will be searched.
-      Defaults to <span class="Pa">/usr/lib/syslinux</span>.</dd>
-  <dt><a class="permalink" href="#XDG_DOWNLOAD_DIR"><code class="Ev" id="XDG_DOWNLOAD_DIR">XDG_DOWNLOAD_DIR</code></a></dt>
-  <dd>This variable is read by shell completion scripts to look up for image
-      files. Defaults to <span class="Pa">~/Downloads</span>. See
+  <dt><a class="permalink" href="#BOOTISO_IMAGES_COMPLETIONS_PATH"><code class="Ev" id="BOOTISO_IMAGES_COMPLETIONS_PATH">BOOTISO_IMAGES_COMPLETIONS_PATH</code></a></dt>
+  <dd>This variable is interpreted by shell completion scripts as a path
+      pointing to a directory to look up for image and hashsum files and suggest
+      those files when no files are matched in current working directory. When
+      not set, either <code class="Ev">XDG_DOWNLOAD_DIR</code> if defined or
+      <span class="Pa">~/Downloads</span> otherwise are used instead. See
       <a class="Xr">xdg-user-dir(1)</a>.</dd>
+  <dt><a class="permalink" href="#BOOTISO_SYSLINUX_LIB_ROOT"><code class="Ev" id="BOOTISO_SYSLINUX_LIB_ROOT">BOOTISO_SYSLINUX_LIB_ROOT</code></a></dt>
+  <dd>Used in &#x201C;Mount-Rsync&#x201D; mode when
+      <var class="Ar">imagefile</var> has syslinux boot capability. In which
+      case, <code class="Nm">bootiso</code> will need to install a MBR boot
+      program which it needs to locate. This variable sets syslinux assets root,
+      from which MBR program file will be searched. Defaults to
+      <span class="Pa">/usr/lib/syslinux</span>.</dd>
 </dl>
 </section>
 <section class="Sh">

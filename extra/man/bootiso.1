@@ -17,7 +17,7 @@ action modes. Respectively,
 .Dq Image-Copy
 and
 .Dq Mount-Rsync
-modes. In the former two,
+modes. In the latest two,
 .Ar INSTALLMODS
 refers to an option enumerated in the first
 .Dq Automatic
@@ -555,14 +555,26 @@ Prompts for confirmation before erasing and paritioning USB device.
 .
 .Sh ENVIRONMENT
 .Bl -tag
-.It Ev BOOTISO_SYSLINUX_LIB_ROOT
-Set syslinux assets root, where MBR program file will be searched. Defaults to
-.Pa /usr/lib/syslinux .
-.It Ev XDG_DOWNLOAD_DIR
-This variable is read by shell completion scripts to look up for image files. Defaults to
-.Pa ~/Downloads .
-See
+.It Ev BOOTISO_IMAGES_COMPLETIONS_PATH
+This variable is interpreted by shell completion scripts as a path pointing to a directory
+to look up for image and hashsum files and suggest those files when no files are matched in current working directory.
+When not set, either
+.Ev XDG_DOWNLOAD_DIR
+if defined or
+.Pa ~/Downloads
+otherwise are used instead. See
 .Xr xdg-user-dir 1 .
+.It Ev BOOTISO_SYSLINUX_LIB_ROOT
+Used in
+.Dq Mount-Rsync
+mode when
+.Ar imagefile
+has syslinux boot capability. In which case,
+.Nm
+will need to install a MBR boot program which it needs to locate.
+This variable sets syslinux assets root, from which MBR program file will be searched.
+Defaults to
+.Pa /usr/lib/syslinux .
 .El
 .
 .
