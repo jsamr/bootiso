@@ -1920,8 +1920,8 @@ inspectPartition() {
   isoInspection[hasWimFile]=$hasWimFile
   if [[ $2 == true ]]; then
     inspectSyslinux
-    isoInspection[syslinuxConf]="$syslinuxConf"
-    isoInspection[syslinuxBin]="$syslinuxBin"
+    isoInspection[syslinuxConf]="${syslinuxConf#$mountPoint}"
+    isoInspection[syslinuxBin]="${syslinuxBin#$mountPoint}"
     isoInspection[syslinuxVer]="$syslinuxVer"
   fi
 }
