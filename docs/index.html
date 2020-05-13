@@ -144,12 +144,14 @@ Each line depicts an action, with the exception of the first three lines which
 <h2 class="Ss" id="Features"><a class="permalink" href="#Features">Features</a></h2>
 One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
   images are hybrid and the operation is error-prone, especially for amateur
-  unix users. In addition to offering a safety layer (see
-  <a class="Sx" href="#GUARDRAILS">GUARDRAILS</a> section),
-  <code class="Nm">bootiso</code> will handle hybrid and non-hybrid SYSLINUX or
-  UEFI compliant ISOs such as any GNU-Linux ISO, Windows ISO or rescue live-cds
-  like UltimateBootCD. This program also offers other features, such as quickly
-  format a USB drive, inspecting an image file or listing USB-connected drives.
+  unix users, thus its &#x201C;disk destroyer&#x201D; nickname. In addition to
+  offering a safety layer (see <a class="Sx" href="#GUARDRAILS">GUARDRAILS</a>
+  section), <code class="Nm">bootiso</code> will handle hybrid and non-hybrid
+  SYSLINUX or UEFI compliant images such as any GNU-Linux, Windows or rescue
+  live-cds like UltimateBootCD images. This program also offers additional
+  features, such as quickly format a USB drive, inspecting an image file or
+  listing USB-connected drives. Supported images format are plain disk images
+  (img) and ISO 9660 files.
 <p class="Pp"><code class="Nm">bootiso</code> can be invoked with two types of
     options: actions and modifiers. Actions determine the goal of the program
     execution, and modifiers define the specifics to reach that goal. At most
