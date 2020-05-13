@@ -42,6 +42,10 @@ one is printed.
 .Cm --icopy
 .Op Ar "INSTALLMODS" No ...
 .Op Cm --dd-bs Ar blocksize
+.Oo
+.Fl D
+.Op Cm --data-part-fstype Ar fstype
+.Oc
 .Op Cm --
 .Ar imagefile
 .\" Install Mount-Rsync mode
@@ -118,7 +122,7 @@ one is printed.
 is a command-line utility aimed at simplifying the task of 
 .Dq burning
 a USB storage device with a bootable disk image.
-The program is interactive, so you can safely call it with no options. Read
+The program can be safely called with no options. Read
 .Sx EXAMPLES
 section for a quick summary of typical invocations.
 .Ss Features
@@ -237,13 +241,30 @@ will fail and exit, unless
 is set.
 .Pp
 .Sy Notice:
-Device block files are usually located in 
-.Pa /dev/sXX
-or
-.Pa "/dev/hXX".
+Device block files are located in 
+.Pa "/dev/".
 .Pa /dev/
 prefix can be omitted.
 You will be prompted to select a device when not using this modifier.
+Also, this option is not compatible with loop devices.
+.It Fl "D", Cm --data-part
+Add a supplementary data partition after installation. Requires
+.Cm --icopy
+or
+.Cm --dd
+install modifier.
+.Pp
+.Sy Notice:
+This will only work with
+.Ar imagefiles
+containing MBR or GPT partition schemes.
+.It Cm --data-part-fstype Ar fstype
+Change filesystem type for the supplementary data partition.
+Default is FAT32. Requires
+.Cm --icopy
+or
+.Cm --dd
+install modifier.
 .It Cm --dd-bs Ar blocksize
 Specify the maximum block-size used by
 .Xr dd 1

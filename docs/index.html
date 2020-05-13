@@ -51,8 +51,9 @@ Each line depicts an action, with the exception of the first three lines which
     <td><code class="Nm">bootiso</code></td>
     <td><code class="Cm">--icopy</code> [<var class="Ar">INSTALLMODS</var>
       <span class="No">...</span>] [<code class="Cm">--dd-bs</code>
-      <var class="Ar">blocksize</var>] [<code class="Cm">--</code>]
-      <var class="Ar">imagefile</var></td>
+      <var class="Ar">blocksize</var>] [<code class="Fl">-D</code>
+      [<code class="Cm">--data-part-fstype</code> <var class="Ar">fstype</var>]]
+      [<code class="Cm">--</code>] <var class="Ar">imagefile</var></td>
   </tr>
 </table>
 <br/>
@@ -137,9 +138,9 @@ Each line depicts an action, with the exception of the first three lines which
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
 <code class="Nm">bootiso</code> is a command-line utility aimed at simplifying
   the task of &#x201C;burning&#x201D; a USB storage device with a bootable disk
-  image. The program is interactive, so you can safely call it with no options.
-  Read <a class="Sx" href="#EXAMPLES">EXAMPLES</a> section for a quick summary
-  of typical invocations.
+  image. The program can be safely called with no options. Read
+  <a class="Sx" href="#EXAMPLES">EXAMPLES</a> section for a quick summary of
+  typical invocations.
 <section class="Ss">
 <h2 class="Ss" id="Features"><a class="permalink" href="#Features">Features</a></h2>
 One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
@@ -221,12 +222,25 @@ Use generic modifiers knowingly as some might override default safe behaviors.
       <var class="Ar">device</var> is not connected through a USB bus,
       <code class="Nm">bootiso</code> will fail and exit, unless
       <code class="Cm">--no-usb-check</code> is set.
-    <p class="Pp"><b class="Sy">Notice:</b> Device block files are usually
-        located in <span class="Pa">/dev/sXX</span> or
-        <span class="Pa">/dev/hXX</span>. <span class="Pa">/dev/</span> prefix
-        can be omitted. You will be prompted to select a device when not using
-        this modifier.</p>
+    <p class="Pp"><b class="Sy">Notice:</b> Device block files are located in
+        <span class="Pa">/dev/</span>. <span class="Pa">/dev/</span> prefix can
+        be omitted. You will be prompted to select a device when not using this
+        modifier. Also, this option is not compatible with loop devices.</p>
   </dd>
+  <dt><a class="permalink" href="#D"><code class="Fl" id="D">-D</code></a>,
+    <code class="Cm">--data-part</code></dt>
+  <dd>Add a supplementary data partition after installation. Requires
+      <code class="Cm">--icopy</code> or <code class="Cm">--dd</code> install
+      modifier.
+    <p class="Pp"><b class="Sy">Notice:</b> This will only work with
+        <var class="Ar">imagefiles</var> containing MBR or GPT partition
+        schemes.</p>
+  </dd>
+  <dt><a class="permalink" href="#--data-part-fstype"><code class="Cm" id="--data-part-fstype">--data-part-fstype</code></a>
+    <var class="Ar">fstype</var></dt>
+  <dd>Change filesystem type for the supplementary data partition. Default is
+      FAT32. Requires <code class="Cm">--icopy</code> or
+      <code class="Cm">--dd</code> install modifier.</dd>
   <dt><a class="permalink" href="#--dd-bs"><code class="Cm" id="--dd-bs">--dd-bs</code></a>
     <var class="Ar">blocksize</var></dt>
   <dd>Specify the maximum block-size used by <a class="Xr">dd(1)</a> utility in
