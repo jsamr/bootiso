@@ -64,13 +64,13 @@ typeset -ar supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
 typeset -Ar userVarsCompatibilityMatrix=(
   ['iso-file']='install-auto install-mount-rsync install-image-copy inspect probe'
   ['hash-file']='install-auto install-mount-rsync install-image-copy inspect probe'
-  ['device']='install-auto install-mount-rsync install-image-copy format'
-  ['type']='install-mount-rsync format'
-  ['label']='install-mount-rsync format'
+  [device]='install-auto install-mount-rsync install-image-copy format'
+  [type]='install-mount-rsync format'
+  [label]='install-mount-rsync format'
   ['remote-bootloader']='install-mount-rsync'
   ['part-type']='format install-mount-rsync'
   ['dd-bs']='install-image-copy'
-  ['data-part-fstype']='install-image-copy'
+  ['data-part-fs']='install-image-copy'
 )
 typeset -Ar userFlagsCompatibilityMatrix=(
   ['assume-yes']='install-auto install-mount-rsync install-image-copy format'
@@ -81,7 +81,7 @@ typeset -Ar userFlagsCompatibilityMatrix=(
   ['force-hash-check']='install-auto install-mount-rsync install-image-copy probe inspect'
   ['no-usb-check']='install-auto install-mount-rsync install-image-copy list-usb-drives probe format'
   ['no-size-check']='install-auto install-mount-rsync install-image-copy'
-  ['gpt']='format install-mount-rsync'
+  [gpt]='format install-mount-rsync'
   ['data-part']='install-image-copy'
   # Mount-Rsync specials
   ['local-bootloader']='install-mount-rsync'
@@ -149,11 +149,11 @@ typeset -A userVars=(
   ['iso-file']=''
   ['hash-file']=''
   ['device']=''
-  ['type']=''
+  ['fs']=''
   ['label']=''
   ['remote-bootloader']=''
   ['part-type']=''
-  ['data-part-fstype']=''
+  ['data-part-fs']=''
 )
 
 typeset -A exitStatus=(
@@ -287,29 +287,29 @@ Invoked with no action flag, $scriptName will default to install action in autom
 boot capabilities and find the best way to make a bootable USB drive."
 
 displayHelp() {
-  local termwidth
-  termwidth=$(tput cols)
-  echo -e "$helpIntro" | fmt -g "$termwidth" -w "$termwidth"
+  local _termWidth
+  _termWidth=$(tput cols)
+  echo -e "$helpIntro" | fmt -g "$_termWidth" -w "$_termWidth"
   echo -e "$helpSynopsis"
-  echo -e "$helpHint" | fmt -g "$termwidth" -w "$termwidth"
+  echo -e "$helpHint" | fmt -g "$_termWidth" -w "$_termWidth"
   echo -e "\n$(boldify 'ACTIONS')"
-  echo -e "$actionFlagsTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "$actionFlagsTable" | column -c "$_termWidth" --table -d -N flag,desc -W desc -s \|
   echo -e "\n$(boldify 'GENERIC MODIFIERS')"
-  echo -e "$modifierFlagsTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
-  echo -e "\nAdvanced modifiers are described in $scriptName man page." | fmt -g "$termwidth" -w "$termwidth"
+  echo -e "$modifierFlagsTable" | column -c "$_termWidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "\nAdvanced modifiers are described in $scriptName man page." | fmt -g "$_termWidth" -w "$_termWidth"
   echo -e "\n$(boldify 'INSTALL MODE MODIFIERS')"
-  echo -e "$installModeModifiersTable" | column -c "$termwidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "$installModeModifiersTable" | column -c "$_termWidth" --table -d -N flag,desc -W desc -s \|
 }
 
 printColumn() {
-  local prefix=$1
-  local prefixLength=$2
-  local cols
-  local sep='\t'
-  cols="$(tput cols)"
+  local -r _prefix=$1
+  local -r _prefixLength=$2
+  local _termWidth
+  local _sep='\t'
+  _termWidth="$(tput cols)"
   shift 2
-  local rawInput="$*"
-  echo -n -e "$prefix$sep$prefixLength$sep$cols$sep$rawInput" | awk -F $sep '
+  local _rawInput="$*"
+  echo -n -e "$_prefix$_sep$_prefixLength$_sep$_termWidth$_sep$_rawInput" | awk -F $_sep '
 {
   prefix = $1
   prefixlen = $2
@@ -366,20 +366,20 @@ echoinfo() {
 
 # $*: The message to print.
 failAndExit() {
-  local status=$1
-  if ! [[ $status =~ ^[0-9]+$ ]]; then
+  local -r _status=$1
+  if ! [[ $_status =~ ^[0-9]+$ ]]; then
     echoerr "(failAndExit) Internal state error."
-    status="${exitStatus[INTERNALST]}"
+    _status="${exitStatus[INTERNALST]}"
   else
     shift
-    if [ "$status" -eq "${exitStatus[SYNOPSISNC]}" ]; then
+    if [ "$_status" -eq "${exitStatus[SYNOPSISNC]}" ]; then
       [ $# -ne 0 ] && echoerr "$@"
       echoerr "Check $(boldify 'man 1 bootiso')."
     else
       echoerr "$@" "Exiting..."
     fi
   fi
-  exit "$status"
+  exit "$_status"
 }
 
 syncdev() {
@@ -387,8 +387,9 @@ syncdev() {
 }
 
 compute() {
-  answer=$(echo "$@" | bc)
-  if ((answer == 0)); then
+  local _answer
+  _answer=$(echo "$@" | bc)
+  if ((_answer == 0)); then
     return 1
   else
     return 0
@@ -402,19 +403,19 @@ hasPackage() {
 }
 
 configureFolders() {
-  local defaultMode=777
+  local _defaultMode=777
   if [ ! -e "$tempRoot" ]; then
-    mkdir -m $defaultMode "$tempRoot"
+    mkdir -m $_defaultMode "$tempRoot"
   elif [ -d "$tempRoot" ]; then
-    chmod -R $defaultMode "$tempRoot"
+    chmod -R $_defaultMode "$tempRoot"
   else
     failAndExit "${exitStatus[INTERNALST]}" "(configureFolders) '$tempRoot' is not a folder." \
       "Remove this file and try again."
   fi
   if [ ! -e "$cacheRoot" ]; then
-    mkdir -m $defaultMode "$cacheRoot"
+    mkdir -m $_defaultMode "$cacheRoot"
   elif [ -d "$cacheRoot" ]; then
-    chmod -R $defaultMode "$cacheRoot"
+    chmod -R $_defaultMode "$cacheRoot"
   else
     failAndExit "${exitStatus[INTERNALST]}" "(configureFolders) '$cacheRoot' is not a folder." \
       "Remove this file and try again."
@@ -428,7 +429,8 @@ configureFolders() {
 }
 
 isMounted() {
-  if [ ! -z "$1" ] && grep -q -e "$1" /etc/mtab; then
+  local -r _partitionBlock=$1
+  if [ ! -z "$_partitionBlock" ] && grep -q -e "$_partitionBlock" /etc/mtab; then
     return 0
   else
     return 1
@@ -447,9 +449,9 @@ umountUSB() {
 
 # $1: mountPoint
 unmountPartition() {
-  local mountPoint="$1"
-  if isMounted "$mountPoint"; then
-    if ! umount "$mountPoint" |& indentAll; then
+  local -r _mountPoint="$1"
+  if isMounted "$_mountPoint"; then
+    if ! umount "$_mountPoint" |& indentAll; then
       echowarn "Could not unmount image mount point."
     fi
   fi
@@ -501,9 +503,9 @@ initPckgManager() {
 
 checkSudo() {
   if ((EUID != 0)); then
-    if [[ -t 1 ]] && command -v sudo &>/dev/null; then
+    if [[ -t 1 ]] && hasPackage sudo; then
       sudo --preserve-env "$0" "$@"
-    elif command -v gksu &>/dev/null; then
+    elif hasPackage gksu; then
       exec 1>output_file
       gksu --preserve-env "$0" "$@"
     else
@@ -513,15 +515,8 @@ checkSudo() {
   fi
 }
 
-failISOCheck() {
-  echoerr "Provided file '$selectedIsoFile' doesn't seem to be an image file (wrong mime-type: '$mimetype')." \
-    "You can bypass this policy with $(boldify '-M, --no-mime-check')."
-  failAndExit "${exitStatus[BADFILE]}"
-}
-
 assertISOIsOK() {
-  local mimetype
-  local -i isOctetStream
+  local _mimeType
   if [ -z "$selectedIsoFile" ]; then
     echoerr "Missing argument 'iso-file'."
     exit 2
@@ -533,36 +528,40 @@ assertISOIsOK() {
     failAndExit "${exitStatus[MISFILE]}" "Provided iso file '$selectedIsoFile' does not exist."
   fi
   if [ "$disableMimeCheck" == false ]; then
-    mimetype=$(file --mime-type -b -- "$selectedIsoFile")
-    [ "$mimetype" == "application/octet-stream" ]
-    isOctetStream=$?
-    if ((isOctetStream != 0)) && [ ! "$mimetype" == "application/x-iso9660-image" ]; then
-      failISOCheck
+    _mimeType=$(file --mime-type -b -- "$selectedIsoFile")
+    if [[ "$_mimeType" != "application/octet-stream" && "$_mimeType" != "application/x-iso9660-image" ]]; then
+      echoerr "Provided file '$selectedIsoFile' doesn't seem to be an image file (wrong mime-type: '$_mimeType')." \
+        "You can bypass this policy with $(boldify '-M, --no-mime-check')."
+      failAndExit "${exitStatus[BADFILE]}"
     fi
   fi
 }
 
 checkISOHash() {
-  local lHash
+  local _lHash
+  local _numValidHashes=0
+  local _isoDirectory
+  local _isoFileName
+  local -ar _hashes=("md5sum" "sha1sum" "sha256sum" "sha512sum")
   computeHashWithProgress() {
-    local hashName="$1"
-    local isoName="$2"
-    local hashStoreFile
-    hashStoreFile=$(createTempFile "bootiso-file-hash")
-    echoinfo "Checking hash for '$isoName'..."
-    printf "%s%s" \
-      "You can disable this check with $(boldify "-H, --no-hash-check") flags" \
-      "    " | indentAll
-    temporaryAssets+=("$hashStoreFile")
+    local _hashName="$1"
+    local _imageName="$2"
+    # _i must be defined for updateProgress
+    local _hashStoreFile _i
+    _hashStoreFile=$(createTempFile "bootiso-file-_hash")
+    echoinfo "Checking _hash for '$_imageName'..."
+    printf "%s" \
+      "You can disable this check with $(boldify "-H, --no-_hash-check") flags." | indentAll
+    temporaryAssets+=("$_hashStoreFile")
     (
-      local hash
-      local -i status=0
-      hash=$($hashName "$isoName" | awk "{print \$1; exit }")
-      status=$?
-      if ((status == 0)); then
-        printf "%s" "$hash" >"$hashStoreFile"
+      local _hash
+      local -i _status=0
+      _hash=$($_hashName "$_imageName" | awk "{print \$1; exit }")
+      _status=$?
+      if ((_status == 0)); then
+        printf "%s" "$_hash" >"$_hashStoreFile"
       else
-        printf "%s" 1 >"$hashStoreFile"
+        printf "%s" 1 >"$_hashStoreFile"
       fi
     ) &
     pid=$!
@@ -570,56 +569,55 @@ checkISOHash() {
       updateProgress
     done
     cleanProgress
-    lHash=$(cat "$hashStoreFile")
-    if [ "$lHash" == "1" ]; then
+    _lHash=$(cat "$_hashStoreFile")
+    if [ "$_lHash" == "1" ]; then
       return 1
     fi
   }
   checkHash() {
-    local hashPath=$1 # Path to file containing hashes
-    local isoName=$2  # File to be checked
-    local hashName=$3 # Name of command of hash
-    local status
-    # Hash from hash file
-    local gHash
-    gHash=$(awk -v pattern="$isoName$" '$0 ~ pattern { print $1; exit }' "$hashPath")
-    if [ -z "$gHash" ]; then
-      echoerr "No matching filename found in hash file '$hashPath'"
+    local -r _hashPath=$1  # Path to file containing _hashes
+    local -r _imageName=$2 # File to be checked
+    local -r _hashName=$3  # Name of command of _hash
+    local _status _answer
+    # Hash from _hash file
+    local _gHash
+    _gHash=$(awk -v pattern="$_imageName$" '$0 ~ pattern { print $1; exit }' "$_hashPath")
+    if [ -z "$_gHash" ]; then
+      echoerr "No matching filename found in _hash file '$_hashPath'"
       return
-    elif [ -z "$hashName" ]; then
-      case ${#gHash} in
+    elif [ -z "$_hashName" ]; then
+      case ${#_gHash} in
       32)
-        hashName="md5sum"
+        _hashName="md5sum"
         ;;
       40)
-        hashName="sha1sum"
+        _hashName="sha1sum"
         ;;
       64)
-        hashName="sha256sum"
+        _hashName="sha256sum"
         ;;
       128)
-        hashName="sha512sum"
+        _hashName="sha512sum"
         ;;
       *)
-        failAndExit "${exitStatus[BADFILE]}" "Matching line in '$hashPath' has an unexpected hash format."
+        failAndExit "${exitStatus[BADFILE]}" "Matching line in '$_hashPath' has an unexpected _hash format."
         ;;
       esac
     fi
     # Hash from iso
-    computeHashWithProgress $hashName "$isoName"
-    status=$?
-    if ((status != 0)); then
-      failAndExit "${exitStatus[INTERNALTP]}" "$hashName command failed with status $status"
+    computeHashWithProgress $_hashName "$_imageName"
+    _status=$?
+    if ((_status != 0)); then
+      failAndExit "${exitStatus[INTERNALTP]}" "$_hashName command failed with _status $_status"
     fi
-    if [ "$gHash" != "$lHash" ]; then
+    if [ "$_gHash" != "$_lHash" ]; then
       if [ "$forceHashCheck" == 'true' ]; then
-        failAndExit "${exitStatus[ASSERTFAIL]}" "Hash mismatch in '$hashPath' (${hashName%sum})."
+        failAndExit "${exitStatus[ASSERTFAIL]}" "Hash mismatch in '$_hashPath' (${_hashName%sum})."
       else
-        echowarn "Hash mismatch in '$hashPath' (${hashName%sum})."
-        local answer
-        read -r -n1 -p "${logPrefixEmpty}Do you still want to continue? (y/n)> " answer
+        echowarn "Hash mismatch in '$_hashPath' (${_hashName%sum})."
+        read -r -n1 -p "${logPrefixEmpty}Do you still want to continue? (y/n)> " _answer
         echo
-        case $answer in
+        case $_answer in
         y | Y)
           return
           ;;
@@ -627,89 +625,90 @@ checkISOHash() {
           failAndExit "${exitStatus[USERABORT]}"
           ;;
         esac
-        echoinfo "Ignoring mismatching hash."
+        echoinfo "Ignoring mismatching _hash."
       fi
     else
-      echogood "Matching ${hashName%sum} hash found in '$hashPath'"
-      numValidHashes=$((numValidHashes + 1))
+      echogood "Matching ${_hashName%sum} _hash found in '$_hashPath'"
+      _numValidHashes=$((_numValidHashes + 1))
     fi
   }
-
-  local numValidHashes=0
-  local isoDirectory
-  local isoFileName
-  local -ar hashes=("md5sum" "sha1sum" "sha256sum" "sha512sum")
-  isoDirectory=$(dirname "$selectedIsoFile")
-  isoFileName=$(basename "$selectedIsoFile")
+  _isoDirectory=$(dirname "$selectedIsoFile")
+  _isoFileName=$(basename "$selectedIsoFile")
   if [ -n "$hashFile" ]; then
     if [ -f "$hashFile" ]; then
-      checkHash "$hashFile" "$isoFileName"
+      checkHash "$hashFile" "$_isoFileName"
     else
-      failAndExit "${exitStatus[MISFILE]}" "Specified hash file '$hashFile' does not exist."
+      failAndExit "${exitStatus[MISFILE]}" "Specified _hash file '$hashFile' does not exist."
     fi
   else
     shopt -s nullglob nocaseglob
-    for hash in "${hashes[@]}"; do
-      for file in "$isoDirectory/$hash"*; do
-        checkHash "$file" "$isoFileName" "$hash"
+    for _hash in "${_hashes[@]}"; do
+      for file in "$_isoDirectory/$_hash"*; do
+        checkHash "$file" "$_isoFileName" "$_hash"
       done
 
-      if [ -f "$selectedIsoFile.${hash%sum}" ]; then
-        checkHash "$selectedIsoFile.${hash%sum}" "$isoFileName" "$hash"
+      if [ -f "$selectedIsoFile.${_hash%sum}" ]; then
+        checkHash "$selectedIsoFile.${_hash%sum}" "$_isoFileName" "$_hash"
       fi
     done
     shopt -u nullglob nocaseglob
   fi
 
-  if [ "$forceHashCheck" == 'true' ] && [ $numValidHashes == 0 ]; then
-    failAndExit "${exitStatus[ASSERTFAIL]}" "No matching hashes found. Assert forced by $(boldify '--force-hash-check')"
+  if [ "$forceHashCheck" == 'true' ] && [ $_numValidHashes == 0 ]; then
+    failAndExit "${exitStatus[ASSERTFAIL]}" "No matching _hashes found. Assert forced by $(boldify '--force-_hash-check')"
   fi
 }
 
 firstMatchInFolder() {
-  find "$1" -type f -iname "$2" -print -quit
+  local -r _path=$1
+  local -r _pattern=$2
+  find "$_path" -type f -iname "$_pattern" -print -quit
 }
 
+# $1 : from path
+# $2+: patterns (see find -iname)
 matchFirstExpression() {
-  local root=$1
-  local expr
-  local match
+  local -r _path=$1
+  local _pattern
+  local _match
   shift
-  for expr in "$@"; do
-    match=$(firstMatchInFolder "$root" "$expr")
-    if [ ! -z "$match" ]; then
-      echo "$match"
+  for _pattern in "$@"; do
+    _match=$(firstMatchInFolder "$_path" "$_pattern")
+    if [ ! -z "$_match" ]; then
+      echo "$_match"
       break
     fi
   done
 }
 
+# $1 : from path
+# $2+: path segments (see find -path)
 findFileFromPatterns() {
-  local root=$1
+  local -r _path=$1
   shift
-  local loc
-  local found
-  local candidate
-  for loc in "$@"; do
-    if [ -f "${root}/$loc" ]; then
-      found="${root}/$loc"
+  local _pathSegment
+  local _found
+  local _candidate
+  for _pathSegment in "$@"; do
+    if [ -f "${_path}/$_pathSegment" ]; then
+      _found="${_path}/$_pathSegment"
       break
     fi
   done
-  if [ -z "$found" ]; then
-    for loc in "$@"; do
-      candidate=$(find "$root" -type f -path "*/$loc" -print -quit)
-      if [ ! -z "$candidate" ]; then
-        found="$candidate"
+  if [ -z "$_found" ]; then
+    for _pathSegment in "$@"; do
+      _candidate=$(find "$_path" -type f -path "*/$_pathSegment" -print -quit)
+      if [ ! -z "$_candidate" ]; then
+        _found="$_candidate"
         break
       fi
     done
   fi
-  echo "$found"
+  echo "$_found"
 }
 
 configureLabel() {
-  local user vendor
+  local _user _vendor
   partitionLabel=${partitionLabel:-$(blkid -o value -s LABEL -- "$selectedIsoFile")}
   case $filesystemType in
   vfat)
@@ -741,10 +740,10 @@ configureLabel() {
   esac
   # Fallback to "USER_VENDOR" if format
   if [[ "$action" == format ]]; then
-    user=${SUDO_USER:-$USER}
-    vendor=$(lsblk -dno VENDOR "$selectedDevice" 2>/dev/null)
-    vendor=${vendor:-FLASH}
-    partitionLabel=${partitionLabel:-"${user^^}_${vendor^^}"}
+    _user=${SUDO_USER:-$USER}
+    _vendor=$(lsblk -dno VENDOR "$selectedDevice" 2>/dev/null)
+    _vendor=${_vendor:-FLASH}
+    partitionLabel=${partitionLabel:-"${_user^^}_${_vendor^^}"}
   else
     partitionLabel=${partitionLabel:-''}
   fi
@@ -759,66 +758,68 @@ configureLabel() {
 
 # $1: The name of the package command to check.
 checkpkg() {
-  local answer
-  if ! hasPackage "$1"; then
-    echowarn "Command '$1' not found! Should be in package '${commandPackages["$1"]}'."
+  local -r _pkg=$1
+  local _answer
+  if ! hasPackage "$_pkg"; then
+    echowarn "Command '$_pkg' not found! Should be in package '${commandPackages["$_pkg"]}'."
     if [ ! -z "$pkgmgr" ]; then
-      read -r -n1 -p "${logPrefixEmpty}Attempt installation? (y/n)> " answer
+      read -r -n1 -p "${logPrefixEmpty}Attempt installation? (y/n)> " _answer
       echo
-      case $answer in
+      case $_answer in
       y | Y)
-        if ! $pkgmgr "${commandPackages["$1"]}"; then
-          failAndExit "${exitStatus[MISDEP]}" "Installation of dependency '$1' failed." \
+        if ! $pkgmgr "${commandPackages["$_pkg"]}"; then
+          failAndExit "${exitStatus[MISDEP]}" "Installation of dependency '$_pkg' failed." \
             "Perhaps this dependency has a slightly different name on your distribution." \
             "Find it and install manually."
         else
-          if ! hasPackage "$1"; then
-            failAndExit "${exitStatus[MISDEP]}" "Program '$1' is not accessible in the \$PATH environment even though the package ${commandPackages["$1"]} has just been installed."
+          if ! hasPackage "$_pkg"; then
+            failAndExit "${exitStatus[MISDEP]}" "Program '$_pkg' is not accessible in the \$PATH environment even though the package ${commandPackages["$_pkg"]} has just been installed."
           fi
         fi
         ;;
       *)
-        failAndExit "${exitStatus[MISDEP]}" "Missing dependency '$1'."
+        failAndExit "${exitStatus[MISDEP]}" "Missing dependency '$_pkg'."
         ;;
       esac
     else
-      failAndExit "${exitStatus[MISDEP]}" "Missing dependency '$1'."
+      failAndExit "${exitStatus[MISDEP]}" "Missing dependency '$_pkg'."
     fi
   fi
 }
 
-# $1: The string by which elements will be joined.
-# $2-* : the elements to join
+# $1 : The string by which elements will be joined.
+# $2+ : the elements to join
 joinBy() {
-  local IFS=$1
+  local -r IFS=$1
   shift
   echo "$*"
 }
 
-# $1: The element to check.
-# $2-* : the list to check against.
+# $1 : The element to check.
+# $2+ : the list to check against.
 containsElement() {
-  local e match="$1"
+  local -r _match="$1"
+  local _arg
   shift
-  for e; do [[ "$e" == "$match" ]] && return 0; done
+  for _arg in "$@"; do [[ "$_arg" == "$_match" ]] && return 0; done
   return 1
 }
 
 initDevicesList() {
-  local -a devices
-  local device
-  mapfile -t devices < <(lsblk -dno NAME)
+  local -a _devices
+  local _device
+  mapfile -t _devices < <(lsblk -dno NAME)
   devicesList=()
-  for device in "${devices[@]}"; do
-    if [ "$(getDeviceType "/dev/$device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
-      devicesList+=("$device")
+  for _device in "${_devices[@]}"; do
+    if [ "$(getDeviceType "/dev/$_device")" == "usb" ] || [ "$disableUSBCheck" == 'true' ]; then
+      devicesList+=("$_device")
     fi
   done
 }
 
 listDevicesTable() {
   # Run udevadm settle
-  local lsblkCmd='lsblk -d -l -o NAME,MODEL,VENDOR,SIZE,TRAN,HOTPLUG'
+  local _lsblkCmd='lsblk -d -l -o NAME,MODEL,VENDOR,SIZE,TRAN,HOTPLUG'
   initDevicesList
   if [ "$disableUSBCheck" == 'true' ]; then
     echoinfo "Listing drives available in your system:"
@@ -826,7 +827,7 @@ listDevicesTable() {
     echoinfo "Listing USB devices available in your system:"
   fi
   if [ "${#devicesList[@]}" -gt 0 ]; then
-    $lsblkCmd "${devicesList[@]/#/\/dev\/}" | sed "s/^/$logPrefixEmpty/"
+    $_lsblkCmd "${devicesList[@]/#/\/dev\/}" | sed "s/^/$logPrefixEmpty/"
     return 0
   else
     echowarn "Couldn't find any USB drives on your system." \
@@ -837,19 +838,21 @@ listDevicesTable() {
 }
 
 parseArguments() {
+  local _key
+  local _isEndOfOptions=false
+  local _wrongOptions
+  local _options
+  local -a _extractedOptions
   enableUserFlag() {
     userFlags["$1"]=true
   }
   setUserVar() {
     userVars["$1"]=$2
   }
-  local key
-  local isEndOfOptions=false
-  local wrongOptions
   while [[ $# -gt 0 ]]; do
-    key="$1"
-    if [ "$isEndOfOptions" == false ]; then
-      case $key in
+    _key="$1"
+    if [ "$_isEndOfOptions" == false ]; then
+      case $_key in
       # ACTIONS
       -h | --help | help)
         enableUserFlag 'help'
@@ -934,14 +937,14 @@ parseArguments() {
         if (($# < 2)); then
           failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a filesystem type."
         fi
-        setUserVar 'type' "${2,,}" #lowercased
+        setUserVar 'fs' "${2,,}" #lowercased
         shift 2
         ;;
       --data-part-fs)
         if (($# < 2)); then
           failAndExit "${exitStatus[SYNOPSISNC]}" "Missing value for '$1' flag. Please provide a filesystem type."
         fi
-        setUserVar 'data-part-fstype' "${2,,}" #lowercased
+        setUserVar 'data-part-fs' "${2,,}" #lowercased
         shift 2
         ;;
       -L | --label)
@@ -991,29 +994,28 @@ parseArguments() {
         shift
         ;;
       --)
-        isEndOfOptions=true
+        _isEndOfOptions=true
         shift
         ;;
       -*)
-        if [[ "$isEndOfOptions" == false ]]; then
-          if [[ "$key" =~ ^-- ]]; then
-            failAndExit "${exitStatus[SYNOPSISNC]}" "Unknown option: $(boldify "$key")."
+        if [[ "$_isEndOfOptions" == false ]]; then
+          if [[ "$_key" =~ ^-- ]]; then
+            failAndExit "${exitStatus[SYNOPSISNC]}" "Unknown option: $(boldify "$_key")."
           # Handle stacked options
-          elif [[ "$key" =~ ^-["$shortOptions"]{2,}$ ]]; then
+          elif [[ "$_key" =~ ^-["$shortOptions"]{2,}$ ]]; then
             shift
-            local options=${key#*-}
-            local -a extractedOptions
-            mapfile -t extractedOptions < <(echo "$options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
-            set -- "${extractedOptions[@]}" "$@"
+            _options=${_key#*-}
+            mapfile -t _extractedOptions < <(echo "$_options" | grep -o . | xargs -d '\n' -n1 printf '-%s\n')
+            set -- "${_extractedOptions[@]}" "$@"
           else
             printf "\\e[0;31m%s\\e[m" "$scriptName: Unknown options: "
-            printf '%s.' "$key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
-            if [[ "$key" =~ ^-[a-zA-Z0-9]+$ ]]; then
-              wrongOptions=$(printf '%s' "${key#*-}" | grep -Po "[^$shortOptions]" | tr -d '\n')
-              if [ ${#key} -eq 2 ]; then
-                echowarn "$(boldify "$wrongOptions") flag were not recognized."
+            printf '%s.' "$_key" | GREP_COLORS='mt=00;32:sl=00;31' grep --color=always -P "[$shortOptions]"
+            if [[ "$_key" =~ ^-[a-zA-Z0-9]+$ ]]; then
+              _wrongOptions=$(printf '%s' "${_key#*-}" | grep -Po "[^$shortOptions]" | tr -d '\n')
+              if [ ${#_key} -eq 2 ]; then
+                echowarn "$(boldify "$_wrongOptions") flag were not recognized."
               else
-                echowarn "$(boldify "$wrongOptions") flags were not recognized."
+                echowarn "$(boldify "$_wrongOptions") flags were not recognized."
               fi
             fi
             failAndExit "${exitStatus[SYNOPSISNC]}"
@@ -1036,9 +1038,9 @@ parseArguments() {
 }
 
 checkPackages() {
-  local pkg
-  for pkg in "${commandDependencies[@]}"; do
-    checkpkg "$pkg"
+  local _pkg
+  for _pkg in "${commandDependencies[@]}"; do
+    checkpkg "$_pkg"
   done
   # test grep supports -P option
   if ! echo 1 | grep -P '1' &>/dev/null; then
@@ -1050,24 +1052,25 @@ checkPackages() {
 # $1 : the folder name prefix
 # print the name of the new folder if operation succeeded, fails otherwise
 createMountFolder() {
-  local tmpFileTemplate
+  local _tmpFileTemplate _status
   if ((EUID == 0)); then
-    tmpFileTemplate="$mountRoot/$1-XXX"
+    _tmpFileTemplate="$mountRoot/$1-XXX"
   else
-    tmpFileTemplate="$tempRoot/$1-XXX"
+    _tmpFileTemplate="$tempRoot/$1-XXX"
   fi
-  mktemp -d "$tmpFileTemplate"
-  local status=$?
-  if [ ! $status -eq 0 ]; then
-    failAndExit "${exitStatus[INTERNALIO]}" "Failed to create temporary mount point with pattern '$tmpFileTemplate'."
+  mktemp -d "$_tmpFileTemplate"
+  _status=$?
+  if [ ! $_status -eq 0 ]; then
+    failAndExit "${exitStatus[INTERNALIO]}" "Failed to create temporary mount point with pattern '$_tmpFileTemplate'."
   fi
 }
 
 createTempFile() {
-  local tmpFileTemplate="$tempRoot/$1-XXX"
-  mktemp "$tmpFileTemplate"
-  local status=$?
-  if [ ! $status -eq 0 ]; then
+  local -r _prefix=$1
+  local _tmpFileTemplate="$tempRoot/$_prefix-XXX" _status
+  mktemp "$_tmpFileTemplate"
+  _status=$?
+  if [ ! $_status -eq 0 ]; then
     failAndExit "${exitStatus[INTERNALIO]}" "Failed to create temporary file."
   fi
 }
@@ -1075,13 +1078,15 @@ createTempFile() {
 # $1 : a device block
 # Returns "usb" if device is USB, "ata" for SATA and "other" otherwise
 getDeviceType() {
-  local deviceType
-  deviceType=$(lsblk --nodeps -nlo TRAN "$1")
-  echo "${deviceType:-other}"
+  local -r _deviceBlock=$1
+  local _deviceType
+  _deviceType=$(lsblk --nodeps -nlo TRAN "$_deviceBlock")
+  echo "${_deviceType:-other}"
 }
 
 deviceIsDisk() {
-  lsblk --nodeps -o NAME,TYPE "$1" | grep -q disk
+  local -r _deviceBlock="$1"
+  lsblk --nodeps -o NAME,TYPE "$_deviceBlock" | grep -q disk
   return $?
 }
 
@@ -1104,12 +1109,15 @@ selectDevice() {
     fi
   }
   handleDeviceSelection() {
+    local _selectedDeviceBlock
     if [ ${#devicesList[@]} -eq 1 ] && [ "$disableUSBCheck" == false ]; then
       # autoselect
-      if [ "$disableConfirmation" == false ] || { [ "$disableConfirmation" == 'true' ] && [ "$autoselect" == 'true' ]; }; then
-        local selected="${devicesList[0]}"
-        echogood "Autoselecting '$selected' (only USB device candidate)"
-        selectedDevice="/dev/$selected"
+      if [ "$disableConfirmation" == false ] || {
+        [ "$disableConfirmation" == 'true' ] && [ "$autoselect" == 'true' ]
+      }; then
+        _selectedDeviceBlock="${devicesList[0]}"
+        echogood "Autoselecting '$_selectedDeviceBlock' (only USB device candidate)"
+        selectedDevice="/dev/$_selectedDeviceBlock"
       else
         chooseDevice
       fi
@@ -1129,36 +1137,36 @@ selectDevice() {
 }
 
 assertDeviceIsOK() {
+  local -r _deviceBlock=$1
   failDevice() {
     echoerr "$1"
     listDevicesTable
     echoerr "Exiting..."
-    exit 1
+    exit "${exitStatus[MISDEV]}"
   }
-  local -r device=$1
-  if [ ! -e "$device" ]; then
-    failDevice "The selected device '$device' does not exist."
+  if [ ! -e "$_deviceBlock" ]; then
+    failDevice "The selected device '$_deviceBlock' does not exist."
   fi
-  if [ ! -b "$device" ]; then
-    failDevice "The selected device '$device' is not a valid block file."
+  if [ ! -b "$_deviceBlock" ]; then
+    failDevice "The selected device '$_deviceBlock' is not a valid block file."
   fi
-  if [ ! -d "/sys/block/$(basename "$device")" ] || ! deviceIsDisk "$device"; then
+  if [ ! -d "/sys/block/$(basename "$_deviceBlock")" ] || ! deviceIsDisk "$_deviceBlock"; then
     failAndExit "${exitStatus[BADDEV]}" \
-      "The selected device '$device' is either unmounted or not a disk (might be a partition or loop)." \
-      "Select a disk instead or reconnect the USB device." \
+      "The selected device '$_deviceBlock' is either unmounted or not a disk (might be a partition or loop)." \
+      "Select a disk instead or reconnect the USB _deviceBlock." \
       "You can check the availability of USB drives with $(boldify "$scriptName -l")."
   fi
 }
 
 assertDeviceIsUSB() {
-  local deviceType
+  local _deviceType
   if [ "$disableUSBCheck" == 'true' ]; then
     echowarn "USB check has been disabled. Skipping."
     return 0
   fi
-  deviceType=$(getDeviceType "$selectedDevice")
-  if [ "$deviceType" != "usb" ]; then
-    echoerr "The device you selected is not connected via USB (found TRAN: '$deviceType') and the operation was therefore canceled."
+  _deviceType=$(getDeviceType "$selectedDevice")
+  if [ "$_deviceType" != "usb" ]; then
+    echoerr "The device you selected is not connected via USB (found TRAN: '$_deviceType') and the operation was therefore canceled."
     echowarn "Use $(boldify '--no-usb-check') to bypass this policy at your own risk."
     echoerr "Exiting..."
     exit 1
@@ -1167,14 +1175,14 @@ assertDeviceIsUSB() {
 }
 
 assertISOSize() {
-  local -r device=$1
-  local -r iso=$2
+  local -r _deviceBlock=$1
+  local -r _imageFile=$2
   if [ "$disableSizeCheck" == 'true' ]; then
     echowarn "Size check has been disabled. Skipping."
     return 0
   fi
-  if [ "$(blockdev --getsz "$iso")" -gt "$(blockdev --getsz "$device")" ]; then
-    echoerr "The image is larger than the selected device '$device' and the operation was therefore canceled."
+  if [ "$(blockdev --getsz "$_imageFile")" -gt "$(blockdev --getsz "$_deviceBlock")" ]; then
+    echoerr "The image is larger than the selected _deviceBlock '$_deviceBlock' and the operation was therefore canceled."
     echowarn "Use $(boldify '--no-size-check') to bypass this policy at your own risk."
     echoerr "Exiting..."
     exit 1
@@ -1182,14 +1190,14 @@ assertISOSize() {
 }
 
 shouldWipeUSBKey() {
-  local answer='y'
+  local _answer='y'
   echowarn "About to wipe the content of device '$selectedDevice'."
   if [ "$disableConfirmation" == false ]; then
-    read -r -p "${logPrefixEmpty}Are you sure you want to proceed? (y/n)> " answer
+    read -r -p "${logPrefixEmpty}Are you sure you want to proceed? (y/n)> " _answer
   else
     echowarn "Bypassing confirmation with $(boldify '-y, --assume-yes')."
   fi
-  if [ "$answer" == 'y' ]; then
+  if [ "$_answer" == 'y' ]; then
     return 0
   else
     return 1
@@ -1200,8 +1208,11 @@ shouldWipeUSBKey() {
 # $2: target partition
 # $3: partition label
 formatPartition() {
+  local -r _fstype=$1
+  local -r _targetPart=$2
+  local -r _partLabel=$3
   # These options always end up with the label flag setter
-  local -Ar mkfsOpts=(
+  local -Ar _mkfsOpts=(
     ['vfat']="-v -F 32 -n" # Fat32 mode
     ['exfat']="-n"
     ['ntfs']="-Q -c 4096 -L" # Quick mode + cluster size = 4096 for Syslinux support
@@ -1211,19 +1222,19 @@ formatPartition() {
     ['f2fs']="-l"
   )
   # format
-  echogood "Creating $1 partition on '$2'..."
+  echogood "Creating $_fstype partition on '$_targetPart'..."
   # shellcheck disable=SC2086
-  "mkfs.$filesystemType" ${mkfsOpts[$1]} "$3" "$2" |&
+  "mkfs.$filesystemType" ${_mkfsOpts[$_fstype]} "$_partLabel" "$_targetPart" |&
     indentAll ||
-    failAndExit "${exitStatus[INTERNALIO]}" "Failed to create $1 partition on USB device."
+    failAndExit "${exitStatus[INTERNALIO]}" "Failed to create $_fstype partition on USB device."
 }
 
 # $1 partScheme
 # $2 fsType
 partTypeFromFSType() {
-  local partScheme=$1
-  local fsType=$2
-  local -A gptTypeCodes=(
+  local -r _partScheme=$1
+  local -r _fsType=$2
+  local -A _gptTypeCodes=(
     ['vfat']="${gptPartitionCodes[wdp]}"
     ['exfat']="${gptPartitionCodes[wdp]}"
     ['ntfs']="${gptPartitionCodes[wdp]}"
@@ -1232,11 +1243,11 @@ partTypeFromFSType() {
     ['ext4']="${gptPartitionCodes[lfd]}"
     ['f2fs']="${gptPartitionCodes[lfd]}"
   )
-  local -A mbrTypeCodes=(['vfat']='c' ['exfat']='7' ['ntfs']='7' ['ext2']='83' ['ext3']='83' ['ext4']='83' ['f2fs']='83')
-  case "$partScheme" in
-  dos | mbr) echo "${mbrTypeCodes[$fsType]}" ;;
-  gpt) echo "${gptTypeCodes[$fsType]}" ;;
-  *) failAndExit "${exitStatus[INTERNALST]}" "unhandled partition scheme: $partScheme" ;;
+  local -A _mbrTypeCodes=(['vfat']='c' ['exfat']='7' ['ntfs']='7' ['ext2']='83' ['ext3']='83' ['ext4']='83' ['f2fs']='83')
+  case "$_partScheme" in
+  dos | mbr) echo "${_mbrTypeCodes[$_fsType]}" ;;
+  gpt) echo "${_gptTypeCodes[$_fsType]}" ;;
+  *) failAndExit "${exitStatus[INTERNALST]}" "unhandled partition scheme: $_partScheme" ;;
   esac
 }
 
@@ -1245,67 +1256,67 @@ partTypeFromFSType() {
 # 1: failed appending partition table
 # 2: failed formating partition
 addDataPartition() {
-  local dataPartition diskReport sectorSize partSize humanSize partScheme partType
-  diskReport=$(sfdisk -lJ "$selectedDevice")
-  partScheme=$(echo "$diskReport" | jq -r '.partitiontable.label')
-  partType=$(partTypeFromFSType "$partScheme" "$dataPartFstype")
-  sfdisk --append "$selectedDevice" < <(echo "-,-,$partType") || return 1
-  diskReport=$(sfdisk -lJ "$selectedDevice")
-  dataPartition=$(echo "$diskReport" | jq -r '.partitiontable.partitions[-1].node')
-  formatPartition "$dataPartFstype" "$dataPartition" "DATA" || return 2
-  sectorSize=$(echo "$diskReport" | jq -r '.partitiontable.sectorsize')
-  partSize=$(echo "$diskReport" | jq -r '.partitiontable.partitions[-1].size')
-  humanSize=$(numfmt --to=iec-i --suffix=B $((sectorSize * partSize)))
-  echogood "Created $dataPartFstype data partition $dataPartition of size $humanSize"
+  local _dataPartition _diskReport _sectorSize _partSize _humanSize _partScheme _partType
+  _diskReport=$(sfdisk -lJ "$selectedDevice")
+  _partScheme=$(echo "$_diskReport" | jq -r '.partitiontable.label')
+  _partType=$(partTypeFromFSType "$_partScheme" "$dataPartFstype")
+  sfdisk --append "$selectedDevice" < <(echo "-,-,$_partType") || return 1
+  _diskReport=$(sfdisk -lJ "$selectedDevice")
+  _dataPartition=$(echo "$_diskReport" | jq -r '.partitiontable.partitions[-1].node')
+  formatPartition "$dataPartFstype" "$_dataPartition" "DATA" || return 2
+  _sectorSize=$(echo "$_diskReport" | jq -r '.partitiontable.sectorsize')
+  _partSize=$(echo "$_diskReport" | jq -r '.partitiontable.partitions[-1].size')
+  _humanSize=$(numfmt --to=iec-i --suffix=B $((_sectorSize * _partSize)))
+  echogood "Created $dataPartFstype data partition $_dataPartition of size $_humanSize"
 }
 
 # $1: partType - MBR or GPT
 # $2: notBootable - true or false
 createPartitionTable() {
-  local partitionOptions="label: gpt"
-  local sfdiskCommand='sfdisk'
-  local sfdiskVersion
-  local tableType=$1
-  local notBootable=$2
-  sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+')
+  local -r _tableType=$1
+  local -r _notBootable=$2
+  local _partitionOptions
+  local _sfdiskCommand='sfdisk'
+  local _sfdiskVersion
+  _sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+')
   makeSfdiskCommand() {
     # Retrocompatibility for 'old' sfdisk versions
-    if compute "$sfdiskVersion >= 2.28"; then
-      sfdiskCommand='sfdisk -W always'
+    if compute "$_sfdiskVersion >= 2.28"; then
+      _sfdiskCommand='sfdisk -W always'
     fi
   }
   initGPT() {
     local _partitionType=${partitionType:-$(partTypeFromFSType gpt "$filesystemType")}
-    partitionOptions="label: gpt\n"
-    if [ "$notBootable" == false ]; then
+    _partitionOptions="label: gpt\n"
+    if [ "$_notBootable" == false ]; then
       # Windows UEFI boot partitions must be of type "Windows Data Partition",
       # otherwise bug with "Drivers not found"
-      if [[ "${isoInspection['supportsEFIBoot']}" == true && "${isoInspection['hasWimFile']}" == false ]]; then
+      if [[ "${isoInspection[supportsEFIBoot]}" == true && "${isoInspection[hasWimFile]}" == false ]]; then
         # Set typecode to EFI System Partition
         _partitionType="${gptPartitionCodes[efi]}"
       else
         failAndExit "${exitStatus[INTERNALST]}" "GPT partition tables are not compatible with legacy BIOS boot."
       fi
     fi
-    partitionOptions+="type=${_partitionType}"
+    _partitionOptions+="type=${_partitionType}"
   }
   initMBR() {
     local _partitionType=${partitionType:-$(partTypeFromFSType mbr "$filesystemType")}
-    partitionOptions="label: dos\n"
-    partitionOptions+="$selectedPartition : start=2048, type=$_partitionType"
+    _partitionOptions="label: dos\n"
+    _partitionOptions+="$selectedPartition : start=2048, type=$_partitionType"
   }
   makeSfdiskCommand
-  case "$tableType" in
+  case "$_tableType" in
   GPT) initGPT ;;
   MBR) initMBR ;;
   *) failAndExit "${exitStatus[INTERNALST]}" "Unexpected partition scheme '$1'" ;;
   esac
-  if [[ "$notBootable" == false && "$tableType" == MBR ]]; then
-    partitionOptions+=", bootable"
+  if [[ "$_notBootable" == false && "$_tableType" == MBR ]]; then
+    _partitionOptions+=", bootable"
   fi
-  echogood "Creating $tableType partition table with 'sfdisk' v$sfdiskVersion..."
-  echo -e "$partitionOptions" | $sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "${exitStatus[INTERNALIO]}" \
-    "Failed to write USB device $tableType partition table."
+  echogood "Creating $_tableType partition table with 'sfdisk' v$_sfdiskVersion..."
+  echo -e "$_partitionOptions" | $_sfdiskCommand "$selectedDevice" |& indentAll || failAndExit "${exitStatus[INTERNALIO]}" \
+    "Failed to write USB device $_tableType partition table."
   partx -u "$selectedDevice" # Refresh partition table
   syncdev
 }
@@ -1313,15 +1324,16 @@ createPartitionTable() {
 # $1: notBootable - true or false
 #     default false
 partitionUSB() {
-  local tableType notBootable=${1:-false}
+  local -r _notBootable=${1:-false}
+  local _tableType
   unmountPartitions() {
-    local partition
+    local _partition
     # unmount any partition on selected device
     mapfile -t devicePartitions < <(grep -oP "^\\K$selectedDevice\\S*" /proc/mounts)
-    for partition in "${devicePartitions[@]}"; do
-      if ! umount "$partition" >/dev/null; then
+    for _partition in "${devicePartitions[@]}"; do
+      if ! umount "$_partition" >/dev/null; then
         failAndExit "${exitStatus[INTERNALIO]}" \
-          "Failed to unmount $partition. It's likely that the partition is busy."
+          "Failed to unmount $_partition. It's likely that the partition is busy."
       fi
     done
   }
@@ -1342,12 +1354,12 @@ partitionUSB() {
     unmountPartitions
     eraseDevice
     if [ "$shouldMakePartition" == 'true' ]; then
-      if [[ "$enforceGPT" == true && (${isoInspection['supportsEFIBoot']} == true || "$notBootable" == true) ]]; then
-        tableType=GPT
+      if [[ "$enforceGPT" == true && (${isoInspection[supportsEFIBoot]} == true || "$_notBootable" == true) ]]; then
+        _tableType=GPT
       else
-        tableType=MBR
+        _tableType=MBR
       fi
-      createPartitionTable $tableType "$notBootable"
+      createPartitionTable $_tableType "$_notBootable"
       formatPartition "$filesystemType" "$selectedPartition" "$partitionLabel"
     fi
   else
@@ -1356,21 +1368,21 @@ partitionUSB() {
 }
 
 mountUSB() {
-  local type="$filesystemType"
+  local _type="$filesystemType"
   usbMountPoint=$(createMountFolder usb) || exit "$?"
   temporaryAssets+=("$usbMountPoint")
   echoinfo "Created USB device mount point at '$usbMountPoint'"
-  if ! mount -t "$type" "$selectedPartition" "$usbMountPoint" >/dev/null; then
+  if ! mount -t "$_type" "$selectedPartition" "$usbMountPoint" >/dev/null; then
     failAndExit "${exitStatus[INTERNALIO]}" "Could not mount USB device."
   fi
 }
 
-# Requires variable "i" in scope
+# Requires variable "_i" in scope
 updateProgress() {
-  local sp="/-\\|"
+  local _sp="/-\\|"
   # print when launched from terminal
   if tty -s; then
-    printf "\\b%s" "${sp:i++%${#sp}:1}"
+    printf "\\b%s" "${_sp:_i++%${#_sp}:1}"
   fi
   sleep 0.25
 }
@@ -1383,37 +1395,39 @@ cleanProgress() {
 }
 
 syncWithProgress() {
-  local -i i=1
-  local -i status
-  local syncPid
-  local statusFile
-  statusFile=$(createTempFile "bootiso-sync-status")
-  temporaryAssets+=("$statusFile")
+  # _i must be defined for updateProgress
+  local -i _i=1
+  local -i _status
+  local _syncPid
+  local _statusFile
+  _statusFile=$(createTempFile "bootiso-sync-status")
+  temporaryAssets+=("$_statusFile")
   syncdev &
-  syncPid=$!
+  _syncPid=$!
   echo -n "$scriptName: Synchronizing writes on device '${selectedDevice}'   "
-  while [ -e "/proc/$syncPid" ]; do
+  while [ -e "/proc/$_syncPid" ]; do
     updateProgress
   done
   cleanProgress
-  status=$(cat "$statusFile")
-  if [ ! "$status" -eq 0 ]; then
+  _status=$(cat "$_statusFile")
+  if [ ! "$_status" -eq 0 ]; then
     failAndExit "${exitStatus[INTERNALIO]}" "Sync call failed."
   fi
 }
 
 copyWithRsync() {
   rsyncWithProgress() {
-    local -i i=1
-    local statusFile
-    local wimFile="$elToritoMountPoint/sources/install.wim"
-    local rsyncOptions=""
-    local status
-    statusFile=$(createTempFile "bootiso-rsync-status")
-    temporaryAssets+=("$statusFile")
-    if [ -f "$wimFile" ]; then
+    # _i must be defined for updateProgress
+    local -i _i=1
+    local _statusFile
+    local _wimFile="$elToritoMountPoint/sources/install.wim"
+    local _rsyncOptions=""
+    local _status
+    _statusFile=$(createTempFile "bootiso-rsync-status")
+    temporaryAssets+=("$_statusFile")
+    if [ -f "$_wimFile" ]; then
       if [ "$disableWimsplit" == false ]; then
-        rsyncOptions="--exclude sources/install.wim"
+        _rsyncOptions="--exclude sources/install.wim"
         echogood "Detected a Windows install.wim file, which will be handled by 'wimlib-imagex' utility."
       else
         echowarn "Detected a Windows install.wim file but wimsplit has been disabled with $(boldify '--no-wim-split') option."
@@ -1421,14 +1435,14 @@ copyWithRsync() {
     fi
     (
       # shellcheck disable=SC2086
-      rsync -r -q -I --no-links --no-perms --no-owner --no-group $rsyncOptions "$elToritoMountPoint"/. "$usbMountPoint"
-      status=$?
+      rsync -r -q -I --no-links --no-perms --no-owner --no-group $_rsyncOptions "$elToritoMountPoint"/. "$usbMountPoint"
+      _status=$?
       cleanProgress
-      if ((status == 0)) && [ -f "$wimFile" ] && [ "$disableWimsplit" == false ]; then
+      if ((_status == 0)) && [ -f "$_wimFile" ] && [ "$disableWimsplit" == false ]; then
         echo
-        wimlib-imagex split "$wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
+        wimlib-imagex split "$_wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
       fi
-      echo "$status" >"$statusFile"
+      echo "$_status" >"$_statusFile"
     ) &
     pid=$!
     echo -n "$scriptName: Copying files from image to USB device with 'rsync'    "
@@ -1436,8 +1450,8 @@ copyWithRsync() {
       updateProgress
     done
     cleanProgress
-    status=$(cat "$statusFile")
-    if [ ! "$status" -eq 0 ]; then
+    _status=$(cat "$_statusFile")
+    if [ ! "$_status" -eq 0 ]; then
       failAndExit "${exitStatus[INTERNALIO]}" "Copy command with 'rsync' failed."
     fi
   }
@@ -1448,14 +1462,14 @@ copyWithRsync() {
 
 copyWithDD() {
   ddWithProgress() {
-    local -i i=1
-    local statusFile
-    local status
-    statusFile=$(createTempFile "bootiso-status")
-    temporaryAssets+=("$statusFile")
+    local -i _i=1
+    local _statusFile
+    local _status
+    _statusFile=$(createTempFile "bootiso-status")
+    temporaryAssets+=("$_statusFile")
     (
       dd if="$selectedIsoFile" of="$selectedDevice" bs="$ddBusSize" status=none
-      echo "$?" >"$statusFile"
+      echo "$?" >"$_statusFile"
     ) &
     pid=$!
     echo -n "$scriptName: Copying files from image to USB device with 'dd'    "
@@ -1463,8 +1477,8 @@ copyWithDD() {
       updateProgress
     done
     cleanProgress
-    status=$(cat "$statusFile")
-    if [ ! "$status" -eq 0 ]; then
+    _status=$(cat "$_statusFile")
+    if [ ! "$_status" -eq 0 ]; then
       failAndExit "${exitStatus[INTERNALIO]}" "Copy command with 'dd' failed."
     fi
   }
@@ -1473,110 +1487,109 @@ copyWithDD() {
 }
 
 installSyslinuxVersion() {
-  local versions
-  local minor
-  local filename
-  local rootURL="https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing"
-  local syslinuxArchive
-  local assetURL
-  local status
-  local selectedSyslinuxVersion=$1
-  local abortingMessage="Aborting SYSLINUX installation and resuming with local install."
+  local -r _desiredSyslinuxVersion=$1
+  local _versions
+  local _minor
+  local _filename
+  local _kernelOrgURL="https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing"
+  local _syslinuxArchive
+  local _assetURL
+  local _status
+  local _abortingMessage="Aborting SYSLINUX installation and resuming with local install."
   checkConnexion() {
-    status=$(curl -sLIo /dev/null -w "%{http_code}" "$rootURL")
-    if [ "$status" != 200 ]; then
-      if [ "$status" == 000 ]; then
+    _status=$(curl -sLIo /dev/null -w "%{http_code}" "$_kernelOrgURL")
+    if [ "$_status" != 200 ]; then
+      if [ "$_status" == 000 ]; then
         failAndExit "${exitStatus[HOSTUNR]}" "kernel.org is unreachable. You don't seem to have an internet connection." \
           "Please try again later or use $(boldify '--local-bootloader') to force usage of the local SYSLINUX version."
         return 9
       else
-        echowarn "Couldn't GET $rootURL." \
-          "Received status code '$status'." \
+        echowarn "Couldn't GET $_kernelOrgURL." \
+          "Received status code '$_status'." \
           "$openTicketMessage" \
-          "$abortingMessage"
+          "$_abortingMessage"
         return 10
       fi
     fi
     return 0
   }
   findMinorVersions() {
-    local syslinuxInstallDir
-    versions="$(curl -sL "$rootURL" | grep -oP 'href="\K\d+\.\d+(?=/")' | sort --version-sort)"
+    _versions="$(curl -sL "$_kernelOrgURL" | grep -oP 'href="\K\d+\.\d+(?=/")' | sort --version-sort)"
     if (($? != 0)); then
-      echowarn "Couldn't GET $rootURL." \
+      echowarn "Couldn't GET $_kernelOrgURL." \
         "Aborting syslinux installation and resuming with local install."
       return 10
-    elif [ -z "$versions" ]; then
-      echoerr "Couldn't parse the result of $rootURL." \
+    elif [ -z "$_versions" ]; then
+      echoerr "Couldn't parse the result of $_kernelOrgURL." \
         "This is not expected: please open a ticket at $ticketsurl." \
-        "$abortingMessage"
+        "$_abortingMessage"
       return 11
     fi
-    minor=$(echo "$versions" | grep -E "^$selectedSyslinuxVersion" | grep "^${selectedSyslinuxVersion%.}" | tail -n 1)
-    if [ -z "$minor" ]; then
-      echoerr "Version '$selectedSyslinuxVersion' is not available at kernel.org."
+    _minor=$(echo "$_versions" | grep -E "^$_desiredSyslinuxVersion" | grep "^${_desiredSyslinuxVersion%.}" | tail -n 1)
+    if [ -z "$_minor" ]; then
+      echoerr "Version '$_desiredSyslinuxVersion' is not available at kernel.org."
       return 8
     fi
     return 0
   }
   findMatchedRelease() {
-    filename=$(curl -sL "$rootURL/$minor/" | grep -oP 'href="\Ksyslinux-\d+\.\d+-\w+\d+\.tar\.gz(?=")' | sort --version-sort | tail -n1)
-    if [ -z "$filename" ]; then
-      echoerr "Couldn't find '$filename'."
+    _filename=$(curl -sL "$_kernelOrgURL/$_minor/" | grep -oP 'href="\Ksyslinux-\d+\.\d+-\w+\d+\.tar\.gz(?=")' | sort --version-sort | tail -n1)
+    if [ -z "$_filename" ]; then
+      echoerr "Couldn't find '$_filename'."
       return 11
     fi
-    assetURL="$rootURL/$minor/$filename"
-    syslinuxArchive=$cacheRoot/$filename
+    _assetURL="$_kernelOrgURL/$_minor/$_filename"
+    _syslinuxArchive=$cacheRoot/$_filename
     return 0
   }
   downloadMatchedVersion() {
-    if [ -e "$syslinuxArchive" ]; then
-      echogood "Found '$syslinuxArchive' in cache."
+    if [ -e "$_syslinuxArchive" ]; then
+      echogood "Found '$_syslinuxArchive' in cache."
       return 0
     fi
-    if curl -sL -o "$syslinuxArchive" "$assetURL"; then
-      if [ -f "$syslinuxArchive" ]; then
-        echogood "Download of '$syslinuxArchive' completed ($(du -h "$syslinuxArchive" | awk '{print $1}'))"
+    if curl -sL -o "$_syslinuxArchive" "$_assetURL"; then
+      if [ -f "$_syslinuxArchive" ]; then
+        echogood "Download of '$_syslinuxArchive' completed ($(du -h "$_syslinuxArchive" | awk '{print $1}'))"
       else
-        echowarn "Missing file '$syslinuxArchive'." \
+        echowarn "Missing file '$_syslinuxArchive'." \
           "This is not expected: please open a ticket at $ticketsurl." \
-          "$abortingMessage"
+          "$_abortingMessage"
         return 10
       fi
     else
-      echowarn "Couldn't get '$assetURL'." \
+      echowarn "Couldn't get '$_assetURL'." \
         "This is not expected: please open a ticket at $ticketsurl." \
-        "$abortingMessage"
+        "$_abortingMessage"
       return 10
     fi
     return 0
   }
   extractMatchedVersion() {
-    if tar -xf "$syslinuxArchive" -C "$tempRoot"; then
-      syslinuxInstallDir="$tempRoot/$(basename "${syslinuxArchive%.tar.gz}")"
+    if tar -xf "$_syslinuxArchive" -C "$tempRoot"; then
+      syslinuxInstallDir="$tempRoot/$(basename "${_syslinuxArchive%.tar.gz}")"
       temporaryAssets+=("$syslinuxInstallDir")
     else
-      rm "$syslinuxArchive"
+      rm "$_syslinuxArchive"
       return 11
     fi
   }
   configureSyslinuxInstall() {
-    local extlinuxBin
-    local mbrBin
-    extlinuxBin=$(findFileFromPatterns "$syslinuxInstallDir" 'bios/extlinux/extlinux' 'extlinux/extlinux' 'extlinux')
-    mbrBin=$(findFileFromPatterns "$syslinuxInstallDir" 'bios/mbr/mbr.bin' 'mbr/mbr.bin' 'mbr.bin')
-    if [ -z "$extlinuxBin" ]; then
+    local _extlinuxBin
+    local _mbrBin
+    _extlinuxBin=$(findFileFromPatterns "$syslinuxInstallDir" 'bios/extlinux/extlinux' 'extlinux/extlinux' 'extlinux')
+    _mbrBin=$(findFileFromPatterns "$syslinuxInstallDir" 'bios/mbr/mbr.bin' 'mbr/mbr.bin' 'mbr.bin')
+    if [ -z "$_extlinuxBin" ]; then
       echowarn "Couldn't find 'extlinux' binary in installation folder." \
-        "$abortingMessage"
+        "$_abortingMessage"
       return 10
     fi
-    if [ -z "$mbrBin" ]; then
+    if [ -z "$_mbrBin" ]; then
       echowarn "Couldn't find 'mbr.bin' in installation folder." \
-        "$abortingMessage"
+        "$_abortingMessage"
       return 10
     fi
-    syslinuxInstall['mbrBin']="$mbrBin"
-    syslinuxInstall['extBin']="$extlinuxBin"
+    syslinuxInstall['mbrBin']="$_mbrBin"
+    syslinuxInstall['extBin']="$_extlinuxBin"
     return 0
   }
   checkpkg 'curl'
@@ -1587,27 +1600,27 @@ installSyslinuxVersion() {
   downloadMatchedVersion || return "$?"
   extractMatchedVersion || return "$?"
   configureSyslinuxInstall || return "$?"
-  echogood "SYSLINUX version '$minor' temporarily set for installation."
+  echogood "SYSLINUX version '$_minor' temporarily set for installation."
 }
 
 installBootloader() {
-  local syslinuxFolder
-  local syslinuxConfig
-  local -i versionsMatch=0
-  local localSyslinuxVersion
+  local _syslinuxFolder
+  local _syslinuxConfig
+  local _localSyslinuxVersion
   inferSyslinuxVersion() {
-    localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
+    _localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
     if [ "$selectedBootloaderVersion" != 'auto' ]; then
       syslinuxVersion="$selectedBootloaderVersion"
     else
-      syslinuxVersion=${isoInspection['syslinuxVer']:-"$localSyslinuxVersion"}
+      syslinuxVersion=${isoInspection[syslinuxVer]:-"$_localSyslinuxVersion"}
     fi
   }
   # return 0 : install from kernel.org
   # return 1+: install from local
   checkSyslinuxVersion() {
+    local -i _versionsMatch=0
     if [ "$localBootloader" == true ]; then
-      echogood "Enfoced local SYSLINUX bootloader at version '$localSyslinuxVersion'."
+      echogood "Enfoced local SYSLINUX bootloader at version '$_localSyslinuxVersion'."
       return 1
     fi
     if [ -z "$syslinuxVersion" ]; then
@@ -1616,10 +1629,10 @@ installBootloader() {
     if [ "$selectedBootloaderVersion" != 'auto' ]; then
       echoinfo "Searching for SYSLINUX V$syslinuxVersion remotely."
       if ! installSyslinuxVersion "$syslinuxVersion"; then
-        if [ ! -z "${isoInspection['syslinuxVer']}" ]; then
-          echowarn "Falling back to image SYSLINUX version '${isoInspection['syslinuxVer']}'"
-          syslinuxVersion="${isoInspection['syslinuxVer']}"
-          installSyslinuxVersion "${isoInspection['syslinuxVer']}"
+        if [ ! -z "${isoInspection[syslinuxVer]}" ]; then
+          echowarn "Falling back to image SYSLINUX version '${isoInspection[syslinuxVer]}'"
+          syslinuxVersion="${isoInspection[syslinuxVer]}"
+          installSyslinuxVersion "${isoInspection[syslinuxVer]}"
           return $?
         else
           return 1
@@ -1628,54 +1641,53 @@ installBootloader() {
         return 0
       fi
     fi
-    echoinfo "Found local SYSLINUX version '$localSyslinuxVersion'"
-    compute "$localSyslinuxVersion == ${isoInspection['syslinuxVer']}" >/dev/null
-    versionsMatch=$?
-    if ((versionsMatch == 0)); then
+    echoinfo "Found local SYSLINUX version '$_localSyslinuxVersion'"
+    compute "$_localSyslinuxVersion == ${isoInspection[syslinuxVer]}" >/dev/null
+    _versionsMatch=$?
+    if ((_versionsMatch == 0)); then
       echogood "image SYSLINUX version matches local version."
       return 1
     else
-      local -i status
       echowarn "image SYSLINUX version doesn't match local version." \
         "Scheduling download of version $syslinuxVersion..."
       if ! installSyslinuxVersion "$syslinuxVersion"; then
-        echowarn "Falling back to local SYSLINUX version '$localSyslinuxVersion'."
-        syslinuxVersion="$localSyslinuxVersion"
+        echowarn "Falling back to local SYSLINUX version '$_localSyslinuxVersion'."
+        syslinuxVersion="$_localSyslinuxVersion"
         return 1
       fi
     fi
   }
   setSyslinuxLocation() {
-    local isoFolder
-    local isolinuxConfig
-    if [[ "${isoInspection['syslinuxConf']}" =~ isolinux.cfg ]]; then
-      isolinuxConfig="$usbMountPoint${isoInspection['syslinuxConf']}"
-      isoFolder=$(dirname "$isolinuxConfig")
-      syslinuxConfig="$isoFolder/syslinux.cfg"
-      mv "$isolinuxConfig" "$syslinuxConfig"
-      echoinfo "Found ISOLINUX config file at '$isolinuxConfig'." \
-        "Moving to '$syslinuxConfig'."
+    local _isoFolder
+    local _isolinuxConfig
+    if [[ "${isoInspection[syslinuxConf]}" =~ isolinux.cfg ]]; then
+      _isolinuxConfig="$usbMountPoint${isoInspection[syslinuxConf]}"
+      _isoFolder=$(dirname "$_isolinuxConfig")
+      _syslinuxConfig="$_isoFolder/syslinux.cfg"
+      mv "$_isolinuxConfig" "$_syslinuxConfig"
+      echoinfo "Found ISOLINUX config file at '$_isolinuxConfig'." \
+        "Moving to '$_syslinuxConfig'."
     else
-      syslinuxConfig="$usbMountPoint${isoInspection['syslinuxConf']}"
+      _syslinuxConfig="$usbMountPoint${isoInspection[syslinuxConf]}"
     fi
-    syslinuxFolder=$(dirname "$syslinuxConfig")
+    _syslinuxFolder=$(dirname "$_syslinuxConfig")
   }
   installWtLocalExtlinux() {
     syslinuxInstall=(['mbrBin']="$foundSyslinuxMbrBinary" ['extBin']='extlinux')
-    syslinuxVersion="$localSyslinuxVersion"
-    echoinfo "Installing SYSLINUX bootloader in '$syslinuxFolder' with local version '$syslinuxVersion'..."
-    rsync --no-links --no-perms --no-owner --no-group -I "$foundSyslinuxBiosFolder"/*.c32 "$syslinuxFolder" |&
+    syslinuxVersion="$_localSyslinuxVersion"
+    echoinfo "Installing SYSLINUX bootloader in '$_syslinuxFolder' with local version '$syslinuxVersion'..."
+    rsync --no-links --no-perms --no-owner --no-group -I "$foundSyslinuxBiosFolder"/*.c32 "$_syslinuxFolder" |&
       indentAll ||
       echowarn "SYSLINUX could not install C32 BIOS modules."
     syncdev
     echogood "C32 BIOS modules successfully installed."
-    ${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll || failAndExit "${exitStatus[INTERNALTP]}" \
+    ${syslinuxInstall['extBin']} --stupid --install "$_syslinuxFolder" |& indentAll || failAndExit "${exitStatus[INTERNALTP]}" \
       "SYSLINUX bootloader could not be installed."
     syncdev
   }
   installWtKernelOrgExtlinux() {
-    echoinfo "Installing SYSLINUX bootloader in '$syslinuxFolder' with kernel.org version '$syslinuxVersion'..."
-    if ! ${syslinuxInstall['extBin']} --stupid --install "$syslinuxFolder" |& indentAll; then
+    echoinfo "Installing SYSLINUX bootloader in '$_syslinuxFolder' with kernel.org version '$syslinuxVersion'..."
+    if ! ${syslinuxInstall['extBin']} --stupid --install "$_syslinuxFolder" |& indentAll; then
       echowarn "Could not run SYSLINUX '$syslinuxVersion' from kernel.org." \
         "Attempting with local SYSLINUX install..."
       installWtLocalExtlinux >/dev/null
@@ -1701,57 +1713,57 @@ installBootloader() {
 }
 
 checkAction() {
-  local -ra actions=('help' 'version' 'format' 'install-image-copy' 'install-mount-rsync' 'list-usb-drives' 'inspect' 'probe')
-  local -a enabledActions=()
-  local act
-  for act in "${actions[@]}"; do
-    if [ "${userFlags[$act]}" == 'true' ]; then
-      enabledActions+=("$act")
+  local -ra _actions=('help' 'version' 'format' 'install-image-copy' 'install-mount-rsync' 'list-usb-drives' 'inspect' 'probe')
+  local -a _enabledActions=()
+  local _act
+  for _act in "${_actions[@]}"; do
+    if [ "${userFlags[$_act]}" == 'true' ]; then
+      _enabledActions+=("$_act")
     fi
   done
-  if ((${#enabledActions[@]} == 0)); then
+  if ((${#_enabledActions[@]} == 0)); then
     action='install-auto'
-  elif ((${#enabledActions[@]} == 1)); then
-    action=${enabledActions[0]}
+  elif ((${#_enabledActions[@]} == 1)); then
+    action=${_enabledActions[0]}
   else
     failAndExit "${exitStatus[SYNOPSISNC]}" \
-      "You cannot invoke multiple actions at once: $(joinBy '+' "${enabledActions[@]}")."
+      "You cannot invoke multiple actions at once: $(joinBy '+' "${_enabledActions[@]}")."
   fi
 }
 
 # $1: fsType
 normalizeFSType() {
-  local fsType="${1:-vfat}"
-  if [ "${fsType,,}" == fat32 ]; then
+  local -r _fsType="${1:-vfat}"
+  if [ "${_fsType,,}" == fat32 ]; then
     echo vfat
   else
-    echo "$fsType"
+    echo "$_fsType"
   fi
 }
 
 # $1: fsType
 checkFSType() {
-  local fsType="$1"
-  if ! containsElement "$fsType" "${supportedFS[@]}"; then
-    failAndExit "${exitStatus[SYNOPSISNC]}" "Filesystem type '$fsType' not supported." \
+  local -r _fsType="$1"
+  if ! containsElement "$_fsType" "${supportedFS[@]}"; then
+    failAndExit "${exitStatus[SYNOPSISNC]}" "Filesystem type '$_fsType' not supported." \
       "Supported FS types: $(joinBy "," "${supportedFS[*]}")."
   fi
-  if ! command -v "mkfs.$fsType" &>/dev/null; then
+  if ! command -v "mkfs.$_fsType" &>/dev/null; then
     failAndExit "${exitStatus[MISDEP]}" \
-      "Program 'mkfs.$fsType' could not be found on your system." \
+      "Program 'mkfs.$_fsType' could not be found on your system." \
       "Please install it and retry."
   fi
 }
 
 checkUserVars() {
   # check partition types
-  if [ -n "${userVars[type]}" ]; then
-    userVars['type']=$(normalizeFSType "${userVars[type]}")
-    checkFSType "${userVars[type]}"
+  if [ -n "${userVars[fs]}" ]; then
+    userVars[fs]=$(normalizeFSType "${userVars[fs]}")
+    checkFSType "${userVars[fs]}"
   fi
-  if [ -n "${userVars['data-part-fstype']}" ]; then
-    userVars['data-part-fstype']=$(normalizeFSType "${userVars['data-part-fstype']}")
-    checkFSType "${userVars['data-part-fstype']}"
+  if [ -n "${userVars['data-part-fs']}" ]; then
+    userVars['data-part-fs']=$(normalizeFSType "${userVars['data-part-fs']}")
+    checkFSType "${userVars['data-part-fs']}"
   fi
   # check device
   if [ -n "${userVars[device]}" ]; then
@@ -1794,40 +1806,41 @@ checkUserFlags() {
     if [ "${userFlags['autoselect']}" == true ] && [ "${userFlags['assume-yes']}" == false ]; then
       echowarn "$(boldify '-a, --autoselect') is enabled by default when $(boldify '-y, --asume-yes') is not set."
     fi
-    if [[ -n "${userVars['data-part-fstype']}" && -z "${userFlags['data-part']}" ]]; then
+    if [[ -n "${userVars['data-part-fs']}" && -z "${userFlags['data-part']}" ]]; then
       echowarn "You set $(boldify '--data-part-fs') option but forgot $(boldify -D). No data partition will be added."
     fi
   fi
 }
 
 checkFlagMatrix() {
-  local key
-  for key in "${!userVarsCompatibilityMatrix[@]}"; do
-    if [ ! -z "${userVars[$key]}" ]; then
+  local _key
+  for _key in "${!userVarsCompatibilityMatrix[@]}"; do
+    if [ ! -z "${userVars[$_key]}" ]; then
       #shellcheck disable=SC2086
-      if ! containsElement "$action" ${userVarsCompatibilityMatrix[$key]}; then
-        if [ "$key" == "iso-file" ]; then
+      if ! containsElement "$action" ${userVarsCompatibilityMatrix[$_key]}; then
+        if [ "$_key" == "iso-file" ]; then
           failAndExit "${exitStatus[SYNOPSISNC]}" \
             "$(boldify $action) doesn't require any positional arguments."
         else
           failAndExit "${exitStatus[SYNOPSISNC]}" \
-            "$(boldify "$action") action doesn't support $(boldify --$key) modifier."
+            "$(boldify "$action") action doesn't support $(boldify --$_key) modifier."
         fi
       fi
     fi
   done
-  for key in "${!userFlagsCompatibilityMatrix[@]}"; do
-    if [ ! -z "${userFlags[$key]}" ]; then
+  for _key in "${!userFlagsCompatibilityMatrix[@]}"; do
+    if [ ! -z "${userFlags[$_key]}" ]; then
       #shellcheck disable=SC2086
-      if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$key]}; then
+      if ! containsElement "$action" ${userFlagsCompatibilityMatrix[$_key]}; then
         failAndExit "${exitStatus[SYNOPSISNC]}" \
-          "$(boldify $action) action doesn't support $(boldify --$key) modifier."
+          "$(boldify $action) action doesn't support $(boldify --$_key) modifier."
       fi
     fi
   done
 }
 
 cleanup() {
+  local _asset
   removeTempAsset() {
     if [[ "$1" =~ ^$tempRoot ]] || [[ "$1" =~ ^$mountRoot ]]; then
       if [ -d "$1" ]; then
@@ -1856,11 +1869,10 @@ cleanup() {
     fi
   }
   if ((EUID == 0)); then
-    local asset
     umountElTorito
     umountUSB
-    for asset in "${temporaryAssets[@]}"; do
-      removeTempAsset "$asset"
+    for _asset in "${temporaryAssets[@]}"; do
+      removeTempAsset "$_asset"
     done
     ejectDevice
   fi
@@ -1871,8 +1883,8 @@ assignInternalVariables() {
   selectedIsoFile=${userVars['iso-file']:-''}
   # Option flags
   disableConfirmation=${userFlags['assume-yes']:-'false'}
-  autoselect=${userFlags['autoselect']:-'false'}
-  enforceGPT=${userFlags['gpt']:-'false'}
+  autoselect=${userFlags[autoselect]:-'false'}
+  enforceGPT=${userFlags[gpt]:-'false'}
   localBootloader=${userFlags['local-bootloader']:-'false'}
   disableMimeCheck=${userFlags['no-mime-check']:-'false'}
   disableUSBCheck=${userFlags['no-usb-check']:-'false'}
@@ -1882,14 +1894,14 @@ assignInternalVariables() {
   disableWimsplit=${userFlags['no-wimsplit']:-'false'}
   enableDataPart=${userFlags['data-part']:-'false'}
   # Vars flags
-  filesystemType=${userVars['type']:-'vfat'}
+  filesystemType=${userVars[fs]:-'vfat'}
   partitionType=${userVars['part-type']}
   hashFile=${userVars['hash-file']:-''}
   selectedDevice=${userVars[device]:-''}
-  partitionLabel=${userVars['label']:-''}
+  partitionLabel=${userVars[label]:-''}
   selectedBootloaderVersion=${userVars['remote-bootloader']:-'auto'}
   ddBusSize=${userVars['dd-bs']:-'4M'}
-  dataPartFstype=${userVars['data-part-fstype']:-'vfat'}
+  dataPartFstype=${userVars['data-part-fs']:-'vfat'}
   # Action-dependent flags
   case $action in
   install-*)
@@ -1945,176 +1957,177 @@ runSecurityAssessments() {
 # $1: mountPoint
 # $2: inspect syslinux? true or false
 inspectPartition() {
-  local mountPoint="$1" wimFile
-  local supportsEFIBoot hasWimFile syslinuxBin syslinuxConf syslinuxVer
-  supportsEFIBoot=${isoInspection[supportsEFIBoot]:-false}
-  hasWimFile=${isoInspection[hasWimFile]:-false}
-  syslinuxBin=${isoInspection[syslinuxBin]}
-  syslinuxConf=${isoInspection[syslinuxConf]}
-  syslinuxVer=${isoInspection[syslinuxVer]}
-  local -a sysLinuxLocations=('boot/syslinux/syslinux.cfg' 'syslinux/syslinux.cfg' 'syslinux.cfg' 'boot/syslinux/extlinux.conf'
+  local -r _mountPoint="$1"
+  local -r _shouldInspectSyslinux=$2
+  local _supportsEFIBoot _hasWimFile _syslinuxBin _syslinuxConf _syslinuxVer
+  _supportsEFIBoot=${isoInspection[supportsEFIBoot]:-false}
+  _hasWimFile=${isoInspection[hasWimFile]:-false}
+  _syslinuxBin=${isoInspection[syslinuxBin]}
+  _syslinuxConf=${isoInspection[syslinuxConf]}
+  _syslinuxVer=${isoInspection[syslinuxVer]}
+  local -a _sysLinuxLocations=('boot/syslinux/syslinux.cfg' 'syslinux/syslinux.cfg' 'syslinux.cfg' 'boot/syslinux/extlinux.conf'
     'boot/syslinux/extlinux.cfg' 'boot/extlinux/extlinux.conf' 'boot/extlinux/extlinux.cfg' 'syslinux/extlinux.conf'
     'syslinux/extlinux.cfg' 'extlinux/extlinux.conf' 'extlinux/extlinux.cfg' 'extlinux.conf' 'extlinux.cfg')
-  local -a isoLinuxLocations=('boot/isolinux/isolinux.cfg' 'isolinux/isolinux.cfg' 'isolinux.cfg' 'boot/syslinux/isolinux.cfg' 'syslinux/isolinux.cfg')
+  local -a _isoLinuxLocations=('boot/isolinux/isolinux.cfg' 'isolinux/isolinux.cfg' 'isolinux.cfg' 'boot/syslinux/isolinux.cfg' 'syslinux/isolinux.cfg')
   inspectSyslinux() {
-    syslinuxBin=$(matchFirstExpression "$mountPoint" 'syslinux.bin' 'isolinux.bin' 'extlinux.bin' 'boot.bin' 'extlinux' 'syslinux' 'isolinux')
-    if [ ! -z "$syslinuxBin" ]; then
-      syslinuxVer=$(strings "$syslinuxBin" | grep -E 'ISOLINUX|SYSLINUX|EXTLINUX' | grep -oP '(\d+\.\d+)' | awk 'NR==1{print $1}')
+    _syslinuxBin=$(matchFirstExpression "$_mountPoint" 'syslinux.bin' 'isolinux.bin' 'extlinux.bin' 'boot.bin' 'extlinux' 'syslinux' 'isolinux')
+    if [ ! -z "$_syslinuxBin" ]; then
+      _syslinuxVer=$(strings "$_syslinuxBin" | grep -E 'ISOLINUX|SYSLINUX|EXTLINUX' | grep -oP '(\d+\.\d+)' | awk 'NR==1{print $1}')
     fi
-    syslinuxConf=$(findFileFromPatterns "$mountPoint" "${sysLinuxLocations[@]}")
-    if [ -z "$syslinuxConf" ]; then
-      syslinuxConf=$(matchFirstExpression "$mountPoint" 'syslinux.cfg' 'extlinux.conf' 'extlinux.cfg')
+    _syslinuxConf=$(findFileFromPatterns "$_mountPoint" "${_sysLinuxLocations[@]}")
+    if [ -z "$_syslinuxConf" ]; then
+      _syslinuxConf=$(matchFirstExpression "$_mountPoint" 'syslinux.cfg' 'extlinux.conf' 'extlinux.cfg')
     fi
-    if [ -z "$syslinuxConf" ]; then
-      syslinuxConf=$(findFileFromPatterns "$mountPoint" "${isoLinuxLocations[@]}")
-      syslinuxConf=${syslinuxConf:-$(firstMatchInFolder "$mountPoint" 'isolinux.cfg')}
+    if [ -z "$_syslinuxConf" ]; then
+      _syslinuxConf=$(findFileFromPatterns "$_mountPoint" "${_isoLinuxLocations[@]}")
+      _syslinuxConf=${_syslinuxConf:-$(firstMatchInFolder "$_mountPoint" 'isolinux.cfg')}
     fi
   }
   inspectEFICapabilities() {
-    local hasEfiRoot
-    local hasEfiFile
-    hasEfiRoot=$(find "$mountPoint" -type d -iname 'efi' -print -quit)
-    hasEfiFile=$(find "$mountPoint" -type f -ipath '*/efi/*.efi' -prune -print -quit)
-    if [ ! -z "$hasEfiFile" ] && [ ! -z "$hasEfiRoot" ]; then
-      supportsEFIBoot=true
+    local _hasEfiRoot
+    local _hasEfiFile
+    _hasEfiRoot=$(find "$_mountPoint" -type d -iname 'efi' -print -quit)
+    _hasEfiFile=$(find "$_mountPoint" -type f -ipath '*/efi/*.efi' -prune -print -quit)
+    if [ ! -z "$_hasEfiFile" ] && [ ! -z "$_hasEfiRoot" ]; then
+      _supportsEFIBoot=true
     fi
   }
   inspectWindows() {
-    wimFile="$mountPoint/sources/install.wim"
-    if [[ -e "$wimFile" ]]; then
-      hasWimFile=true
+    if [[ -e "$_mountPoint/sources/install.wim" ]]; then
+      _hasWimFile=true
     fi
   }
   inspectEFICapabilities
   inspectWindows
-  isoInspection[supportsEFIBoot]=$supportsEFIBoot
-  isoInspection[hasWimFile]=$hasWimFile
-  if [[ $2 == true ]]; then
+  isoInspection[supportsEFIBoot]=$_supportsEFIBoot
+  isoInspection[hasWimFile]=$_hasWimFile
+  if [[ $_shouldInspectSyslinux == true ]]; then
     inspectSyslinux
-    isoInspection[syslinuxConf]="${syslinuxConf#$mountPoint}"
-    isoInspection[syslinuxBin]="${syslinuxBin#$mountPoint}"
-    isoInspection[syslinuxVer]="$syslinuxVer"
+    isoInspection[syslinuxConf]="${_syslinuxConf#$_mountPoint}"
+    isoInspection[syslinuxBin]="${_syslinuxBin#$_mountPoint}"
+    isoInspection[syslinuxVer]="$_syslinuxVer"
   fi
 }
 
 # $1: mountPoint
 mountElToritoFile() {
-  local mountPoint="$1"
-  if ! mount -r -o loop -- "$selectedIsoFile" "$mountPoint" >/dev/null; then
+  local -r _mountPoint="$1"
+  if ! mount -r -o loop -- "$selectedIsoFile" "$_mountPoint" >/dev/null; then
     failAndExit "${exitStatus[INTERNALIO]}" "Could not mount image file."
   else
-    temporaryAssets+=("$mountPoint")
+    temporaryAssets+=("$_mountPoint")
   fi
 }
 
 inspectHybridImage() {
-  local diskReport scheme
-  local startSector
-  local supportsEFIBoot supportsBIOSBoot
+  local _diskReport _partScheme
+  local _supportsEFIBoot _supportsBIOSBoot
   inspectMBRPartTable() {
+    local _startSector
     # Look for the first ESP partition
-    startSector=$(echo "$diskReport" | jq ".partitiontable.partitions | map(select(.type==\"${mbrPartitionCodes[efi]}\"))[0].start | select (.!=null)")
+    _startSector=$(echo "$_diskReport" | jq ".partitiontable.partitions | map(select(.type==\"${mbrPartitionCodes[efi]}\"))[0].start | select (.!=null)")
     # If ESP found, look for first bootable
-    if [[ -n "$startSector" ]]; then
-      supportsEFIBoot=true
+    if [[ -n "$_startSector" ]]; then
+      _supportsEFIBoot=true
     else
-      supportsEFIBoot=false
+      _supportsEFIBoot=false
     fi
-    startSector=$(echo "$diskReport" | jq '.partitiontable.partitions | map(select(.bootable==true))[0].start | select (.!=null)')
-    if [[ -n "$startSector" ]]; then
-      supportsBIOSBoot=true
+    _startSector=$(echo "$_diskReport" | jq '.partitiontable.partitions | map(select(.bootable==true))[0].start | select (.!=null)')
+    if [[ -n "$_startSector" ]]; then
+      _supportsBIOSBoot=true
     else
-      supportsBIOSBoot=false
+      _supportsBIOSBoot=false
     fi
   }
   inspectGPTPartTable() {
+    local _startSector
     # In GPT mode, UEFI is theoretically the only possible boot mode
-    startSector=$(echo "$diskReport" | jq ".partitiontable.partitions | map(select(.type==\"${gptPartitionCodes[efi]}\"))[0].start | select (.!=null)")
-    supportsBIOSBoot=false
-    if [[ -n "$startSector" ]]; then
-      supportsEFIBoot=true
+    _startSector=$(echo "$_diskReport" | jq ".partitiontable.partitions | map(select(.type==\"${gptPartitionCodes[efi]}\"))[0].start | select (.!=null)")
+    _supportsBIOSBoot=false
+    if [[ -n "$_startSector" ]]; then
+      _supportsEFIBoot=true
     else
-      supportsEFIBoot=false
+      _supportsEFIBoot=false
     fi
   }
-  diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2>/dev/null)
+  _diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2>/dev/null)
   if (($? != 0)); then
     failAndExit "${exitStatus[INTERNALIO]}" "sfdisk couldn't read the partition table on the image file, which is likely corrupted."
   fi
-  scheme=$(echo "$diskReport" | jq -r '.partitiontable.label')
-  case $scheme in
+  _partScheme=$(echo "$_diskReport" | jq -r '.partitiontable.label')
+  case $_partScheme in
   dos) inspectMBRPartTable ;;
   gpt) inspectGPTPartTable ;;
   esac
-  isoInspection[supportsBIOSBoot]="$supportsBIOSBoot"
-  isoInspection[supportsEFIBoot]="$supportsEFIBoot"
+  isoInspection[supportsBIOSBoot]="$_supportsBIOSBoot"
+  isoInspection[supportsEFIBoot]="$_supportsEFIBoot"
 }
 
 inspectElToritoImage() {
-  local mountPoint
-  mountPoint=$(createMountFolder iso) || exit "$?"
-  mountElToritoFile "$mountPoint"
-  inspectPartition "$mountPoint" true
-  unmountPartition "$mountPoint"
+  local _mountPoint
+  _mountPoint=$(createMountFolder iso) || exit "$?"
+  mountElToritoFile "$_mountPoint"
+  inspectPartition "$_mountPoint" true
+  unmountPartition "$_mountPoint"
 }
 
 inspectImageFile() {
-  local isHybrid
+  local _isHybrid
   inspectImageFilesystem() {
     file -b -- "$selectedIsoFile" | grep -q '^ISO 9660 CD-ROM filesystem'
     if (($? == 0)); then
-      isHybrid=false
+      _isHybrid=false
     else
-      isHybrid=true
+      _isHybrid=true
     fi
   }
   inspectImageFilesystem
-  if [[ $isHybrid == true ]]; then
+  if [[ $_isHybrid == true ]]; then
     inspectHybridImage
   else
     inspectElToritoImage
   fi
-  isoInspection[isHybrid]=$isHybrid
+  isoInspection[isHybrid]=$_isHybrid
 }
 
 inspectISOBootCapabilities() {
-  local uefiCompatible=${isoInspection['supportsEFIBoot']}
-  local syslinuxCompatible=false
-  if [ "${isoInspection['supportsEFIBoot']}" == true ]; then
+  local _uefiCompatible=${isoInspection[supportsEFIBoot]}
+  local _syslinuxCompatible=false
+  if [ "${isoInspection[supportsEFIBoot]}" == true ]; then
     if [ "$filesystemType" != "vfat" ]; then
       echowarn "Found UEFI boot capabilities but you selected '$filesystemType' type, which is not compatible with UEFI boot." \
         "Be warned that only legacy boot might work, if any."
     else
-      uefiCompatible=true
+      _uefiCompatible=true
       echogood "UEFI boot check validated. Your USB will work with UEFI boot."
     fi
   fi
-  if [[ "$enforceGPT" == true && "${isoInspection['supportsEFIBoot']}" == false ]]; then
+  if [[ "$enforceGPT" == true && "${isoInspection[supportsEFIBoot]}" == false ]]; then
     echowarn "$(boldify '--gpt') option ignored because image file solely supports legacy BIOS boot, which requires MBR."
   fi
-  if [ ! -z "${isoInspection['syslinuxConf']}" ]; then
-    syslinuxCompatible=true
+  if [ ! -z "${isoInspection[syslinuxConf]}" ]; then
+    _syslinuxCompatible=true
     addSyslinuxBootloader=true
-    if [ ! -z "${isoInspection['syslinuxVer']}" ]; then
-      echogood "Found SYSLINUX config file and binary at version ${isoInspection['syslinuxVer']}."
-    elif [ ! -z "${isoInspection['syslinuxBin']}" ]; then
+    if [ ! -z "${isoInspection[syslinuxVer]}" ]; then
+      echogood "Found SYSLINUX config file and binary at version ${isoInspection[syslinuxVer]}."
+    elif [ ! -z "${isoInspection[syslinuxBin]}" ]; then
       echogood "Found SYSLINUX config file and binary with unknown version."
     else
       echogood "Found SYSLINUX config file."
     fi
     echogood "A SYSLINUX booloader will be installed on your USB device."
   fi
-  # if [[ "$syslinuxCompatible" == false && "$uefiCompatible" == false ]]; then
-  #   failAndExit "${exitStatus[MISBOOTCAP]}" \
-  #     "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
-  #     "Therefore, it cannot result in any successful booting with $scriptName." \
-  #     "Consider following the documentation provided with this image file."
-  # fi
+  if [[ "$_syslinuxCompatible" == false && "$_uefiCompatible" == false ]]; then
+    failAndExit "${exitStatus[MISBOOTCAP]}" \
+      "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
+      "Therefore, it cannot result in any successful booting with $scriptName." \
+      "Consider following the documentation provided with this image file."
+  fi
 }
 
 checkSyslinuxInstall() {
   checkpkg 'syslinux'
-  if ! command -v extlinux >/dev/null; then
+  if ! hasPackage extlinux; then
     failAndExit "${exitStatus[MISDEP]}" \
       "Your distribution doesn't ship 'extlinux' with the 'syslinux' package." \
       "Please install 'extlinux' and try again."
@@ -2131,63 +2144,64 @@ checkSyslinuxInstall() {
 }
 
 printISOBootCapabilities() {
-  local uefiCompatible=${isoInspection[supportsEFIBoot]}
-  local biosCompatible=${isoInspection[supportsBIOSBoot]}
-  local syslinuxCompatible=false
-  local isHybrid=${isoInspection['isHybrid']}
-  local syslinux='SYSLINUX'
-  local localSyslinuxVersion
-  if [ ! -z "${isoInspection['syslinuxConf']}" ]; then
-    syslinuxCompatible=true
+  local _uefiCompatible=${isoInspection[supportsEFIBoot]}
+  local _biosCompatible=${isoInspection[supportsBIOSBoot]}
+  local _syslinuxCompatible=false
+  local _isHybrid=${isoInspection[isHybrid]}
+  local _syslinux='SYSLINUX'
+  local _localSyslinuxVersion
+  if [ ! -z "${isoInspection[syslinuxConf]}" ]; then
+    _syslinuxCompatible=true
   fi
-  if [ ! -z "${isoInspection['syslinuxVer']}" ]; then
-    syslinux+=" ${isoInspection['syslinuxVer']}"
+  if [ ! -z "${isoInspection[syslinuxVer]}" ]; then
+    _syslinux+=" ${isoInspection[syslinuxVer]}"
   fi
   echoinfo "Reporting '$(basename "$selectedIsoFile")' boot capabilities:"
-  if [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == false ]; then
+  if [ "$_isHybrid" == false ] && [ "$_syslinuxCompatible" == false ] && [ "$_uefiCompatible" == false ]; then
     echoerr "The selected image is not hybrid, doesn't support UEFI or legacy BIOS booting nor SYSLINUX." \
       "It cannot result in any successful booting with $scriptName."
-  elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == false ]; then
-    echogood "The selected image is not hybrid, but supports legacy BIOS booting with $syslinux." \
+  elif [ "$_isHybrid" == false ] && [ "$_syslinuxCompatible" == true ] && [ "$_uefiCompatible" == false ]; then
+    echogood "The selected image is not hybrid, but supports legacy BIOS booting with $_syslinux." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with BIOS-boot capable PCs."
-  elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == true ]; then
+  elif [ "$_isHybrid" == false ] && [ "$_syslinuxCompatible" == false ] && [ "$_uefiCompatible" == true ]; then
     echogood "The selected image is not hybrid, but supports UEFI boot." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with modern UEFI-capable PCs."
-  elif [ "$isHybrid" == false ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == true ]; then
-    echogood "The selected image is not hybrid, but supports legacy BIOS booting with $syslinux and UEFI boot." \
+  elif [ "$_isHybrid" == false ] && [ "$_syslinuxCompatible" == true ] && [ "$_uefiCompatible" == true ]; then
+    echogood "The selected image is not hybrid, but supports legacy BIOS booting with $_syslinux and UEFI boot." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Mount-Rsync' modes with any PCs."
-  elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [[ "$biosCompatible" == false ]] && [ "$uefiCompatible" == false ]; then
+  elif [ "$_isHybrid" == true ] && [ "$_syslinuxCompatible" == false ] && [[ "$_biosCompatible" == false ]] && [ "$_uefiCompatible" == false ]; then
     echowarn "The selected image is hybrid, but doesn't support UEFI or legacy BIOS bootloader." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes, but $scriptName is not aware of its booting scheme."
-  elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == false ]; then
-    echogood "The selected image is hybrid and supports legacy BIOS booting with $syslinux." \
+  elif [ "$_isHybrid" == true ] && [ "$_syslinuxCompatible" == true ] && [ "$_uefiCompatible" == false ]; then
+    echogood "The selected image is hybrid and supports legacy BIOS booting with $_syslinux." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with BIOS-boot capable PCs."
-  elif [ "$isHybrid" == true ] && [ "$biosCompatible" == true ] && [ "$uefiCompatible" == false ]; then
+  elif [ "$_isHybrid" == true ] && [ "$_biosCompatible" == true ] && [ "$_uefiCompatible" == false ]; then
     echogood "The selected image is hybrid and supports legacy BIOS booting." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with BIOS-boot capable PCs."
-  elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == false ] && [ "$uefiCompatible" == true ]; then
+  elif [ "$_isHybrid" == true ] && [ "$_syslinuxCompatible" == false ] && [ "$_uefiCompatible" == true ]; then
     echogood "The selected image is hybrid and supports UEFI boot." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with modern UEFI-capable PCs."
-  elif [ "$isHybrid" == true ] && [ "$syslinuxCompatible" == true ] && [ "$uefiCompatible" == true ]; then
-    echogood "The selected image is hybrid and supports legacy BIOS booting with $syslinux along with UEFI boot." \
+  elif [ "$_isHybrid" == true ] && [ "$_syslinuxCompatible" == true ] && [ "$_uefiCompatible" == true ]; then
+    echogood "The selected image is hybrid and supports legacy BIOS booting with $_syslinux along with UEFI boot." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PCs."
-  elif [ "$isHybrid" == true ] && [ "$biosCompatible" == true ] && [ "$uefiCompatible" == true ]; then
+  elif [ "$_isHybrid" == true ] && [ "$_biosCompatible" == true ] && [ "$_uefiCompatible" == true ]; then
     echogood "The selected image is hybrid and supports legacy BIOS boot along with UEFI boot." \
       "It should boot with $scriptName in $(boldify install) 'Automatic' and 'Image-Copy' modes with any PCs."
   else
-    echoerr "Wrong state. isHybrid: $isHybrid, biosCompatible: $biosCompatible, uefiCompatible: $uefiCompatible, syslinuxCompatible: $syslinuxCompatible"
+    failAndExit "${exitStatus[INTERNALST]}" "Unexpected state. isHybrid: $_isHybrid, biosCompatible: $_biosCompatible," \
+      "uefiCompatible: $_uefiCompatible, syslinuxCompatible: $_syslinuxCompatible"
   fi
-  if [[ "$uefiCompatible" == false && ("$syslinuxCompatible" == true || "$biosCompatible" == true) ]]; then
+  if [[ "$_uefiCompatible" == false && ("$_syslinuxCompatible" == true || "$_biosCompatible" == true) ]]; then
     echowarn "You might have to enable CSM in your UEFI system for legacy BIOS-boot suport."
   fi
-  localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
-  if [ "$syslinuxCompatible" == true ] && [ ! -z "${isoInspection['syslinuxVer']}" ] && [ "$isHybrid" == false ]; then
-    if compute "$localSyslinuxVersion == ${isoInspection['syslinuxVer']}"; then
-      echogood "Furthermore, SYSLINUX version in the image file matches local version (${isoInspection['syslinuxVer']})."
-    elif compute "${localSyslinuxVersion%.*} == ${isoInspection['syslinuxVer']%.*}"; then
-      echoinfo "However, SYSLINUX version (${isoInspection['syslinuxVer']}) in the image file doesn't match the minor part of local version ($localSyslinuxVersion), which should not cause any problems."
+  _localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
+  if [ "$_syslinuxCompatible" == true ] && [ ! -z "${isoInspection[syslinuxVer]}" ] && [ "$_isHybrid" == false ]; then
+    if compute "$_localSyslinuxVersion == ${isoInspection[syslinuxVer]}"; then
+      echogood "Furthermore, SYSLINUX version in the image file matches local version (${isoInspection[syslinuxVer]})."
+    elif compute "${_localSyslinuxVersion%.*} == ${isoInspection[syslinuxVer]%.*}"; then
+      echoinfo "However, SYSLINUX version (${isoInspection[syslinuxVer]}) in the image file doesn't match the minor part of local version ($_localSyslinuxVersion), which should not cause any problems."
     else
-      echowarn "SYSLINUX version (${isoInspection['syslinuxVer']}) in the image file doesn't match the major part of local version ($localSyslinuxVersion)." \
+      echowarn "SYSLINUX version (${isoInspection[syslinuxVer]}) in the image file doesn't match the major part of local version ($_localSyslinuxVersion)." \
         "$scriptName will try to download and execute this version from kernel.org, unless given the modifier $(boldify '--local-bootloader')." \
         "If that fails, it will attempt installation with the local version of SYSLINUX."
     fi
