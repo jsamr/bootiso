@@ -553,7 +553,7 @@ checkISOHash() {
     printf "%s" \
       "You can disable this check with $(boldify "-H, --no-_hash-check") flags." | indentAll
     temporaryAssets+=("$_hashStoreFile")
-    (
+    ( 
       local _hash
       local -i _status=0
       _hash=$($_hashName "$_imageName" | awk "{print \$1; exit }")
@@ -1433,7 +1433,7 @@ copyWithRsync() {
         echowarn "Detected a Windows install.wim file but wimsplit has been disabled with $(boldify '--no-wim-split') option."
       fi
     fi
-    (
+    ( 
       # shellcheck disable=SC2086
       rsync -r -q -I --no-links --no-perms --no-owner --no-group $_rsyncOptions "$elToritoMountPoint"/. "$usbMountPoint"
       _status=$?
@@ -1467,7 +1467,7 @@ copyWithDD() {
     local _status
     _statusFile=$(createTempFile "bootiso-status")
     temporaryAssets+=("$_statusFile")
-    (
+    ( 
       dd if="$selectedIsoFile" of="$selectedDevice" bs="$ddBusSize" status=none
       echo "$?" > "$_statusFile"
     ) &
