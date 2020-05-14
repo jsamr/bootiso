@@ -341,7 +341,7 @@ printLog() {
 indentAll() {
   while read -r line; do
     printColumn " " "$logPrefixLength" "$line"
-  done <"${1:-/dev/stdin}"
+  done < "${1:-/dev/stdin}"
 }
 
 # $*: The message to print.
@@ -398,7 +398,7 @@ compute() {
 
 # $1: The name of the command to check against $PATH.
 hasPackage() {
-  command -v "$1" &>/dev/null
+  command -v "$1" &> /dev/null
   return $?
 }
 
@@ -506,7 +506,7 @@ checkSudo() {
     if [[ -t 1 ]] && hasPackage sudo; then
       sudo --preserve-env "$0" "$@"
     elif hasPackage gksu; then
-      exec 1>output_file
+      exec 1> output_file
       gksu --preserve-env "$0" "$@"
     else
       failAndExit "${exitStatus[MISPRIVILEGE]}" "You must run $scriptName as root."
@@ -559,9 +559,9 @@ checkISOHash() {
       _hash=$($_hashName "$_imageName" | awk "{print \$1; exit }")
       _status=$?
       if ((_status == 0)); then
-        printf "%s" "$_hash" >"$_hashStoreFile"
+        printf "%s" "$_hash" > "$_hashStoreFile"
       else
-        printf "%s" 1 >"$_hashStoreFile"
+        printf "%s" 1 > "$_hashStoreFile"
       fi
     ) &
     pid=$!
@@ -741,7 +741,7 @@ configureLabel() {
   # Fallback to "USER_VENDOR" if format
   if [[ "$action" == format ]]; then
     _user=${SUDO_USER:-$USER}
-    _vendor=$(lsblk -dno VENDOR "$selectedDevice" 2>/dev/null)
+    _vendor=$(lsblk -dno VENDOR "$selectedDevice" 2> /dev/null)
     _vendor=${_vendor:-FLASH}
     partitionLabel=${partitionLabel:-"${_user^^}_${_vendor^^}"}
   else
@@ -1043,7 +1043,7 @@ checkPackages() {
     checkpkg "$_pkg"
   done
   # test grep supports -P option
-  if ! echo 1 | grep -P '1' &>/dev/null; then
+  if ! echo 1 | grep -P '1' &> /dev/null; then
     failAndExit "${exitStatus[MISDEP]}" \
       "You're using an old version of grep which does not support perl regular expression (-P option)."
   fi
@@ -1331,7 +1331,7 @@ partitionUSB() {
     # unmount any partition on selected device
     mapfile -t devicePartitions < <(grep -oP "^\\K$selectedDevice\\S*" /proc/mounts)
     for _partition in "${devicePartitions[@]}"; do
-      if ! umount "$_partition" >/dev/null; then
+      if ! umount "$_partition" > /dev/null; then
         failAndExit "${exitStatus[INTERNALIO]}" \
           "Failed to unmount $_partition. It's likely that the partition is busy."
       fi
@@ -1340,7 +1340,7 @@ partitionUSB() {
   eraseDevice() {
     echoinfo "Erasing contents of '$selectedDevice'..."
     # clean signature from selected device
-    wipefs --all --force "$selectedDevice" &>/dev/null
+    wipefs --all --force "$selectedDevice" &> /dev/null
     # erase drive
     dd if=/dev/zero of="$selectedDevice" bs=512 count=1 conv=notrunc status=none |&
       indentAll ||
@@ -1372,7 +1372,7 @@ mountUSB() {
   usbMountPoint=$(createMountFolder usb) || exit "$?"
   temporaryAssets+=("$usbMountPoint")
   echoinfo "Created USB device mount point at '$usbMountPoint'"
-  if ! mount -t "$_type" "$selectedPartition" "$usbMountPoint" >/dev/null; then
+  if ! mount -t "$_type" "$selectedPartition" "$usbMountPoint" > /dev/null; then
     failAndExit "${exitStatus[INTERNALIO]}" "Could not mount USB device."
   fi
 }
@@ -1442,7 +1442,7 @@ copyWithRsync() {
         echo
         wimlib-imagex split "$_wimFile" "$usbMountPoint/sources/install.swm" 1024 |& indentAll
       fi
-      echo "$_status" >"$_statusFile"
+      echo "$_status" > "$_statusFile"
     ) &
     pid=$!
     echo -n "$scriptName: Copying files from image to USB device with 'rsync'    "
@@ -1469,7 +1469,7 @@ copyWithDD() {
     temporaryAssets+=("$_statusFile")
     (
       dd if="$selectedIsoFile" of="$selectedDevice" bs="$ddBusSize" status=none
-      echo "$?" >"$_statusFile"
+      echo "$?" > "$_statusFile"
     ) &
     pid=$!
     echo -n "$scriptName: Copying files from image to USB device with 'dd'    "
@@ -1642,7 +1642,7 @@ installBootloader() {
       fi
     fi
     echoinfo "Found local SYSLINUX version '$_localSyslinuxVersion'"
-    compute "$_localSyslinuxVersion == ${isoInspection[syslinuxVer]}" >/dev/null
+    compute "$_localSyslinuxVersion == ${isoInspection[syslinuxVer]}" > /dev/null
     _versionsMatch=$?
     if ((_versionsMatch == 0)); then
       echogood "image SYSLINUX version matches local version."
@@ -1690,7 +1690,7 @@ installBootloader() {
     if ! ${syslinuxInstall['extBin']} --stupid --install "$_syslinuxFolder" |& indentAll; then
       echowarn "Could not run SYSLINUX '$syslinuxVersion' from kernel.org." \
         "Attempting with local SYSLINUX install..."
-      installWtLocalExtlinux >/dev/null
+      installWtLocalExtlinux > /dev/null
     fi
     syncdev
   }
@@ -1748,7 +1748,7 @@ checkFSType() {
     failAndExit "${exitStatus[SYNOPSISNC]}" "Filesystem type '$_fsType' not supported." \
       "Supported FS types: $(joinBy "," "${supportedFS[*]}")."
   fi
-  if ! command -v "mkfs.$_fsType" &>/dev/null; then
+  if ! command -v "mkfs.$_fsType" &> /dev/null; then
     failAndExit "${exitStatus[MISDEP]}" \
       "Program 'mkfs.$_fsType' could not be found on your system." \
       "Please install it and retry."
@@ -2012,7 +2012,7 @@ inspectPartition() {
 # $1: mountPoint
 mountElToritoFile() {
   local -r _mountPoint="$1"
-  if ! mount -r -o loop -- "$selectedIsoFile" "$_mountPoint" >/dev/null; then
+  if ! mount -r -o loop -- "$selectedIsoFile" "$_mountPoint" > /dev/null; then
     failAndExit "${exitStatus[INTERNALIO]}" "Could not mount image file."
   else
     temporaryAssets+=("$_mountPoint")
@@ -2050,7 +2050,7 @@ inspectHybridImage() {
       _supportsEFIBoot=false
     fi
   }
-  _diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2>/dev/null)
+  _diskReport=$(sfdisk -lJ -- "$selectedIsoFile" 2> /dev/null)
   if (($? != 0)); then
     failAndExit "${exitStatus[INTERNALIO]}" "sfdisk couldn't read the partition table on the image file, which is likely corrupted."
   fi
