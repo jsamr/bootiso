@@ -13,3 +13,13 @@ charset = utf-8
 
 indent_style = space
 indent_size = 2
+
+[{bootiso,*.bash}]
+
+shell_variant = bash
+binary_next_line   = false
+switch_case_indent = false
+space_redirects    = true
+keep_padding       = true
+function_next_line = false
+binary_next_line   = false
