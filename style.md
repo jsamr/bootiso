@@ -22,16 +22,17 @@ Module prefixes determine to which “virtual module” a function belongs, and 
 Also, an implicit rule of the level metric is that lower level functions can never invoke higher level ones.
 Here is a table with description:
 
-| module            | prefix  | level | description                           |
-| :---------------- | ------- | :---: | ------------------------------------- |
-| primitive         | `prim_` |   1   | Primitive utilities                   |
-| terminal          | `term_` |   1   | Terminal utilities                    |
-| filesystem        | `fs_`   |   1   | Filesystem utilities                  |
-| program           | `prog_` |   1   | Process and program-related utilities |
-| assert            | `asrt_` |   2   | Assertions operations                 |
-| device and images | `devi_` |   2   | Devices and images operations         |
-| steps             | `step_` |   3   | High-level program execution step     |
-| action execution  | `exec_` |   4   | Functions encapsulating an “action”   |
+| module            | prefix  | level | description                         |
+| :---------------- | ------- | :---: | ----------------------------------- |
+| primitive         | `prim_` |   1   | Primitive utilities                 |
+| terminal          | `term_` |   1   | Terminal utilities                  |
+| filesystem        | `fs_`   |   1   | Filesystem utilities                |
+| system            | `sys_`  |   1   | Operating System utilities          |
+| ps                | `ps_`   |   1   | Process state utilities             |
+| assert            | `asrt_` |   2   | Assertions operations               |
+| device and images | `devi_` |   2   | Devices and images operations       |
+| steps             | `step_` |   3   | High-level program execution step   |
+| action execution  | `exec_` |   4   | Functions encapsulating an “action” |
 
 ## Variable Prefixes
 
@@ -48,7 +49,7 @@ Non-constants should be prefixed with `st_` for “stateful”, with the excepti
 ## Module conventions
 
 Module names **should** not exceed 4 characters.
-To be easily identified in minimaps, modules names are commented in ASCII art *Roman* font.
+To be easily identified in minimaps, modules names are commented in ASCII art _Roman_ font.
 The recommended utility is **figlet**.
 
 ```bash
