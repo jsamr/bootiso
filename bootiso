@@ -354,32 +354,6 @@ typeset -Ar fs_mbrPartitionCodes=(
   [efi]=ef
 )
 
-function fs_configureFolders() {
-  local _defaultMode=777
-  if [ ! -e "$ct_tempRoot" ]; then
-    mkdir -m $_defaultMode "$ct_tempRoot"
-  elif [ -d "$ct_tempRoot" ]; then
-    chmod -R $_defaultMode "$ct_tempRoot"
-  else
-    ps_failAndExit INTERNALST "(fs_configureFolders) '$ct_tempRoot' is not a folder." \
-      "Remove this file and try again."
-  fi
-  if [ ! -e "$ct_cacheRoot" ]; then
-    mkdir -m $_defaultMode "$ct_cacheRoot"
-  elif [ -d "$ct_cacheRoot" ]; then
-    chmod -R $_defaultMode "$ct_cacheRoot"
-  else
-    ps_failAndExit INTERNALST "(fs_configureFolders) '$ct_cacheRoot' is not a folder." \
-      "Remove this file and try again."
-  fi
-  if [ ! -e "$ct_mountRoot" ]; then
-    mkdir "$ct_mountRoot"
-  elif [ ! -d "$ct_mountRoot" ]; then
-    ps_failAndExit INTERNALST "(fs_configureFolders) '$ct_mountRoot' is not a folder." \
-      "Remove this file and try again."
-  fi
-}
-
 function fs_firstMatchInFolder() {
   local -r _path=$1
   local -r _pattern=$2
@@ -668,7 +642,7 @@ function sys_isDeviceDisk() {
 # o888o               
 #
 #
-# PROCESS STATE MODULE (1)
+# PROCESS STATE MODULE (2)
 
 typeset -Ar ps_exitStatus=(
   # Exceptions
@@ -1704,6 +1678,32 @@ function devi_inspectElToritoImage() {
 #
 # STEP MODULE (3)
 
+function step_configureFolders() {
+  local _defaultMode=777
+  if [ ! -e "$ct_tempRoot" ]; then
+    mkdir -m $_defaultMode "$ct_tempRoot"
+  elif [ -d "$ct_tempRoot" ]; then
+    chmod -R $_defaultMode "$ct_tempRoot"
+  else
+    ps_failAndExit INTERNALST "(step_configureFolders) '$ct_tempRoot' is not a folder." \
+      "Remove this file and try again."
+  fi
+  if [ ! -e "$ct_cacheRoot" ]; then
+    mkdir -m $_defaultMode "$ct_cacheRoot"
+  elif [ -d "$ct_cacheRoot" ]; then
+    chmod -R $_defaultMode "$ct_cacheRoot"
+  else
+    ps_failAndExit INTERNALST "(step_configureFolders) '$ct_cacheRoot' is not a folder." \
+      "Remove this file and try again."
+  fi
+  if [ ! -e "$ct_mountRoot" ]; then
+    mkdir "$ct_mountRoot"
+  elif [ ! -d "$ct_mountRoot" ]; then
+    ps_failAndExit INTERNALST "(step_configureFolders) '$ct_mountRoot' is not a folder." \
+      "Remove this file and try again."
+  fi
+}
+
 function step_initDevicesList() {
   local -a _devices
   local _device
@@ -2224,6 +2224,13 @@ function step_checkArguments() {
   asrt_checkUserFlags
 }
 
+function step_finalize() {
+  if [ "$st_hasActionDuration" == 'true' ]; then
+    ps_stopTimerAndPrintLapsed
+  fi
+  st_completedAction=$targetAction
+}
+
 #  .ooooo.  oooo    ooo  .ooooo.   .ooooo.
 # d88' `88b  `88b..8P'  d88' `88b d88' `"Y8
 # 888ooo888    Y888'    888ooo888 888
@@ -2450,7 +2457,7 @@ function main() {
   asrt_checkPackages
   if [ "$requiresRoot" == 'true' ]; then
     asrt_checkSudo "$@"
-    fs_configureFolders
+    step_configureFolders
   fi
   if [ "$st_expectingISOFile" == 'true' ]; then
     asrt_checkFileIsImage
@@ -2473,10 +2480,7 @@ function main() {
   'help') exec_help ;;
   *) ps_failAndExit INTERNALST "(main) unexpected action $(term_boldify "$targetAction")." ;;
   esac
-  if [ "$st_hasActionDuration" == 'true' ]; then
-    ps_stopTimerAndPrintLapsed
-  fi
-  st_completedAction=$targetAction
+  step_finalize
 }
 
 trap ps_cleanup EXIT INT TERM
