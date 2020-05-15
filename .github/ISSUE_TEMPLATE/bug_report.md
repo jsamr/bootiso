@@ -7,23 +7,25 @@ assignees: jsamr
 
 ---
 
-**Category** (choose at least one)
+**Category**
 
-- *behavior* (bootiso didn't behave as promised)
+<!-- choose at least one
+- *behavior* (bootiso didn't behave as promised, chose that if you don't know)
 - *distro-dependant* (a bug occurred because of a distribution specificity)
-- *retro-compatibility* (bootiso should support or explicitly unsupport an old version of it's dependency)
+- *retro-compatibility* (bootiso should support or explicitly unsupport an old version of its dependency)
+-->
 
 **Describe the bug**
 
-A clear and concise description of what the bug is.
+<!-- A clear and concise description of what the bug is. -->
 
 **Expected behavior** (for behavioral bugs only)
 
-A clear and concise description of what you expected to happen.
+<!-- A clear and concise description of what you expected to happen. -->
 
-**To Reproduce**
+**Reproduction**
 
-Steps to reproduce the behavior:
+<!-- Steps to reproduce the behavior:
 
 1. Run `bootiso [arguments]` with [this ISO]( ... link to ISO / torrent)
 [Optionally, intermediate command line interactions]
@@ -32,6 +34,11 @@ Steps to reproduce the behavior:
 ``` bash
 <Print bootiso log here>
 ```
+-->
+
+**Exit status**
+
+<!-- Print the result of `echo $?` right after after bootiso failure -->
 
 **Environment:**
 
@@ -39,13 +46,13 @@ Steps to reproduce the behavior:
 <Print the ouput of neofetch here>
 ```
 
-If the bad behavior was caused by a specific tool (i.e., rsync), please give us the version you are using.
+<!-- If the failure was caused by a specific tool (i.e., rsync), please give us the version you are using. -->
 
 
 **Additional context** (optional)
 
-Add any other context about the problem here.
+<!-- Add any other context about the problem here. -->
 
 **Suggestion fix** (optional)
 
-Add a suggestion to circumvent the issue.
+<!-- Add a suggestion to circumvent the issue. -->
