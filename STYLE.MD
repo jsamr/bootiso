@@ -19,14 +19,20 @@
 Those prefixes help understanding to which “virtual module” a function belongs, and greatly limit risk of collusion.
 Here is a table with description:
 
-ARGS_: Utilities related to command arguments inspection
-ASRT_: Utilities to perform assertions on contextual environment
-TEXT_: Utilities related to text processing
-DEVO_: Utilities related to device operations and information querying
-FILE_: Utilities related to file searching
-PRNT_: Utilities related to printing in console
-DEPS_: Utilities related to dependency management
-STEP_: High-level execution step
+prim_: Primitive utilities
+stdo_: Utilities related to printing in console
+file_: Utilities related to file processing
+syst_: System utilites
+
+asrt_: Utilities to perform assertions on contextual environment
+prog_: Process and program-related utilities
+devi_: Devices and images operations. Utilities related to image and device operations and information querying
+
+step_: High-level execution step
+exec_: Exec action (...)
+
+args_: Utilities related to command arguments inspection
+
 
 ## Variable Namespace Prefixes
 
