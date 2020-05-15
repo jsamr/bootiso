@@ -647,7 +647,7 @@ function sys_checkCommand() {
 }
 
 # $1 - a device block
-# Returns "usb" if device is USB, "ata" for SATA and "other" otherwise
+# Returns "usb", "ata", "nvme" ... or fallback to "other"
 function sys_getDeviceType() {
   local -r _deviceBlock=$1
   local _deviceType
