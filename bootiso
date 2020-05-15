@@ -652,39 +652,39 @@ function prog_failAndExit() {
   exit "${ct_exitStatus[$_statusCode]}"
 }
 
-# $1 - The name of the command to check against $PATH.
-function prog_hasPackage() {
+# $1 - The name of the command to check in $PATH.
+function prog_hasCommand() {
   command -v "$1" &> /dev/null
   return $?
 }
 
-# $1: The name of the package command to check.
-function prog_checkPkg() {
-  local -r _pkg=$1
+# $1 - The name of the package command to check.
+function prog_checkCommand() {
+  local -r _command=$1
   local _answer
-  if ! prog_hasPackage "$_pkg"; then
-    term_echowarn "Command '$_pkg' not found! Should be in package '${ct_commandPackages["$_pkg"]}'."
+  if ! prog_hasCommand "$_command"; then
+    term_echowarn "Command '$_command' not found! Should be in package '${ct_commandPackages["$_command"]}'."
     if [ ! -z "$pkgmgr" ]; then
       read -r -n1 -p "${term_logPrefixEmpty}Attempt installation? (y/n)> " _answer
       echo
       case $_answer in
       y | Y)
-        if ! $pkgmgr "${ct_commandPackages["$_pkg"]}"; then
-          prog_failAndExit MISDEP "Installation of dependency '$_pkg' failed." \
+        if ! $pkgmgr "${ct_commandPackages["$_command"]}"; then
+          prog_failAndExit MISDEP "Installation of dependency '$_command' failed." \
             "Perhaps this dependency has a slightly different name on your distribution." \
             "Find it and install manually."
         else
-          if ! prog_hasPackage "$_pkg"; then
-            prog_failAndExit MISDEP "Program '$_pkg' is not accessible in the \$PATH environment even though the package ${ct_commandPackages["$_pkg"]} has just been installed."
+          if ! prog_hasCommand "$_command"; then
+            prog_failAndExit MISDEP "Program '$_command' is not accessible in the \$PATH environment even though the package ${ct_commandPackages["$_command"]} has just been installed."
           fi
         fi
         ;;
       *)
-        prog_failAndExit MISDEP "Missing dependency '$_pkg'."
+        prog_failAndExit MISDEP "Missing dependency '$_command'."
         ;;
       esac
     else
-      prog_failAndExit MISDEP "Missing dependency '$_pkg'."
+      prog_failAndExit MISDEP "Missing dependency '$_command'."
     fi
   fi
 }
@@ -819,9 +819,9 @@ typeset -Ar ct_commandPackages=(
 
 function asrt_checkSudo() {
   if ((EUID != 0)); then
-    if [[ -t 1 ]] && prog_hasPackage sudo; then
+    if [[ -t 1 ]] && prog_hasCommand sudo; then
       sudo --preserve-env "$0" "$@"
-    elif prog_hasPackage gksu; then
+    elif prog_hasCommand gksu; then
       exec 1> output_file
       gksu --preserve-env "$0" "$@"
     else
@@ -978,7 +978,7 @@ function asrt_checkImageHash() {
 function asrt_checkPackages() {
   local _pkg
   for _pkg in "${asrt_commandDependencies[@]}"; do
-    prog_checkPkg "$_pkg"
+    prog_checkCommand "$_pkg"
   done
   # test grep supports -P option
   if ! echo 1 | grep -P '1' &> /dev/null; then
@@ -1193,8 +1193,8 @@ function asrt_inspectImageBootCapabilities() {
 }
 
 function asrt_checkSyslinuxInstall() {
-  prog_checkPkg 'syslinux'
-  if ! prog_hasPackage extlinux; then
+  prog_checkCommand 'syslinux'
+  if ! prog_hasCommand extlinux; then
     prog_failAndExit MISDEP \
       "Your distribution doesn't ship 'extlinux' with the 'syslinux' package." \
       "Please install 'extlinux' and try again."
@@ -1883,7 +1883,7 @@ function step_copyWithRsync() {
       prog_failAndExit INTERNALIO "Copy command with 'rsync' failed."
     fi
   }
-  prog_checkPkg 'rsync'
+  prog_checkCommand 'rsync'
   _rsyncWithProgress
   fs_syncWithProgress
 }
@@ -1915,35 +1915,35 @@ function step_copyWithDD() {
 }
 
 function step_initPckgManager() {
-  if prog_hasPackage apt-get; then # Debian
+  if prog_hasCommand apt-get; then # Debian
     pkgmgr="apt-get install"
     return 0
   fi
-  if prog_hasPackage dnf; then # Fedora
+  if prog_hasCommand dnf; then # Fedora
     pkgmgr="dnf install"
     return 0
   fi
-  if prog_hasPackage yum; then # Fedora
+  if prog_hasCommand yum; then # Fedora
     pkgmgr="yum install"
     return 0
   fi
-  if prog_hasPackage pacman; then # Arch
+  if prog_hasCommand pacman; then # Arch
     pkgmgr="pacman -S"
     return 0
   fi
-  if prog_hasPackage zypper; then # OpenSuse
+  if prog_hasCommand zypper; then # OpenSuse
     pkgmgr="zypper install"
     return 0
   fi
-  if prog_hasPackage emerge; then # Gentoo
+  if prog_hasCommand emerge; then # Gentoo
     pkgmgr="emerge"
     return 0
   fi
-  if prog_hasPackage xbps-install; then # Void
+  if prog_hasCommand xbps-install; then # Void
     pkgmgr="xbps-install"
     return 0
   fi
-  if prog_hasPackage eopkg; then # Solus
+  if prog_hasCommand eopkg; then # Solus
     pkgmgr="eopkg install"
     return 0
   fi
