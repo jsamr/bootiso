@@ -44,3 +44,13 @@ Non-constants should be prefixed with `st_` for “stateful”, with the excepti
 |    :heavy_check_mark:    |    :heavy_check_mark:    | :heavy_multiplication_x: | _module prefix_, e.g. `asrt_` |
 | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | `st_` for “stateful”          |
 | :heavy_multiplication_x: | :heavy_multiplication_x: |    :heavy_check_mark:    | _no prefix_                   |
+
+## Module conventions
+
+Module names **should** not exceed 4 characters.
+To be easily identified in minimaps, modules names are commented in ASCII art *Roman* font.
+The recommended utility is **figlet**.
+
+```bash
+figlet -f Roman <name>
+```
