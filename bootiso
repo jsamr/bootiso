@@ -1676,7 +1676,7 @@ function devi_inspectElToritoImage() {
 #                             888
 #                            o888o
 #
-# STEP MODULE (3)
+# STEPS MODULE (3)
 
 function step_configureFolders() {
   local _defaultMode=777
