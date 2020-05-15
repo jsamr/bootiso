@@ -5,6 +5,9 @@
 # Author: jules randolph <jules.sam.randolph@gmail.com> https://github.com/jsamr
 # License: MIT
 # Version 4.0.0-alpha.0
+#
+# This source code is organized in "pseudo-modules".
+# Refer to the style.md file.
 
 set -o pipefail
 set -E
@@ -26,7 +29,7 @@ fi
 # 888   .o8   888 .
 # `Y8bod8P'   "888"
 #
-# CONSTANT GLOBAL VARIABLES
+# CONSTANT GLOBAL VARIABLES (0)
 #
 # Readonly (constant) declarations are prefixed with 'ct_'.
 # Modules can have their own constant declarations, prefixed with
@@ -49,7 +52,7 @@ typeset -r ct_openTicketMessage="This is not expected: please open a ticket at $
 # o.  )88b   888 .
 # 8""888P'   "888"
 #
-# STATE GLOBAL VARIABLES
+# STATE GLOBAL VARIABLES (0)
 
 typeset st_targetPartition
 typeset st_elToritoMountPoint
@@ -120,7 +123,7 @@ typeset -A st_userVars=(
 #  888                          
 # o888o
 #
-# PARAMETER GLOBAL VARIABLES
+# PARAMETER GLOBAL VARIABLES (0)
 # 
 # Global variables derived from program arguments or configuration.
 # These are the only unprefixed global variables.
@@ -157,7 +160,7 @@ typeset disableDeviceEjection
 # 8""888P' o888o o888o 
 #                      
 #
-# SH MODULE
+# SH MODULE (1)
 
 # $@ - The expression piped to bc
 function sh_compute() {
@@ -207,7 +210,7 @@ function sh_normalizeFSType() {
 #   "888" `Y8bod8P' d888b    o888o o888o o888o
 #
 #
-# TERMINAL MODULE
+# TERMINAL MODULE (1)
 
 # See console_codes GNU-Linux man page
 typeset -r term_setRed="\e[31m"
@@ -338,7 +341,7 @@ function term_cleanProgress() {
 # o888o   8""888P'
 #
 #
-# FILESYSTEM MODULE
+# FILESYSTEM MODULE (1)
 
 typeset -Ar fs_gptPartitionCodes=(
   [efi]="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
@@ -601,7 +604,7 @@ function fs_syncWithProgress() {
 #          `Y8P'                
 #
 # 
-# OPERATING SYSTEM MODULE
+# OPERATING SYSTEM MODULE (1)
 
 # $1 - The name of the command to check in $PATH.
 function sys_hasCommand() {
@@ -665,7 +668,7 @@ function sys_isDeviceDisk() {
 # o888o               
 #
 #
-# PROCESS STATE MODULE
+# PROCESS STATE MODULE (1)
 
 typeset -Ar ps_exitStatus=(
   # Exceptions
@@ -763,7 +766,7 @@ function ps_failAndExit() {
 # `Y888""8o 8""888P' d888b      "888"
 #
 #
-# ASSERTION MODULE
+# ASSERTION MODULE (2)
 
 typeset -ar asrt_supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
 typeset -Ar asrt_userVarsCompatibilityMatrix=(
@@ -1240,7 +1243,7 @@ function asrt_checkSyslinuxInstall() {
 # `Y8bod88P" `Y8bod8P'     `8'     o888o
 #
 #
-# DEVICE AND IMAGES MODULE
+# DEVICE AND IMAGES MODULE (3)
 
 function devi_configureLabel() {
   local _user _vendor
@@ -1699,7 +1702,7 @@ function devi_inspectElToritoImage() {
 #                             888
 #                            o888o
 #
-# STEP MODULE
+# STEP MODULE (3)
 
 function step_initDevicesList() {
   local -a _devices
@@ -2227,7 +2230,7 @@ function step_checkArguments() {
 # 888    .o  .o8"'88b   888    .o 888   .o8
 # `Y8bod8P' o88'   888o `Y8bod8P' `Y8bod8P'
 #
-# EXEC (ACTION) MODULE
+# ACTION EXEC MODULE (4)
 
 function exec_help() {
   local _termWidth
