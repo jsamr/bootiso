@@ -26,7 +26,7 @@ fi
 # 888   .o8   888 .
 # `Y8bod8P'   "888"
 #
-# Global constant declarations
+# CONSTANT GLOBAL VARIABLES
 #
 # Readonly (constant) declarations are prefixed with 'ct_'.
 # Modules can have their own constant declarations, prefixed with
@@ -49,7 +49,7 @@ typeset -r ct_openTicketMessage="This is not expected: please open a ticket at $
 # o.  )88b   888 .
 # 8""888P'   "888"
 #
-# Stateful global variables are prefixed with 'st_'.
+# STATE GLOBAL VARIABLES
 
 typeset st_targetPartition
 typeset st_elToritoMountPoint
@@ -112,15 +112,16 @@ typeset -A st_userVars=(
   ['data-part-fs']=''
 )
 
+# oo.ooooo.   .oooo.   oooo d8b 
+#  888' `88b `P  )88b  `888""8P 
+#  888   888  .oP"888   888     
+#  888   888 d8(  888   888     
+#  888bod8P' `Y888""8o d888b    
+#  888                          
+# o888o
 #
-#  .oooo.   oooo d8b  .oooooooo  .oooo.o
-# `P  )88b  `888""8P 888' `88b  d88(  "8
-#  .oP"888   888     888   888  `"Y88b.
-# d8(  888   888     `88bod8P'  o.  )88b
-# `Y888""8o d888b    `8oooooo.  8""888P'
-#                    d"     YD
-#                    "Y88888P'
-#
+# PARAMETER GLOBAL VARIABLES
+# 
 # Global variables derived from program arguments or configuration.
 # These are the only unprefixed global variables.
 
@@ -147,23 +148,19 @@ typeset disableHashCheck
 typeset disableWimsplit
 typeset disableDeviceEjection
 
-#                      o8o
-#                      `"'
-# oo.ooooo.  oooo d8b oooo  ooo. .oo.  .oo.
-#  888' `88b `888""8P `888  `888P"Y88bP"Y88b
-#  888   888  888      888   888   888   888
-#  888   888  888      888   888   888   888
-#  888bod8P' d888b    o888o o888o o888o o888o
-#  888
-# o888o
+#          oooo        
+#          `888        
+#  .oooo.o  888 .oo.   
+# d88(  "8  888P"Y88b  
+# `"Y88b.   888   888  
+# o.  )88b  888   888  
+# 8""888P' o888o o888o 
+#                      
 #
-# PRIMITIVE MODULE
-#
-# Utilities for primitives, that is generic operations
-# on bash primitive "types" such as strings, arrays, integers...
+# SH MODULE
 
-# $@ - The expression to pipe to bc
-function prim_compute() {
+# $@ - The expression piped to bc
+function sh_compute() {
   local _answer
   _answer=$(echo "$@" | bc)
   if ((_answer == 0)); then
@@ -175,7 +172,7 @@ function prim_compute() {
 
 # $1  - The string by which elements will be joined.
 # $2+ - The elements to join
-function prim_joinBy() {
+function sh_joinBy() {
   local -r IFS=$1
   shift
   echo "$*"
@@ -183,7 +180,7 @@ function prim_joinBy() {
 
 # $1  - The element to check.
 # $2+ - The list to check against.
-function prim_elementIsInList() {
+function sh_elementIsInList() {
   local -r _match="$1"
   local _arg
   shift
@@ -192,7 +189,7 @@ function prim_elementIsInList() {
 }
 
 # $1: fsType
-function prim_normalizeFSType() {
+function sh_normalizeFSType() {
   local -r _fsType="${1:-vfat}"
   if [ "${_fsType,,}" == fat32 ]; then
     echo vfat
@@ -209,9 +206,8 @@ function prim_normalizeFSType() {
 #   888 . 888    .o  888      888   888   888
 #   "888" `Y8bod8P' d888b    o888o o888o o888o
 #
-# TERMINAL MODULE
 #
-# Terminal utilities
+# TERMINAL MODULE
 
 # See console_codes GNU-Linux man page
 typeset -r term_setRed="\e[31m"
@@ -341,9 +337,8 @@ function term_cleanProgress() {
 #  888    o.  )88b
 # o888o   8""888P'
 #
-# FILESYSTEM MODULE
 #
-# Filesystem operations and utilities.
+# FILESYSTEM MODULE
 
 typeset -Ar fs_gptPartitionCodes=(
   [efi]="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
@@ -604,10 +599,9 @@ function fs_syncWithProgress() {
 # 8""888P'     .8'     8""888P' 
 #          .o..P'               
 #          `Y8P'                
+#
 # 
 # OPERATING SYSTEM MODULE
-#
-# This module expose utilities related system
 
 # $1 - The name of the command to check in $PATH.
 function sys_hasCommand() {
@@ -669,7 +663,8 @@ function sys_isDeviceDisk() {
 #  888bod8P' 8""888P' 
 #  888                
 # o888o               
-# 
+#
+#
 # PROCESS STATE MODULE
 
 typeset -Ar ps_exitStatus=(
@@ -744,7 +739,7 @@ function ps_stopTimerAndPrintLapsed() {
 # $2+ - The message to print.
 function ps_failAndExit() {
   local -r _statusCode=$1 _status
-  if ! prim_elementIsInList "$_statusCode" "${!ps_exitStatus[@]}"; then
+  if ! sh_elementIsInList "$_statusCode" "${!ps_exitStatus[@]}"; then
     term_echoerr "(ps_failAndExit) Internal state error. Unknown status code '$_statusCode'"
     _statusCode=INTERNALST
   else
@@ -767,9 +762,8 @@ function ps_failAndExit() {
 # d8(  888  o.  )88b  888       888 .
 # `Y888""8o 8""888P' d888b      "888"
 #
-# ASSERTION MODULE
 #
-# Assertion directives module.
+# ASSERTION MODULE
 
 typeset -ar asrt_supportedFS=('vfat' 'exfat' 'ntfs' 'ext2' 'ext3' 'ext4' 'f2fs')
 typeset -Ar asrt_userVarsCompatibilityMatrix=(
@@ -1081,16 +1075,16 @@ function asrt_checkAction() {
     targetAction=${_enabledActions[0]}
   else
     ps_failAndExit SYNOPSISNC \
-      "You cannot invoke multiple actions at once: $(prim_joinBy '+' "${_enabledActions[@]}")."
+      "You cannot invoke multiple actions at once: $(sh_joinBy '+' "${_enabledActions[@]}")."
   fi
 }
 
 # $1 - fsType
 function asrt_checkFSType() {
   local -r _fsType="$1"
-  if ! prim_elementIsInList "$_fsType" "${asrt_supportedFS[@]}"; then
+  if ! sh_elementIsInList "$_fsType" "${asrt_supportedFS[@]}"; then
     ps_failAndExit SYNOPSISNC "Filesystem type '$_fsType' not supported." \
-      "Supported FS types: $(prim_joinBy "," "${asrt_supportedFS[*]}")."
+      "Supported FS types: $(sh_joinBy "," "${asrt_supportedFS[*]}")."
   fi
   if ! command -v "mkfs.$_fsType" &> /dev/null; then
     ps_failAndExit MISDEP \
@@ -1102,11 +1096,11 @@ function asrt_checkFSType() {
 function asrt_checkUserVars() {
   # check partition types
   if [ -n "${st_userVars[fs]}" ]; then
-    st_userVars[fs]=$(prim_normalizeFSType "${st_userVars[fs]}")
+    st_userVars[fs]=$(sh_normalizeFSType "${st_userVars[fs]}")
     asrt_checkFSType "${st_userVars[fs]}"
   fi
   if [ -n "${st_userVars['data-part-fs']}" ]; then
-    st_userVars['data-part-fs']=$(prim_normalizeFSType "${st_userVars['data-part-fs']}")
+    st_userVars['data-part-fs']=$(sh_normalizeFSType "${st_userVars['data-part-fs']}")
     asrt_checkFSType "${st_userVars['data-part-fs']}"
   fi
   # check device
@@ -1161,7 +1155,7 @@ function asrt_checkFlagMatrix() {
   for _key in "${!asrt_userVarsCompatibilityMatrix[@]}"; do
     if [ ! -z "${st_userVars[$_key]}" ]; then
       #shellcheck disable=SC2086
-      if ! prim_elementIsInList "$targetAction" ${asrt_userVarsCompatibilityMatrix[$_key]}; then
+      if ! sh_elementIsInList "$targetAction" ${asrt_userVarsCompatibilityMatrix[$_key]}; then
         if [ "$_key" == "iso-file" ]; then
           ps_failAndExit SYNOPSISNC \
             "$(term_boldify $targetAction) doesn't require any positional arguments."
@@ -1175,7 +1169,7 @@ function asrt_checkFlagMatrix() {
   for _key in "${!ct_userFlagsCompatibilityMatrix[@]}"; do
     if [ ! -z "${st_userFlags[$_key]}" ]; then
       #shellcheck disable=SC2086
-      if ! prim_elementIsInList "$targetAction" ${ct_userFlagsCompatibilityMatrix[$_key]}; then
+      if ! sh_elementIsInList "$targetAction" ${ct_userFlagsCompatibilityMatrix[$_key]}; then
         ps_failAndExit SYNOPSISNC \
           "$(term_boldify $targetAction) action doesn't support $(term_boldify --$_key) modifier."
       fi
@@ -1245,9 +1239,8 @@ function asrt_checkSyslinuxInstall() {
 # 888   888  888    .o    `888'     888
 # `Y8bod88P" `Y8bod8P'     `8'     o888o
 #
-# DEVICE AND IMAGES MODULE
 #
-# Device and images operations.
+# DEVICE AND IMAGES MODULE
 
 function devi_configureLabel() {
   local _user _vendor
@@ -1301,14 +1294,14 @@ function devi_configureLabel() {
 function devi_selectDevice() {
   function _chooseDevice() {
     local _answer
-    term_echoinfo "Select the device corresponding to the USB device you want to make bootable: $(prim_joinBy ',' "${st_devicesList[@]}")" \
+    term_echoinfo "Select the device corresponding to the USB device you want to make bootable: $(sh_joinBy ',' "${st_devicesList[@]}")" \
       "\n${term_logPrefixEmpty}Type CTRL+D to quit."
     read -r -p "${term_logPrefixEmpty}Select device id> " _answer
     echo
-    if prim_elementIsInList "$_answer" "${st_devicesList[@]}"; then
+    if sh_elementIsInList "$_answer" "${st_devicesList[@]}"; then
       targetDevice="/dev/$_answer"
     else
-      if prim_elementIsInList "$_answer" "" "exit"; then
+      if sh_elementIsInList "$_answer" "" "exit"; then
         term_echoinfo "Exiting on user request."
         exit 0
       else
@@ -1374,7 +1367,7 @@ function devi_createPartitionTable() {
   _sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+')
   function _makeSfdiskCommand() {
     # Retrocompatibility for 'old' sfdisk versions
-    if prim_compute "$_sfdiskVersion >= 2.28"; then
+    if sh_compute "$_sfdiskVersion >= 2.28"; then
       _sfdiskCommand='sfdisk -W always'
     fi
   }
@@ -1707,10 +1700,6 @@ function devi_inspectElToritoImage() {
 #                            o888o
 #
 # STEP MODULE
-#
-# Execution program steps.
-# The functions exposed in this module are high-level semantic
-# units of the whole program execution.
 
 function step_initDevicesList() {
   local -a _devices
@@ -1782,7 +1771,7 @@ function step_installBootloader() {
       fi
     fi
     term_echoinfo "Found local SYSLINUX version '$_localSyslinuxVersion'"
-    prim_compute "$_localSyslinuxVersion == ${st_isoInspections[syslinuxVer]}" > /dev/null
+    sh_compute "$_localSyslinuxVersion == ${st_isoInspections[syslinuxVer]}" > /dev/null
     _versionsMatch=$?
     if ((_versionsMatch == 0)); then
       term_echogood "image SYSLINUX version matches local version."
@@ -2239,8 +2228,6 @@ function step_checkArguments() {
 # `Y8bod8P' o88'   888o `Y8bod8P' `Y8bod8P'
 #
 # EXEC (ACTION) MODULE
-#
-# Very-high level functions corresponding to program actions.
 
 function exec_help() {
   local _termWidth
@@ -2359,9 +2346,9 @@ function exec_inspect() {
   fi
   _localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
   if [ "$_syslinuxCompatible" == true ] && [ ! -z "${st_isoInspections[syslinuxVer]}" ] && [ "$_isHybrid" == false ]; then
-    if prim_compute "$_localSyslinuxVersion == ${st_isoInspections[syslinuxVer]}"; then
+    if sh_compute "$_localSyslinuxVersion == ${st_isoInspections[syslinuxVer]}"; then
       term_echogood "Furthermore, SYSLINUX version in the image file matches local version (${st_isoInspections[syslinuxVer]})."
-    elif prim_compute "${_localSyslinuxVersion%.*} == ${st_isoInspections[syslinuxVer]%.*}"; then
+    elif sh_compute "${_localSyslinuxVersion%.*} == ${st_isoInspections[syslinuxVer]%.*}"; then
       term_echoinfo "However, SYSLINUX version (${st_isoInspections[syslinuxVer]}) in the image file doesn't match the minor part of local version ($_localSyslinuxVersion), which should not cause any problems."
     else
       term_echowarn "SYSLINUX version (${st_isoInspections[syslinuxVer]}) in the image file doesn't match the major part of local version ($_localSyslinuxVersion)." \
