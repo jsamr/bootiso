@@ -37,18 +37,18 @@ Here is a table with description:
 ## Variable Prefixes
 
 The prefixes can be the same as function namespace prefixes for constant (readonly) declarations.
-Non-constants should be prefixed with `st_` for “stateful”, with the exception of variables assigned from user parameters which can be unprefixed.
+Non-constants should be prefixed with `st_`, with the exception of variables assigned from user parameters which can be unprefixed.
 
 |   Constant? (readonly)   |    Belongs to module?    |   Contains parameters?   | Prefix                        |
 | :----------------------: | :----------------------: | :----------------------: | ----------------------------- |
 |    :heavy_check_mark:    | :heavy_multiplication_x: | :heavy_multiplication_x: | `ct_` for “constant“          |
 |    :heavy_check_mark:    |    :heavy_check_mark:    | :heavy_multiplication_x: | _module prefix_, e.g. `asrt_` |
-| :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | `st_` for “stateful”          |
+| :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | `st_` for “state”          |
 | :heavy_multiplication_x: | :heavy_multiplication_x: |    :heavy_check_mark:    | _no prefix_                   |
 
 ## Module conventions
 
-Module names **should** not exceed 4 characters.
+Module names **must** be at least 2 characters and maximum 4 characters.
 To be easily identified in minimaps, modules names are commented in ASCII art _Roman_ font.
 The recommended utility is **figlet**.
 
