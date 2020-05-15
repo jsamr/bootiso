@@ -1258,7 +1258,7 @@ function devi_configureLabel() {
   # Fallback to "USER_VENDOR" if format
   if [[ "$targetAction" == format ]]; then
     _user=${SUDO_USER:-$USER}
-    _vendor=$(lsblk -dno VENDOR "$targetDevice" 2> /dev/null)
+    _vendor=$(lsblk -ldno VENDOR "$targetDevice" 2> /dev/null)
     _vendor=${_vendor:-FLASH}
     targetPartitionLabel=${targetPartitionLabel:-"${_user^^}_${_vendor^^}"}
   else
@@ -1278,13 +1278,13 @@ function devi_configureLabel() {
 function devi_getDeviceType() {
   local -r _deviceBlock=$1
   local _deviceType
-  _deviceType=$(lsblk --nodeps -nlo TRAN "$_deviceBlock")
+  _deviceType=$(lsblk -dlno TRAN "$_deviceBlock")
   echo "${_deviceType:-other}"
 }
 
 function devi_deviceIsDisk() {
   local -r _deviceBlock="$1"
-  lsblk --nodeps -no TYPE "$_deviceBlock"
+  lsblk -lno TYPE "$_deviceBlock" | grep -q disk
   return $?
 }
 
