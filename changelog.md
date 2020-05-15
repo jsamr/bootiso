@@ -5,12 +5,12 @@
 - Add linux manual `man` pages, see [online version](https://jsamr.github.io/bootiso)
 - (*experimental*) Add `bash` and `zsh` completion scripts
 - (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
-- (*experimental*) Add `--gpt` modifier to enforce GPT partition tables (requires `--format` or `--mrsync`)
-- New `-D,--data-part` modifier to add a data partition. Requires “Image-Copy” mode, [#1](https://github.com/jsamr/bootiso/issues/1).
-- New `--data-part-fs <fstype>` modifier to change data partition filesystem
+- (*experimental*) New `--gpt` modifier to enforce GPT partition tables (requires `--format` or `--mrsync`)
+- (*experimental*) New `-D,--data-part` modifier to add a data partition. Requires “Image-Copy” mode, [#1](https://github.com/jsamr/bootiso/issues/1).
+- (*experimental*) New `--data-part-fs <fstype>` modifier to change data partition filesystem
 - New `--part-type` modifier to set partition table type ID (requires `--format` or `--mrsync`). This is especially useful in “Mount-Rsync” mode with GPT partition scheme where the booting system might otherwise refuse to read filesystem. See `sfdisk --list-types --label {gpt|dos}`.
 - New `--dd-bs <block-size>` support for “Image-Copy” mode
-- New `BOOTISO_IMAGES_COMPLETIONS_PATH` environment to help completion scripts suggesting files from a preferred folder. If not set, the completion scripts will still look for files in `XDG_DOWNLOAD_DIR` or `~/Downloads`. This behavior only applies when no files are matched in current working directory.
+- New `BOOTISO_IMAGES_COMPLETIONS_PATH` environment to help completion scripts suggest files from a preferred folder. If not set, the completion scripts will still look for files in `XDG_DOWNLOAD_DIR` or `~/Downloads`. This behavior only applies when no files are matched in current working directory.
 - Semantic exit status, see [#EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)
 
 **BREAKING**
@@ -25,6 +25,7 @@
 **Enhancements**
 
 - `Makefile` and generic install instructions
+- Constribution guidelines
 - Sensible default label with format action: `${USER}_${VENDOR}` with USER read from SUDO_USER and VENDOR from lsblk VENDOR attribute
 - Add `--icopy` alias for `--dd`
 - Support `eopkg` package manager (Solus)
@@ -33,6 +34,7 @@
 - Don't assume `sudo` or `gksu` are installed when privilege access is required
 - Replaced deprecated `mkfs` from util-linux with `mkfs.*` counterparts
 - Allow `--no-mime-check` with inspect and probe actions
+- Refactor in pseudo-modules
 
 **Bugfixes**
 
