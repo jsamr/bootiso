@@ -1,8 +1,10 @@
 # v4.0.0
 
+In addition to bellow listed changes, please note that project license has migrated from MIT to GPLv3, see [LICENSE](https://github.com/jsamr/bootiso/blob/master/LICENSE).
+
 **Features**
 
-- Add linux manual `man` pages, see [online version](https://jsamr.github.io/bootiso)
+- Add linux manual `man` pages, see [manual online version](https://jsamr.github.io/bootiso)
 - (*experimental*) Add `bash` and `zsh` completion scripts
 - (*experimental*) Support `img` files, [#5](https://github.com/jsamr/bootiso/issues/5)
 - (*experimental*) New `--gpt` modifier to enforce GPT partition tables (requires `--format` or `--mrsync`)
@@ -11,22 +13,22 @@
 - New `--part-type` modifier to set partition table type ID (requires `--format` or `--mrsync`). This is especially useful in “Mount-Rsync” mode with GPT partition scheme where the booting system might otherwise refuse to read filesystem. See `sfdisk --list-types --label {gpt|dos}`.
 - New `--dd-bs <block-size>` support for “Image-Copy” mode
 - New `BOOTISO_IMAGES_COMPLETIONS_PATH` environment to help completion scripts suggest files from a preferred folder. If not set, the completion scripts will still look for files in `XDG_DOWNLOAD_DIR` or `~/Downloads`. This behavior only applies when no files are matched in current working directory.
-- Semantic exit status, see [#EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)
+- Semantic exit status, see [manual#EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)
 
 **BREAKING**
 
-- LICENSE changed from MIT to GPLv3, see [LICENSE](LICENSE)
 - Semantics for `--mrsync` and `--dd` have changed:
   1. Those flags now “assert” rather then “force“ the install mode.
   2. It is now forbidden to use the “Mount-Rsync” with hybrid images and “Image-Copy” with non-hybrid.
-  3. These options are now required for any modifier which applies specifically to them. For example, to use `--gpt` during install action, `--mrsync` must be set.
+  3. Mode assertion is now required for any modifier which applies specifically to them. For example, to use `--gpt` during install action, `--mrsync` must be set.
 - Replace `SYSLINUX_LIB_ROOT` env with `BOOTISO_SYSLINUX_LIB_ROOT`
 - Deprecate `-t,--type` in favor of `-F,--fs` to avoid confusion with `--part-type`
 
 **Enhancements**
 
 - `Makefile` and generic install instructions
-- Constribution guidelines
+- [Code Style and Conventions](https://github.com/jsamr/bootiso/blob/master/style.md) document
+- Refactor in pseudo-modules
 - Sensible default label with format action: `${USER}_${VENDOR}` with USER read from SUDO_USER and VENDOR from lsblk VENDOR attribute
 - Add `--icopy` alias for `--dd`
 - Support `eopkg` package manager (Solus)
@@ -35,7 +37,6 @@
 - Don't assume `sudo` or `gksu` are installed when privilege access is required
 - Replaced deprecated `mkfs` from util-linux with `mkfs.*` counterparts
 - Allow `--no-mime-check` with inspect and probe actions
-- Refactor in pseudo-modules
 
 **Bugfixes**
 
@@ -43,9 +44,9 @@
 
 **Dependencies**
 
-*for package maintainers, please rely now on [install.md#Dependencies](install.md#deps)*
+*for package maintainers, please rely now on [install.md#Dependencies](https://github.com/jsamr/bootiso/blob/master/install.md#deps)*
 
-- Dropped unecessary `parted`
+- Dropped unnecessary `parted`
 - Add `jq` to read sfdisk partition table reports
 
 # v3.3.1
@@ -147,7 +148,7 @@
 - better faulty command line argument option assignments handling
 - better user feedback and error reports in many corner cases
 - added short device selection with omission of full path prefix (`/dev/`)
-- check the existence of `mkfs.<type>` before formating
+- check the existence of `mkfs.<type>` before formatting
 - removed `-s` strict mime check option
 - create temporary folders in `/var/tmp` instead of `/tmp` (some systems mount `/tmp` in RAM, which can be problematic with large ISO files)
 
@@ -223,7 +224,7 @@
 - add `--dd` option to use `dd` instead of mount + `cp`
 - drop `rsync` for `cp`
 - add `sync` call right after copying to guarantee all writes are flushed to USB device before unmounting with progress indicator
-- call `wipefs` before partitionning to cleanup device signature
+- call `wipefs` before partitioning to cleanup device signature
 - eject device after unmounting (can be disabled with `--no-eject` option)
 - checkpkg now called for specific options (you don't need all dependencies installed before running)
 - safeguard added to check bash version 4+
