@@ -15,6 +15,7 @@
 
 **BREAKING**
 
+- LICENSE changed from MIT to GPLv3, see [LICENSE](LICENSE)
 - Semantics for `--mrsync` and `--dd` have changed:
   1. Those flags now “assert” rather then “force“ the install mode.
   2. It is now forbidden to use the “Mount-Rsync” with hybrid images and “Image-Copy” with non-hybrid.
