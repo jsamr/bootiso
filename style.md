@@ -11,7 +11,7 @@
 - Functions **must** be declared with `function` keyword.
 - Nested functions **must** be prefixed with an underscore `_`.
 - Nested functions **must** be declared right below local variables declarations.
-- Function parameters **must** be named with a `local -r` (readonly) variable definitions at the very begining of function declaration.
+- Function parameters **must** be named with a `local -r` (readonly) variable definitions at the very beginning of function declaration.
 - Functions in the global scope **must** be prefixed with the module name they belong to followed by an underscore `_`.
 - Long functions (over 30 lines) **should** be deconstructed in multiple small functions, and declared _inside_ this function.
 - Boolean values **should** be represented as strings with value true or false, unless testing for return status.
