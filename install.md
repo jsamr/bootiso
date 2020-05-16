@@ -1,3 +1,5 @@
+# Install Instructions
+
 ## Manual install from git
 
 Assuming you have git and root privileges:
