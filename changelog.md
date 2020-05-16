@@ -19,7 +19,7 @@ In addition to bellow listed changes, please note that project license has migra
 
 - Semantics for `--mrsync` and `--dd` have changed:
   1. Those flags now “assert” rather then “force“ the install mode.
-  2. It is now forbidden to use the “Mount-Rsync” with hybrid images and “Image-Copy” with non-hybrid.
+  2. As a consequence, it is now impossible to use the “Mount-Rsync” with hybrid images and “Image-Copy” with non-hybrid.
   3. Mode assertion is now required for any modifier which applies specifically to them. For example, to use `--gpt` during install action, `--mrsync` must be set.
 - Replace `SYSLINUX_LIB_ROOT` env with `BOOTISO_SYSLINUX_LIB_ROOT`
 - Deprecate `-t,--type` in favor of `-F,--fs` to avoid confusion with `--part-type`
@@ -41,6 +41,7 @@ In addition to bellow listed changes, please note that project license has migra
 **Bugfixes**
 
 - Fix a `sync` call in background which lead to corrupted image installs, see [#48](https://github.com/jsamr/bootiso/issues/48) and [#15](https://github.com/jsamr/bootiso/issues/15)
+- Fix a deadlock bug preventing graceful handling of user interuption (`CTRL+C`) during dd or rsync commands run in subshells
 
 **Dependencies**
 
