@@ -67,7 +67,7 @@ In the bellow example, the selected device with `--device` (shorten `-d`) flag i
 
 ## Distros tweaks
 
-- On Fedora, set `SYSLINUX_LIB_ROOT` env to `/usr/share/syslinux`
+- On Fedora, set `BOOTISO_SYSLINUX_LIB_ROOT` env to `/usr/share/syslinux`
 - On Fedora, wimlib is packaged under wimlib-utils
 - On Debian-based systems, wimlib is packaged under wimtools
 
