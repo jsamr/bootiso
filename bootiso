@@ -54,9 +54,10 @@ typeset -r ct_mountRoot=/mnt
 typeset -r ct_tempRoot=/var/tmp/bootiso
 typeset -r ct_cacheRoot=/var/cache/bootiso
 typeset -r ct_shortOptions='bydJahlMftLpD'
-typeset -r ct_ticketsURL="https://github.com/jsamr/bootiso/issues"
+typeset -r ct_ticketsURL="https://github.com/jsamr/bootiso/issues/new/choose."
 typeset -r ct_kernelOrgSyslinuxURL="https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing"
-typeset -r ct_openTicketMessage="This is not expected: please open a ticket at $ct_ticketsURL."
+typeset -r ct_openBugReportMessage="This is not expected: please open a 'Bug Report' ticket at $ct_ticketsURL."
+typeset -r ct_openImageSupportRequesMessage="You can open an 'Image Support' request here: $ct_ticketsURL"
 
 #              .
 #            .o8
@@ -1199,7 +1200,8 @@ function asrt_inspectImageBootCapabilities() {
     ps_failAndExit MISBOOTCAP \
       "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
       "Therefore, it cannot result in any successful booting with $scriptName." \
-      "Consider following the documentation provided with this image file."
+      "$ct_openImageSupportRequesMessage" \
+      "In the meantime, consider following the instructions provided with this image file."
   fi
 }
 
@@ -1261,7 +1263,7 @@ function devi_configureLabel() {
     targetPartitionLabel=${targetPartitionLabel:0:512}
     ;;
   *)
-    term_echowarn "Unexpected partition type '$targetFilesystem'." "$ct_openTicketMessage"
+    term_echowarn "Unexpected partition type '$targetFilesystem'." "$ct_openBugReportMessage"
     ;;
   esac
   # Fallback to "USER_VENDOR" if format
@@ -1476,7 +1478,7 @@ function devi_installSyslinuxVersion() {
       else
         term_echowarn "Couldn't GET $ct_kernelOrgSyslinuxURL." \
           "Received status code '$_status'." \
-          "$ct_openTicketMessage" \
+          "$ct_openBugReportMessage" \
           "$_abortingMessage"
         return 10
       fi
@@ -2333,7 +2335,8 @@ function exec_inspect() {
   term_echoinfo "Reporting '$(basename "$sourceImageFile")' boot capabilities:"
   if [ "$_isHybrid" == false ] && [ "$_syslinuxCompatible" == false ] && [ "$_uefiCompatible" == false ]; then
     term_echoerr "The selected image is not hybrid, doesn't support UEFI or legacy BIOS booting nor SYSLINUX." \
-      "It cannot result in any successful booting with $scriptName."
+      "It cannot result in any successful booting with $scriptName." \
+      "$ct_openImageSupportRequesMessage"
   elif [ "$_isHybrid" == false ] && [ "$_syslinuxCompatible" == true ] && [ "$_uefiCompatible" == false ]; then
     term_echogood "The selected image is not hybrid, but supports legacy BIOS booting with $_syslinux." \
       "It should boot with $scriptName in $(term_boldify install) 'Automatic' and 'Mount-Rsync' modes with BIOS-boot capable PCs."
