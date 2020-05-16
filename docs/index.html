@@ -553,6 +553,12 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
     <p class="Pp"></p>
     <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
       <code class="Fl">-ay</code> <span class="No">file.iso</span></div>
+    <p class="Pp">Add a FAT32 data partition in &#x201C;Image-Copy&#x201D; mode
+        (only works with hybrid images):</p>
+    <p class="Pp"></p>
+    <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
+      <code class="Cm">--icopy</code> <code class="Fl">-D</code>
+      <span class="No">file.iso</span></div>
   </dd>
   <dt><b class="Sy">Format</b></dt>
   <dd>Format the USB drive to NTFS and label it &#x201C;SONY JOE&#x201D;. Be
