@@ -123,7 +123,7 @@ section for a quick summary of typical invocations.
 One can use 
 .Xr dd 1
 utility for hybrid images, but not all images are
-hybrid and the operation is error-prone, especially for amateur unix users, thus its
+hybrid and the operation is error-prone, especially for amateur Unix users, thus its
 .Dq disk destroyer
 nickname. In addition to offering a safety layer (see
 .Sx GUARDRAILS
@@ -168,7 +168,7 @@ modifier,
 will prompt for selection. With no further notice,
 .Nm
 will write a MBR partition table and format a FAT32 partition.
-These defaults can be overriden with
+These defaults can be overridden with
 .Cm --gpt
 and
 .Cm --fs
@@ -209,7 +209,7 @@ Enable
 behavior in combination with 
 .Cm --assume-yes
 modifier.
-Autoselect will automatically select a USB drive device if there is exactly one connected
+It will automatically select a USB drive device if there is exactly one connected
 to the system.
 .Pp
 .Sy Notice:
@@ -340,7 +340,7 @@ and the hash function name suffixed with
 .Pp
 Supported hash functions are md5, sha1, sha256 and sha512.
 .It Fl J, Cm --no-eject
-Do not eject device after unmounting.
+Do not eject device after unmount.
 This is the default behavior with
 .Sy format
 action.
@@ -394,7 +394,7 @@ Requires
 install modifier.
 .
 .It Fl t Ar "fstype", Cm --type Ar fstype
-Depecated because of potential confusion with
+Deprecated because of potential confusion with
 .Cm "--part-type".
 Use
 .Fl "F", Cm --fs
@@ -494,7 +494,7 @@ install modifier,
 .Nm
 creates a MBR partition table and format one partition in the USB drive and copy files
 from mounted ISO. The behavior will change depending on the presence of special files to
-identify wether legacy BIOS boot or UEFI boot should be preferred.
+identify whether legacy BIOS boot or UEFI boot should be preferred.
 .Nm
 will check conditions to figure out which ones to choose:
 .Bl -enum
@@ -567,7 +567,7 @@ Asserts that selected item is not a partition and exit if it doesn't, with
 .It
 Asserts that selected image is not larger than selected device.
 .It
-Prompts for confirmation before erasing and paritioning USB device.
+Prompts for confirmation before erasing and partitioning USB device.
 .El
 .
 .
@@ -634,7 +634,7 @@ is missing a program.
 .It Sy 10
 Host unreachable: an operation involving network access could not be performed with host.
 .It Sy 11
-User aborted: the action was cancelled by user.
+User aborted: the action was canceled by user.
 .It Sy 12
 Missing privilege: you need to run this command as root.
 .It Sy 64
@@ -682,7 +682,7 @@ You can also explicitly set the target USB device:
 .Pp
 .D1 Nm Fl d No /dev/sde file.iso
 .Pp
-Avoid being prompted before writting to USB drive and autoselect device when there is
+Avoid being prompted before writing to USB drive and autoselect device when there is
 exactly one connected:
 .Pp
 .D1 Nm Fl ay No file.iso
@@ -727,8 +727,8 @@ This is especially prevalent with GPT partition tables.
 Copyright Jules Sam. Randolph.
 .Pp
 GPLv3 License
-.UR https://www.gnu.org/licenses/gpl-3.0.html
-\%https://www.gnu.org/licenses/gpl-3.0.html
+.UR https://www.gnu.org/licenses/gpl-3.0
+\%https://www.gnu.org/licenses/gpl-3.0.
 .ER
 This is free software: you are free to change and redistribute it.  There is NO WARRANTY, to the extent permitted by law.
 .Sh SEE ALSO
@@ -741,7 +741,7 @@ This is free software: you are free to change and redistribute it.  There is NO 
 .
 .Sh COMPATIBILITY
 .Nm
-should work with any terminal emulator and the linux console. More specifically, the output device should
+should work with any terminal emulator and the Linux console. More specifically, the output device should
 support the following features:
 .Bl -bullet
 .It

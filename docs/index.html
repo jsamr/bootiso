@@ -139,7 +139,7 @@ Each line depicts an action, with the exception of the first three lines which
 <h2 class="Ss" id="Features"><a class="permalink" href="#Features">Features</a></h2>
 One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
   images are hybrid and the operation is error-prone, especially for amateur
-  unix users, thus its &#x201C;disk destroyer&#x201D; nickname. In addition to
+  Unix users, thus its &#x201C;disk destroyer&#x201D; nickname. In addition to
   offering a safety layer (see <a class="Sx" href="#GUARDRAILS">GUARDRAILS</a>
   section), <code class="Nm">bootiso</code> will handle hybrid and non-hybrid
   SYSLINUX or UEFI compliant images such as any GNU-Linux, Windows or rescue
@@ -167,7 +167,7 @@ One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
         <code class="Nm">bootiso</code> will prompt for selection. With no
         further notice, <code class="Nm">bootiso</code> will write a MBR
         partition table and format a FAT32 partition. These defaults can be
-        overriden with <code class="Cm">--gpt</code> and
+        overridden with <code class="Cm">--gpt</code> and
         <code class="Cm">--fs</code> modifiers.</p>
   </dd>
   <dt><a class="permalink" href="#h,"><code class="Fl" id="h,">-h,</code></a>
@@ -201,9 +201,8 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dt><a class="permalink" href="#a,"><code class="Fl" id="a,">-a,</code></a>
     <code class="Cm">--autoselect</code></dt>
   <dd>Enable &#x201C;autoselect&#x201D; behavior in combination with
-      <code class="Cm">--assume-yes</code> modifier. Autoselect will
-      automatically select a USB drive device if there is exactly one connected
-      to the system.
+      <code class="Cm">--assume-yes</code> modifier. It will automatically
+      select a USB drive device if there is exactly one connected to the system.
     <p class="Pp"><b class="Sy">Notice:</b> The &#x201C;autoselect&#x201D;
         behavior is the default behavior when &#x201C;assume yes&#x201D; is not
         enabled, unless either <code class="Cm">--device</code> or
@@ -291,7 +290,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   </dd>
   <dt><a class="permalink" href="#J,"><code class="Fl" id="J,">-J,</code></a>
     <code class="Cm">--no-eject</code></dt>
-  <dd>Do not eject device after unmounting. This is the default behavior with
+  <dd>Do not eject device after unmount. This is the default behavior with
       <b class="Sy">format</b> action.</dd>
   <dt><a class="permalink" href="#--local-bootloader"><code class="Cm" id="--local-bootloader">--local-bootloader</code></a></dt>
   <dd>Prevent download of remote bootloader and force local syslinux during
@@ -338,7 +337,7 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   <dt><a class="permalink" href="#t"><code class="Fl" id="t">-t</code></a>
     <var class="Ar">fstype</var>, <code class="Cm">--type</code>
     <var class="Ar">fstype</var></dt>
-  <dd>Depecated because of potential confusion with
+  <dd>Deprecated because of potential confusion with
       <code class="Cm">--part-type</code>. Use <code class="Fl">-F</code>,
       <code class="Cm">--fs</code> instead.</dd>
   <dt><a class="permalink" href="#L"><code class="Fl" id="L">-L</code></a>
@@ -408,7 +407,7 @@ These modifiers only apply to default <b class="Sy">install</b> action (see
       <code class="Nm">bootiso</code> creates a MBR partition table and format
       one partition in the USB drive and copy files from mounted ISO. The
       behavior will change depending on the presence of special files to
-      identify wether legacy BIOS boot or UEFI boot should be preferred.
+      identify whether legacy BIOS boot or UEFI boot should be preferred.
       <code class="Nm">bootiso</code> will check conditions to figure out which
       ones to choose:
     <ol class="Bl-enum">
@@ -449,7 +448,7 @@ These modifiers only apply to default <b class="Sy">install</b> action (see
   <li>Asserts that selected item is not a partition and exit if it doesn't, with
       <a class="Xr">lsblk(8)</a>.</li>
   <li>Asserts that selected image is not larger than selected device.</li>
-  <li>Prompts for confirmation before erasing and paritioning USB device.</li>
+  <li>Prompts for confirmation before erasing and partitioning USB device.</li>
 </ul>
 </section>
 <section class="Sh">
@@ -510,7 +509,7 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
   <dd>Host unreachable: an operation involving network access could not be
       performed with host.</dd>
   <dt><b class="Sy">11</b></dt>
-  <dd>User aborted: the action was cancelled by user.</dd>
+  <dd>User aborted: the action was canceled by user.</dd>
   <dt><b class="Sy">12</b></dt>
   <dd>Missing privilege: you need to run this command as root.</dd>
   <dt><b class="Sy">64</b></dt>
@@ -548,7 +547,7 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
     <p class="Pp"></p>
     <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
       <code class="Fl">-d</code> <span class="No">/dev/sde file.iso</span></div>
-    <p class="Pp">Avoid being prompted before writting to USB drive and
+    <p class="Pp">Avoid being prompted before writing to USB drive and
         autoselect device when there is exactly one connected:</p>
     <p class="Pp"></p>
     <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
@@ -593,9 +592,9 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
 <section class="Sh">
 <h1 class="Sh" id="COPYRIGHT"><a class="permalink" href="#COPYRIGHT">COPYRIGHT</a></h1>
 Copyright Jules Sam. Randolph.
-<p class="Pp">GPLv3 License https://www.gnu.org/licenses/gpl-3.0.html This is
-    free software: you are free to change and redistribute it. There is NO
-    WARRANTY, to the extent permitted by law.</p>
+<p class="Pp">GPLv3 License https://www.gnu.org/licenses/gpl-3.0. This is free
+    software: you are free to change and redistribute it. There is NO WARRANTY,
+    to the extent permitted by law.</p>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
@@ -606,7 +605,7 @@ Copyright Jules Sam. Randolph.
 <section class="Sh">
 <h1 class="Sh" id="COMPATIBILITY"><a class="permalink" href="#COMPATIBILITY">COMPATIBILITY</a></h1>
 <code class="Nm">bootiso</code> should work with any terminal emulator and the
-  linux console. More specifically, the output device should support the
+  Linux console. More specifically, the output device should support the
   following features:
 <ul class="Bl-bullet">
   <li>ASCII character set.</li>
