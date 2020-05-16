@@ -1,4 +1,4 @@
-# Code style and conventions
+# Code Style and Conventions
 
 ## Rules
 
@@ -62,4 +62,17 @@ The recommended utility is **figlet**.
 
 ```bash
 figlet -f Roman <name>
+```
+Example for "fs" module header:
+
+``` bash
+#  .o88o.          
+#  888 `"          
+# o888oo   .oooo.o 
+#  888    d88(  "8 
+#  888    `"Y88b.  
+#  888    o.  )88b 
+# o888o   8""888P'
+# 
+# FILESYTEM MODULE
 ```
