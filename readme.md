@@ -16,7 +16,7 @@ Because of its reliance on GNU and POSIX tools, **bootiso** primarly targets GNU
 
 ### Manual install
 
-Check [install.md](install.md) for detailed instructions.
+Check [Install Instructions](install.md) document.
 
 ## Reference Manual
 
