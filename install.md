@@ -22,11 +22,16 @@ make uninstall
 
 ## Dependencies
 
-**bootiso** relies mainly on classic GNU and POSIX command line utilities, with the exception of the more rencents **wimlib** and **jq**.
+**bootiso** relies mainly on classic GNU and POSIX command line utilities, with the exception of the more recents **wimlib** and **jq**.
 
 **bootiso** should also have a soft dependency on `mkfs.xxx` creation commands for
-each supported filesystem. User will be invited to install the appropriate utility when the requested FS has no matching creation command.
-However, fo the sake of user comfort, it is recommanded that package maintainers define a hard dependency on the most useful filesystems in the program context, that is for Arch Linux **mke2fs**, **dosfstools** and **ntfs-3g**.
+each supported filesystem. User will be invited to install the appropriate utility when the requested filesystem has no matching creation command.
+However, for the sake of user comfort, it is recommended that package maintainers define a hard dependency on the following commands:
+- `mkfs.ext{2,3,4}`
+- `mkfs.fat`
+- `mkfs.ntfs`
+
+The corresponding packages in Arch Linux are **mke2fs**, **dosfstools** and **ntfs-3g**. Mandated dependencies are listed bellow.
 
 <table>
   <thead>
