@@ -110,7 +110,7 @@ __bootiso_check_action() {
   fi
 }
 
-_bootiso_suggest_files_from_list() {
+__bootiso_suggest_files_from_list() {
   local IFS=$'\n'
   mapfile -t COMPREPLY < <(compgen -o filenames -W "$*" -- "${cur}")
 }
@@ -129,7 +129,7 @@ __bootiso_handle_files() {
         mapfile -t COMPREPLY < <(compgen -A directory -- "${cur}")
         compopt -o nospace
       else
-        _bootiso_suggest_files_from_list "${lookupdirfiles[@]}"
+        __bootiso_suggest_files_from_list "${lookupdirfiles[@]}"
       fi
     fi
   fi
