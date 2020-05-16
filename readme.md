@@ -43,25 +43,20 @@ If you are in a hury, jump to the [EXAMPLES](https://jsamr.github.io/bootiso/#EX
 
 `--probe` (shorten `-p`) gives you details about ISO boot capabilities and list available USB drives.
 
-<a href="https://webmshare.com/play/JZrVW">
-<img src="images/bootiso-p.png" width="500">
+<a href="https://asciinema.org/a/eWbZtAXVKIzVYEMMCt5kmT5cq?speed=2&autoplay=1&size=medium&rows=20">
+<img src="https://asciinema.org/a/eWbZtAXVKIzVYEMMCt5kmT5cq.svg" height="350">
 </a>
-
 ### Using `--assume-yes` + `--autoselect`
 
 `--assume-yes` (shorten `-y`) bypass prompting the user for overwritting USB device, and `--autoselect` (shorten `-a`) allow automatic selection of USB device when exactly one device is connected in combination with `--assume-yes`.
 
-<a href="https://webmshare.com/play/mw7Q4">
-<img src="images/bootiso-ay.png" width="500">
-</a>
+<a href="https://asciinema.org/a/Jwy5DTgcEJSCKJlY1SgsfiWc1?speed=3&autoplay=1&size=medium&rows=20" target="_blank"><img src="https://asciinema.org/a/Jwy5DTgcEJSCKJlY1SgsfiWc1.svg" height="350"/></a>
 
 ### No-USB device failure
 
 In the bellow example, the selected device with `--device` (shorten `-d`) flag is not connected through USB and `bootiso` fails.
 
-<a href="https://webmshare.com/play/36rRn">
-<img src="images/bootiso-d-no-usb.png" width="500">
-</a>
+<a href="https://asciinema.org/a/EUg7jUwdwM4KdABClIK1NjGlY?speed=3&autoplay=1&size=medium&rows=20" target="_blank"><img src="https://asciinema.org/a/EUg7jUwdwM4KdABClIK1NjGlY.svg" height="350"/></a>
 
 <a name="distro-tweaks"></a>
 
