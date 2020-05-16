@@ -82,6 +82,7 @@ typeset st_hasActionDuration
 typeset st_foundSyslinuxMbrBinary
 typeset st_foundSyslinuxBiosFolder
 typeset st_shouldMakePartition
+typeset st_backgroundProcess
 typeset -A st_syslinuxBinaries
 typeset -a st_temporaryAssets=()
 typeset -a st_devicesList=()
@@ -687,8 +688,6 @@ function ps_cleanup() {
         rm -rf "$1"
       elif [ -f "$1" ]; then
         rm "$1"
-      else
-        term_echowarn "Skipping deletion of unexpected asset type at '$1'."
       fi
     else
       term_echowarn "Skipping deletion of unexpected temporary asset at '$1'."
@@ -708,13 +707,26 @@ function ps_cleanup() {
       fi
     fi
   }
+  function _waitBackgroundProcess() {
+    local -i _pid=$st_backgroundProcess
+    if [[ -n "$_pid" ]]; then
+      wait "$_pid"
+    fi
+  }
   if ((EUID == 0)); then
+    echo
+    term_echowarn "User aborted!..." \
+      "Synchronizing pending writes before unmounting..." \
+      "PLEASE WAIT A LITTLE WHILE TO AVOID DAMAGING DEVICES!"
+    _waitBackgroundProcess
+    fs_syncdev
     fs_umountElTorito
     fs_umountUSB
     for _asset in "${st_temporaryAssets[@]}"; do
       _removeTempAsset "$_asset"
     done
     _ejectDevice
+    exit "${ps_exitStatus[USERABORT]}"
   fi
 }
 
@@ -892,10 +904,11 @@ function asrt_checkImageHash() {
         printf "%s" 1 > "$_hashStoreFile"
       fi
     ) &
-    pid=$!
-    while [ -e "/proc/$pid" ]; do
+    st_backgroundProcess=$!
+    while [ -e "/proc/$st_backgroundProcess" ]; do
       term_updateProgress
     done
+    st_backgroundProcess=''
     term_cleanProgress
     _lHash=$(cat "$_hashStoreFile")
     if [ "$_lHash" == "1" ]; then
@@ -1390,7 +1403,7 @@ function devi_createPartitionTable() {
   MBR) _initMBR ;;
   *) ps_failAndExit INTERNALST "Unexpected partition scheme '$1'" ;;
   esac
-  if [[ "$_notBootable" == false && "$_partScheme" == MBR ]]; then
+  if [[ "$_notBootable" == false && "$_partScheme" == MBR && "${st_isoInspections[supportsBIOSBoot]}" == true ]]; then
     _partitionOptions+=", bootable"
   fi
   term_echogood "Creating $_partScheme partition table with 'sfdisk' v$_sfdiskVersion..."
@@ -1580,12 +1593,13 @@ function devi_installSyslinuxVersion() {
 function devi_inspectPartition() {
   local -r _mountPoint="$1"
   local -r _shouldInspectSyslinux=$2
-  local _supportsEFIBoot _hasWimFile _syslinuxBin _syslinuxConf _syslinuxVer
+  local _supportsEFIBoot _hasWimFile _syslinuxBin _syslinuxConf _syslinuxVer _supportsBIOSBoot
   _supportsEFIBoot=${st_isoInspections[supportsEFIBoot]:-false}
   _hasWimFile=${st_isoInspections[hasWimFile]:-false}
   _syslinuxBin=${st_isoInspections[syslinuxBin]}
   _syslinuxConf=${st_isoInspections[syslinuxConf]}
   _syslinuxVer=${st_isoInspections[syslinuxVer]}
+  _supportsBIOSBoot=${st_isoInspections[supportsBIOSBoot]}
   local -a _sysLinuxLocations=('boot/syslinux/syslinux.cfg' 'syslinux/syslinux.cfg' 'syslinux.cfg' 'boot/syslinux/extlinux.conf'
     'boot/syslinux/extlinux.cfg' 'boot/extlinux/extlinux.conf' 'boot/extlinux/extlinux.cfg' 'syslinux/extlinux.conf'
     'syslinux/extlinux.cfg' 'extlinux/extlinux.conf' 'extlinux/extlinux.cfg' 'extlinux.conf' 'extlinux.cfg')
@@ -1602,6 +1616,9 @@ function devi_inspectPartition() {
     if [ -z "$_syslinuxConf" ]; then
       _syslinuxConf=$(fs_findFileFromPatterns "$_mountPoint" "${_isoLinuxLocations[@]}")
       _syslinuxConf=${_syslinuxConf:-$(fs_firstMatchInFolder "$_mountPoint" 'isolinux.cfg')}
+    fi
+    if [ -n "$_syslinuxConf" ]; then
+      _supportsBIOSBoot=true
     fi
   }
   function _inspectEFICapabilities() {
@@ -1627,6 +1644,7 @@ function devi_inspectPartition() {
     st_isoInspections[syslinuxConf]="${_syslinuxConf#$_mountPoint}"
     st_isoInspections[syslinuxBin]="${_syslinuxBin#$_mountPoint}"
     st_isoInspections[syslinuxVer]="$_syslinuxVer"
+    st_isoInspections[supportsBIOSBoot]="$_supportsBIOSBoot"
   fi
 }
 
@@ -1889,11 +1907,12 @@ function step_copyWithRsync() {
       fi
       echo "$_status" > "$_statusFile"
     ) &
-    pid=$!
+    st_backgroundProcess=$!
     echo -n "$scriptName: Copying files from image to USB device with 'rsync'    "
-    while [ -e "/proc/$pid" ]; do
+    while [ -e "/proc/$st_backgroundProcess" ]; do
       term_updateProgress
     done
+    st_backgroundProcess=''
     term_cleanProgress
     _status=$(cat "$_statusFile")
     if [ ! "$_status" -eq 0 ]; then
@@ -1916,11 +1935,12 @@ function step_copyWithDD() {
       dd if="$sourceImageFile" of="$targetDevice" bs="$targetDDBusSize" status=none
       echo "$?" > "$_statusFile"
     ) &
-    pid=$!
+    st_backgroundProcess=$!
     echo -n "$scriptName: Copying files from image to USB device with 'dd'    "
-    while [ -e "/proc/$pid" ]; do
+    while [ -e "/proc/$st_backgroundProcess" ]; do
       term_updateProgress
     done
+    st_backgroundProcess=''
     term_cleanProgress
     _status=$(cat "$_statusFile")
     if [ ! "$_status" -eq 0 ]; then
@@ -2500,5 +2520,5 @@ function main() {
   step_finalize
 }
 
-trap ps_cleanup EXIT INT TERM
+trap ps_cleanup EXIT
 main "$@"
