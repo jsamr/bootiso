@@ -1,4 +1,4 @@
-[![License: MIT](https://badgen.net/badge/license/MIT/blue)](https://opensource.org/licenses/MIT)
+[![License: GPLv3](https://badgen.net/badge/license/GPLv3/blue)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Version](https://badgen.net/github/tag/jsamr/bootiso?label=version)]()
 [![Codacy grade](https://img.shields.io/codacy/grade/9f441cf6a1d6475484a9bb3ec2ed9713.svg)](https://app.codacy.com/app/jsamr/bootiso?utm_source=github.com&utm_medium=referral&utm_content=jsamr/bootiso&utm_campaign=badger)
 
@@ -70,3 +70,7 @@ In the bellow example, the selected device with `--device` (shorten `-d`) flag i
 - On Fedora, set `SYSLINUX_LIB_ROOT` env to `/usr/share/syslinux`
 - On Fedora, wimlib is packaged under wimlib-utils
 - On Debian-based systems, wimlib is packaged under wimtools
+
+## Contributing
+
+Read the [Code Style and Conventions](style.md) document.
