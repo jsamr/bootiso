@@ -10,9 +10,12 @@ Because of its reliance on GNU and POSIX tools, **bootiso** primarly targets GNU
 
 ### Package managers
 
-| System family    | URL                                         |
-| :--------------- | ------------------------------------------- |
-| Arch Linux (AUR) | https://aur.archlinux.org/packages/bootiso/ |
+This list might be out of date (please report). Check [repology.org](https://repology.org/project/bootiso/versions).
+
+| System family    | URL                                                                     |
+| :--------------- | ----------------------------------------------------------------------- |
+| Arch Linux (AUR) | https://aur.archlinux.org/packages/bootiso/                             |
+| Void Linux       | https://github.com/void-linux/void-packages/tree/master/srcpkgs/bootiso |
 
 ### Manual install
 
