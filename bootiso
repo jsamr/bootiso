@@ -2,7 +2,7 @@
 # shellcheck disable=SC2181
 # shellcheck disable=SC2236
 #
-# Version 4.0.0-alpha.0
+# Version 4.0.0
 #
 # bootiso - create a bootable USB drive from an image file
 # Copyright (C) 2018-2020 jules randolph <jules.sam.randolph@gmail.com>
@@ -26,7 +26,7 @@
 set -o pipefail
 set -E
 
-version="4.0.0-alpha.0"
+version="4.0.0"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
 
