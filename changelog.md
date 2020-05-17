@@ -1,4 +1,10 @@
-# v4.0.0
+# v4.0.1
+
+**bugfix**
+
+- fix cleanup logic. After successful image installation, a message "user aborted" was displayed. To circumvent the issue, two functions are now registered with trap for cleanup logic. One on EXIT, and an other one on INT or TERM.
+
+# v4.0.1
 
 In addition to bellow listed changes, please note that project license has migrated from MIT to GPLv3, see [LICENSE](https://github.com/jsamr/bootiso/blob/master/LICENSE).
 
