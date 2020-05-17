@@ -424,7 +424,7 @@ function fs_createTempFile() {
   mktemp "$_tmpFileTemplate"
   _status=$?
   if [ ! $_status -eq 0 ]; then
-    ps_failAndExit INTERNALIO "Failed to create temporary file."
+    ps_failAndExit IO_ERROR "Failed to create temporary file."
   fi
 }
 # Print the name of the new folder if operation
@@ -441,7 +441,7 @@ function fs_createMountFolder() {
   mktemp -d "$_tmpFileTemplate"
   _status=$?
   if [ ! $_status -eq 0 ]; then
-    ps_failAndExit INTERNALIO "Failed to create temporary mount point with pattern '$_tmpFileTemplate'."
+    ps_failAndExit IO_ERROR "Failed to create temporary mount point with pattern '$_tmpFileTemplate'."
   fi
 }
 
@@ -492,7 +492,7 @@ function fs_mountUSB() {
   st_temporaryAssets+=("$st_usbMountPoint")
   term_echoinfo "Created USB device mount point at '$st_usbMountPoint'"
   if ! mount -t "$_type" "$st_targetPartition" "$st_usbMountPoint" > /dev/null; then
-    ps_failAndExit INTERNALIO "Could not mount USB device."
+    ps_failAndExit IO_ERROR "Could not mount USB device."
   fi
 }
 
@@ -500,7 +500,7 @@ function fs_mountUSB() {
 function fs_mountElToritoFile() {
   local -r _mountPoint="$1"
   if ! mount -r -o loop -- "$sourceImageFile" "$_mountPoint" > /dev/null; then
-    ps_failAndExit INTERNALIO "Could not mount image file."
+    ps_failAndExit IO_ERROR "Could not mount image file."
   else
     st_temporaryAssets+=("$_mountPoint")
   fi
@@ -528,7 +528,7 @@ function fs_formatPartition() {
   # shellcheck disable=SC2086
   "mkfs.$targetFilesystem" ${_mkfsOpts[$_fstype]} "$_partLabel" "$_targetPart" |&
     term_indentAll ||
-    ps_failAndExit INTERNALIO "Failed to create $_fstype partition on USB device."
+    ps_failAndExit IO_ERROR "Failed to create $_fstype partition on USB device."
 }
 
 # Given a partition scheme (1), output a partition type
@@ -560,7 +560,7 @@ function fs_inferFSType() {
   case "$_partScheme" in
   dos | mbr) echo "${_mbrTypeCodes[$_fsType]}" ;;
   gpt) echo "${_gptTypeCodes[$_fsType]}" ;;
-  *) ps_failAndExit INTERNALST "(fs_inferFSType) unhandled partition scheme: $_partScheme" ;;
+  *) ps_failAndExit STATE_ERROR "(fs_inferFSType) unhandled partition scheme: $_partScheme" ;;
   esac
 }
 
@@ -581,7 +581,7 @@ function fs_syncWithProgress() {
   term_cleanProgress
   _status=$(cat "$_statusFile")
   if [ ! "$_status" -eq 0 ]; then
-    ps_failAndExit INTERNALIO "Sync call failed."
+    ps_failAndExit IO_ERROR "Sync call failed."
   fi
 }
 
@@ -614,21 +614,21 @@ function sys_checkCommand() {
       case $_answer in
       y | Y)
         if ! $pkgmgr "${ct_commandPackages["$_command"]}"; then
-          ps_failAndExit MISDEP "Installation of dependency '$_command' failed." \
+          ps_failAndExit MISSING_DEPENDENCY "Installation of dependency '$_command' failed." \
             "Perhaps this dependency has a slightly different name on your distribution." \
             "Find it and install manually."
         else
           if ! sys_hasCommand "$_command"; then
-            ps_failAndExit MISDEP "Program '$_command' is not accessible in the \$PATH environment even though the package ${ct_commandPackages["$_command"]} has just been installed."
+            ps_failAndExit MISSING_DEPENDENCY "Program '$_command' is not accessible in the \$PATH environment even though the package ${ct_commandPackages["$_command"]} has just been installed."
           fi
         fi
         ;;
       *)
-        ps_failAndExit MISDEP "Missing dependency '$_command'."
+        ps_failAndExit MISSING_DEPENDENCY "Missing dependency '$_command'."
         ;;
       esac
     else
-      ps_failAndExit MISDEP "Missing dependency '$_command'."
+      ps_failAndExit MISSING_DEPENDENCY "Missing dependency '$_command'."
     fi
   fi
 }
@@ -662,23 +662,23 @@ function sys_isDeviceDisk() {
 
 typeset -Ar ps_exitStatus=(
   # Exceptions
-  [ASSERTFAIL]=1
-  [SYNOPSISNC]=2
-  [MISBOOTCAP]=3
-  [MISFILE]=4
+  [ASSERTION_FAILED]=1
+  [SYNOPSIS_NONCOMPL]=2
+  [MISSING_BOOT_CAP]=3
+  [FILE_NOEXIST]=4
   [BADFILE]=5
-  [MISDEV]=6
-  [BADDEV]=7
-  [NODEV]=8
-  [MISDEP]=9
-  [HOSTUNR]=10
-  [USERABORT]=11
-  [MISPRIVILEGE]=12
-  [FAILEDPOSTL]=13
+  [DEVICE_NOEXIST]=6
+  [BAD_DEVICE]=7
+  [NO_DEVICES]=8
+  [MISSING_DEPENDENCY]=9
+  [HOST_UNREACHABLE]=10
+  [USER_ABORTED]=11
+  [MISSING_PRIVILEGE]=12
+  [FAILED_POSTULATE]=13
   # Errors
-  [INTERNALIO]=64
-  [INTERNALST]=65
-  [INTERNALTP]=66
+  [IO_ERROR]=64
+  [STATE_ERROR]=65
+  [THIRD_PARTY_ERROR]=66
 )
 
 function ps_cleanup() {
@@ -727,7 +727,7 @@ function ps_cleanup() {
       _removeTempAsset "$_asset"
     done
     _ejectDevice
-    exit "${ps_exitStatus[USERABORT]}"
+    exit "${ps_exitStatus[USER_ABORTED]}"
   fi
 }
 
@@ -746,17 +746,17 @@ function ps_failAndExit() {
   local -r _statusCode=$1 _status
   if ! sh_elementIsInList "$_statusCode" "${!ps_exitStatus[@]}"; then
     term_echoerr "(ps_failAndExit) Internal state error. Unknown status code '$_statusCode'"
-    _statusCode=INTERNALST
+    _statusCode=STATE_ERROR
   else
     shift
-    if [ "$_statusCode" == SYNOPSISNC ]; then
+    if [ "$_statusCode" == SYNOPSIS_NONCOMPL ]; then
       [ $# -ne 0 ] && term_echoerr "$@"
       term_echoerr "Check $(term_boldify 'man 1 bootiso')."
     else
       term_echoerr "$@" "Exiting..."
     fi
   fi
-  if [ "$_statusCode"  == INTERNALST ]; then
+  if [ "$_statusCode"  == STATE_ERROR ]; then
     term_echoerr "Provide a bug report at $ct_openBugReportMessage."
   fi
   exit "${ps_exitStatus[$_statusCode]}"
@@ -853,7 +853,7 @@ function asrt_checkSudo() {
       exec 1> output_file
       gksu --preserve-env "$0" "$@"
     else
-      ps_failAndExit MISPRIVILEGE "You must run $scriptName as root."
+      ps_failAndExit MISSING_PRIVILEGE "You must run $scriptName as root."
     fi
     exit
   fi
@@ -869,7 +869,7 @@ function asrt_checkFileIsImage() {
     ps_failAndExit BADFILE "Provided file '$sourceImageFile' is a directory."
   fi
   if [ ! -f "$sourceImageFile" ]; then
-    ps_failAndExit MISFILE "Provided iso file '$sourceImageFile' does not exist."
+    ps_failAndExit FILE_NOEXIST "Provided iso file '$sourceImageFile' does not exist."
   fi
   if [ "$disableMimeCheck" == false ]; then
     _mimeType=$(file --mime-type -b -- "$sourceImageFile")
@@ -953,11 +953,11 @@ function asrt_checkImageHash() {
     _computeHashWithProgress $_hashName "$_imageName"
     _status=$?
     if ((_status != 0)); then
-      ps_failAndExit INTERNALTP "$_hashName command failed with _status $_status"
+      ps_failAndExit THIRD_PARTY_ERROR "$_hashName command failed with _status $_status"
     fi
     if [ "$_gHash" != "$_lHash" ]; then
       if [ "$enableForceHashCheck" == 'true' ]; then
-        ps_failAndExit ASSERTFAIL "Hash mismatch in '$_hashPath' (${_hashName%sum})."
+        ps_failAndExit ASSERTION_FAILED "Hash mismatch in '$_hashPath' (${_hashName%sum})."
       else
         term_echowarn "Hash mismatch in '$_hashPath' (${_hashName%sum})."
         read -r -n1 -p "${term_logPrefixEmpty}Do you still want to continue? (y/n)> " _answer
@@ -967,7 +967,7 @@ function asrt_checkImageHash() {
           return
           ;;
         *)
-          ps_failAndExit USERABORT
+          ps_failAndExit USER_ABORTED
           ;;
         esac
         term_echoinfo "Ignoring mismatching _hash."
@@ -983,7 +983,7 @@ function asrt_checkImageHash() {
     if [ -f "$sourceHashFile" ]; then
       _checkHash "$sourceHashFile" "$_isoFileName"
     else
-      ps_failAndExit MISFILE "Specified _hash file '$sourceHashFile' does not exist."
+      ps_failAndExit FILE_NOEXIST "Specified _hash file '$sourceHashFile' does not exist."
     fi
   else
     shopt -s nullglob nocaseglob
@@ -1000,7 +1000,7 @@ function asrt_checkImageHash() {
   fi
 
   if [ "$enableForceHashCheck" == 'true' ] && [ $_numValidHashes == 0 ]; then
-    ps_failAndExit ASSERTFAIL "No matching _hashes found. Assert forced by $(term_boldify '--force-_hash-check')"
+    ps_failAndExit ASSERTION_FAILED "No matching _hashes found. Assert forced by $(term_boldify '--force-_hash-check')"
   fi
 }
 
@@ -1011,7 +1011,7 @@ function asrt_checkPackages() {
   done
   # test grep supports -P option
   if ! echo 1 | grep -P '1' &> /dev/null; then
-    ps_failAndExit MISDEP \
+    ps_failAndExit MISSING_DEPENDENCY \
       "You're using an old version of grep which does not support perl regular expression (-P option)."
   fi
 }
@@ -1022,7 +1022,7 @@ function asrt_checkDeviceIsOK() {
     term_echoerr "$1"
     exec_listUSBDrives
     term_echoerr "Exiting..."
-    exit "${ps_exitStatus[MISDEV]}"
+    exit "${ps_exitStatus[DEVICE_NOEXIST]}"
   }
   if [ ! -e "$_deviceBlock" ]; then
     _failDevice "The selected device '$_deviceBlock' does not exist."
@@ -1031,7 +1031,7 @@ function asrt_checkDeviceIsOK() {
     _failDevice "The selected device '$_deviceBlock' is not a valid block file."
   fi
   if [ ! -d "/sys/block/$(basename "$_deviceBlock")" ] || ! sys_isDeviceDisk "$_deviceBlock"; then
-    ps_failAndExit BADDEV \
+    ps_failAndExit BAD_DEVICE \
       "The selected device '$_deviceBlock' is either unmounted or not a disk (might be a partition or loop)." \
       "Select a disk instead or reconnect the USB _deviceBlock." \
       "You can check the availability of USB drives with $(term_boldify "$scriptName -l")."
@@ -1083,7 +1083,7 @@ function asrt_checkAction() {
   elif ((${#_enabledActions[@]} == 1)); then
     targetAction=${_enabledActions[0]}
   else
-    ps_failAndExit SYNOPSISNC \
+    ps_failAndExit SYNOPSIS_NONCOMPL \
       "You cannot invoke multiple actions at once: $(sh_joinBy '+' "${_enabledActions[@]}")."
   fi
 }
@@ -1092,11 +1092,11 @@ function asrt_checkAction() {
 function asrt_checkFSType() {
   local -r _fsType="$1"
   if ! sh_elementIsInList "$_fsType" "${asrt_supportedFS[@]}"; then
-    ps_failAndExit SYNOPSISNC "Filesystem type '$_fsType' not supported." \
+    ps_failAndExit SYNOPSIS_NONCOMPL "Filesystem type '$_fsType' not supported." \
       "Supported FS types: $(sh_joinBy "," "${asrt_supportedFS[*]}")."
   fi
   if ! command -v "mkfs.$_fsType" &> /dev/null; then
-    ps_failAndExit MISDEP \
+    ps_failAndExit MISSING_DEPENDENCY \
       "Program 'mkfs.$_fsType' could not be found on your system." \
       "Please install it and retry."
   fi
@@ -1120,27 +1120,27 @@ function asrt_checkUserVars() {
     asrt_checkDeviceIsOK "${st_userVars[device]}"
   fi
   if [ -n "${st_userVars['remote-bootloader']}" ] && [[ ! "${st_userVars['remote-bootloader']}" =~ ^[0-9]+\.[0-9]+$ ]]; then
-    ps_failAndExit SYNOPSISNC \
+    ps_failAndExit SYNOPSIS_NONCOMPL \
       "Remote bootloader version '${st_userVars['remote-bootloader']}' set with $(term_boldify '--remote-bootloader') doesn't follow MAJOR.MINOR pattern." \
       "Valid examples are 4.10, 6.02"
   fi
   # Check dd-bs
   if [[ -n "${st_userVars['dd-bs']}" && ! ${st_userVars['dd-bs']} =~ ^[0-9]+[kMGT]?$ ]]; then
-    ps_failAndExit SYNOPSISNC "$(term_boldify '--dd-bs') argument must be a valid block size quantifier, e.g. 512k, 2M."
+    ps_failAndExit SYNOPSIS_NONCOMPL "$(term_boldify '--dd-bs') argument must be a valid block size quantifier, e.g. 512k, 2M."
   fi
 }
 
 function asrt_checkUserFlags() {
   # Autoselect security
   if [ "${st_userFlags['autoselect']}" == 'true' ] && [ "${st_userFlags['no-usb-check']}" == 'true' ]; then
-    ps_failAndExit MISDEP \
+    ps_failAndExit MISSING_DEPENDENCY \
       "You cannot set $(term_boldify '-a, --autoselect') while disabling USB check with $(term_boldify '--no-usb-check')"
   fi
   if [ "${st_userFlags['no-hash-check']}" == 'true' ] && [ "${st_userFlags['force-hash-check']}" == 'true' ]; then
-    ps_failAndExit SYNOPSISNC \
+    ps_failAndExit SYNOPSIS_NONCOMPL \
       "You cannot combine $(term_boldify '--no-hash-check') and $(term_boldify '--force-hash-check')"
   elif [ "${st_userFlags['no-hash-check']}" == 'true' ] && [ -n "${st_userVars['hash-file']}" ]; then
-    ps_failAndExit SYNOPSISNC \
+    ps_failAndExit SYNOPSIS_NONCOMPL \
       "You cannot combine $(term_boldify '--no-hash-check') and $(term_boldify '--hash-file')"
   fi
   # warnings (only with sudo)
@@ -1166,10 +1166,10 @@ function asrt_checkFlagMatrix() {
       #shellcheck disable=SC2086
       if ! sh_elementIsInList "$targetAction" ${asrt_userVarsCompatibilityMatrix[$_key]}; then
         if [ "$_key" == "iso-file" ]; then
-          ps_failAndExit SYNOPSISNC \
+          ps_failAndExit SYNOPSIS_NONCOMPL \
             "$(term_boldify $targetAction) doesn't require any positional arguments."
         else
-          ps_failAndExit SYNOPSISNC \
+          ps_failAndExit SYNOPSIS_NONCOMPL \
             "$(term_boldify "$targetAction") action doesn't support $(term_boldify --$_key) modifier."
         fi
       fi
@@ -1179,7 +1179,7 @@ function asrt_checkFlagMatrix() {
     if [ ! -z "${st_userFlags[$_key]}" ]; then
       #shellcheck disable=SC2086
       if ! sh_elementIsInList "$targetAction" ${ct_userFlagsCompatibilityMatrix[$_key]}; then
-        ps_failAndExit SYNOPSISNC \
+        ps_failAndExit SYNOPSIS_NONCOMPL \
           "$(term_boldify $targetAction) action doesn't support $(term_boldify --$_key) modifier."
       fi
     fi
@@ -1214,7 +1214,7 @@ function asrt_inspectImageBootCapabilities() {
     term_echogood "A SYSLINUX booloader will be installed on your USB device."
   fi
   if [[ "$_syslinuxCompatible" == false && "$_uefiCompatible" == false ]]; then
-    ps_failAndExit MISBOOTCAP \
+    ps_failAndExit MISSING_BOOT_CAP \
       "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
       "Therefore, it cannot result in any successful booting with $scriptName." \
       "$ct_openImageSupportRequesMessage" \
@@ -1225,18 +1225,18 @@ function asrt_inspectImageBootCapabilities() {
 function asrt_checkSyslinuxInstall() {
   sys_checkCommand 'syslinux'
   if ! sys_hasCommand extlinux; then
-    ps_failAndExit MISDEP \
+    ps_failAndExit MISSING_DEPENDENCY \
       "Your distribution doesn't ship 'extlinux' with the 'syslinux' package." \
       "Please install 'extlinux' and try again."
   fi
   st_foundSyslinuxBiosFolder=$(find "$ct_syslinuxLibRoot" -type d -path '*/bios' -print -quit)
   st_foundSyslinuxMbrBinary=$(fs_findFileFromPatterns "$ct_syslinuxLibRoot" 'bios/mbr.bin' 'mbr.bin')
   if [ -z "$st_foundSyslinuxBiosFolder" ]; then
-    ps_failAndExit MISDEP \
+    ps_failAndExit MISSING_DEPENDENCY \
       "Could not find a SYSLINUX bios folder containing c32 bios module files on this system."
   fi
   if [ -z "$st_foundSyslinuxMbrBinary" ]; then
-    ps_failAndExit MISDEP "Could not find a SYSLINUX MBR binary on this system."
+    ps_failAndExit MISSING_DEPENDENCY "Could not find a SYSLINUX MBR binary on this system."
   fi
 }
 
@@ -1315,7 +1315,7 @@ function devi_selectDevice() {
         term_echoinfo "Exiting on user request."
         exit 0
       else
-        ps_failAndExit MISDEV "The drive $_answer does not exist."
+        ps_failAndExit DEVICE_NOEXIST "The drive $_answer does not exist."
       fi
     fi
   }
@@ -1341,7 +1341,7 @@ function devi_selectDevice() {
     if exec_listUSBDrives; then
       _handleDeviceSelection
     else
-      ps_failAndExit NODEV
+      ps_failAndExit NO_DEVICES
     fi
   fi
   st_targetPartition="${targetDevice}1"
@@ -1391,7 +1391,7 @@ function devi_createPartitionTable() {
         # Set typecode to EFI System Partition
         _partitionType="${fs_gptPartitionCodes[efi]}"
       else
-        ps_failAndExit INTERNALST "(devi_createPartitionTable) GPT partition tables are not compatible with legacy BIOS boot."
+        ps_failAndExit STATE_ERROR "(devi_createPartitionTable) GPT partition tables are not compatible with legacy BIOS boot."
       fi
     fi
     _partitionOptions+="type=${_partitionType}"
@@ -1405,13 +1405,13 @@ function devi_createPartitionTable() {
   case "$_partScheme" in
   GPT) _initGPT ;;
   MBR) _initMBR ;;
-  *) ps_failAndExit FAILEDPOSTL "(devi_createPartitionTable) Unexpected partition scheme '$1'" ;;
+  *) ps_failAndExit FAILED_POSTULATE "(devi_createPartitionTable) Unexpected partition scheme '$1'" ;;
   esac
   if [[ "$_notBootable" == false && "$_partScheme" == MBR && "${st_isoInspections[supportsBIOSBoot]}" == true ]]; then
     _partitionOptions+=", bootable"
   fi
   term_echogood "Creating $_partScheme partition table with 'sfdisk' v$_sfdiskVersion..."
-  echo -e "$_partitionOptions" | $_sfdiskCommand "$targetDevice" |& term_indentAll || ps_failAndExit INTERNALIO \
+  echo -e "$_partitionOptions" | $_sfdiskCommand "$targetDevice" |& term_indentAll || ps_failAndExit IO_ERROR \
     "Failed to write USB device $_partScheme partition table."
   partx -u "$targetDevice" # Refresh partition table
   fs_syncdev
@@ -1441,7 +1441,7 @@ function devi_partitionUSB() {
     mapfile -t devicePartitions < <(grep -oP "^\\K$targetDevice\\S*" /proc/mounts)
     for _partition in "${devicePartitions[@]}"; do
       if ! umount "$_partition" > /dev/null; then
-        ps_failAndExit INTERNALIO \
+        ps_failAndExit IO_ERROR \
           "Failed to unmount $_partition. It's likely that the partition is busy."
       fi
     done
@@ -1453,7 +1453,7 @@ function devi_partitionUSB() {
     # erase drive
     dd if=/dev/zero of="$targetDevice" bs=512 count=1 conv=notrunc status=none |&
       term_indentAll ||
-      ps_failAndExit INTERNALIO "Failed to erase USB device." \
+      ps_failAndExit IO_ERROR "Failed to erase USB device." \
         "It's likely that the device has been ejected and needs to be reconnected." \
         "You can check the availability of USB drives with $(term_boldify "$scriptName -l")."
     fs_syncdev
@@ -1472,7 +1472,7 @@ function devi_partitionUSB() {
       fs_formatPartition "$targetFilesystem" "$st_targetPartition" "$targetPartitionLabel"
     fi
   else
-    ps_failAndExit USERABORT "Canceling operation."
+    ps_failAndExit USER_ABORTED "Canceling operation."
   fi
 }
 
@@ -1489,7 +1489,7 @@ function devi_installSyslinuxVersion() {
     _status=$(curl -sLIo /dev/null -w "%{http_code}" "$ct_kernelOrgSyslinuxURL")
     if [ "$_status" != 200 ]; then
       if [ "$_status" == 000 ]; then
-        ps_failAndExit HOSTUNR "kernel.org is unreachable. You don't seem to have an internet connection." \
+        ps_failAndExit HOST_UNREACHABLE "kernel.org is unreachable. You don't seem to have an internet connection." \
           "Please try again later or use $(term_boldify '--local-bootloader') to force usage of the local SYSLINUX version."
         return 9
       else
@@ -1685,7 +1685,7 @@ function devi_inspectHybridImage() {
   }
   _diskReport=$(sfdisk -lJ -- "$sourceImageFile" 2> /dev/null)
   if (($? != 0)); then
-    ps_failAndExit INTERNALIO "sfdisk couldn't read the partition table on the image file, which is likely corrupted."
+    ps_failAndExit IO_ERROR "sfdisk couldn't read the partition table on the image file, which is likely corrupted."
   fi
   _partScheme=$(echo "$_diskReport" | jq -r '.partitiontable.label')
   case $_partScheme in
@@ -1723,7 +1723,7 @@ function step_configureFolders() {
   elif [ -d "$ct_tempRoot" ]; then
     chmod -R $_defaultMode "$ct_tempRoot"
   else
-    ps_failAndExit FAILEDPOSTL "'$ct_tempRoot' is not a folder." \
+    ps_failAndExit FAILED_POSTULATE "'$ct_tempRoot' is not a folder." \
       "Remove this file and try again."
   fi
   if [ ! -e "$ct_cacheRoot" ]; then
@@ -1731,13 +1731,13 @@ function step_configureFolders() {
   elif [ -d "$ct_cacheRoot" ]; then
     chmod -R $_defaultMode "$ct_cacheRoot"
   else
-    ps_failAndExit FAILEDPOSTL "'$ct_cacheRoot' is not a folder." \
+    ps_failAndExit FAILED_POSTULATE "'$ct_cacheRoot' is not a folder." \
       "Remove this file and try again."
   fi
   if [ ! -e "$ct_mountRoot" ]; then
     mkdir "$ct_mountRoot"
   elif [ ! -d "$ct_mountRoot" ]; then
-    ps_failAndExit FAILEDPOSTL "'$ct_mountRoot' is not a folder." \
+    ps_failAndExit FAILED_POSTULATE "'$ct_mountRoot' is not a folder." \
       "Remove this file and try again."
   fi
 }
@@ -1851,7 +1851,7 @@ function step_installBootloader() {
       term_echowarn "SYSLINUX could not install C32 BIOS modules."
     fs_syncdev
     term_echogood "C32 BIOS modules successfully installed."
-    ${st_syslinuxBinaries['extBin']} --stupid --install "$_syslinuxFolder" |& term_indentAll || ps_failAndExit INTERNALTP \
+    ${st_syslinuxBinaries['extBin']} --stupid --install "$_syslinuxFolder" |& term_indentAll || ps_failAndExit THIRD_PARTY_ERROR \
       "SYSLINUX bootloader could not be installed."
     fs_syncdev
   }
@@ -1867,7 +1867,7 @@ function step_installBootloader() {
   function _installMasterBootRecordProg() {
     dd bs=440 count=1 conv=notrunc status=none if="${st_syslinuxBinaries['mbrBin']}" of="$targetDevice" |&
       term_indentAll ||
-      ps_failAndExit INTERNALIO "Failed to install Master Boot Record program."
+      ps_failAndExit IO_ERROR "Failed to install Master Boot Record program."
     fs_syncdev
     term_echogood "Succesfully installed Master Boot Record program."
   }
@@ -1920,7 +1920,7 @@ function step_copyWithRsync() {
     term_cleanProgress
     _status=$(cat "$_statusFile")
     if [ ! "$_status" -eq 0 ]; then
-      ps_failAndExit INTERNALIO "Copy command with 'rsync' failed."
+      ps_failAndExit IO_ERROR "Copy command with 'rsync' failed."
     fi
   }
   sys_checkCommand 'rsync'
@@ -1948,7 +1948,7 @@ function step_copyWithDD() {
     term_cleanProgress
     _status=$(cat "$_statusFile")
     if [ ! "$_status" -eq 0 ]; then
-      ps_failAndExit INTERNALIO "Copy command with 'dd' failed."
+      ps_failAndExit IO_ERROR "Copy command with 'dd' failed."
     fi
   }
   _ddWithProgress
@@ -2043,7 +2043,7 @@ function step_parseArguments() {
       # OPTIONS
       --dd-bs)
         if (($# < 2)); then
-          ps_failAndExit SYNOPSISNC \
+          ps_failAndExit SYNOPSIS_NONCOMPL \
             "Missing value for '$1' flag. Please provide a number of bytes, see dd(1)."
         fi
         _setUserVar 'dd-bs' "$2"
@@ -2059,7 +2059,7 @@ function step_parseArguments() {
         ;;
       --remote-bootloader)
         if (($# < 2)); then
-          ps_failAndExit SYNOPSISNC \
+          ps_failAndExit SYNOPSIS_NONCOMPL \
             "Missing value for '$1' flag. Please provide a version following MAJOR.MINOR pattern. ex: '4.10'."
         fi
         _setUserVar 'remote-bootloader' "$2"
@@ -2075,42 +2075,42 @@ function step_parseArguments() {
         ;;
       -d | --device)
         if (($# < 2)); then
-          ps_failAndExit SYNOPSISNC "Missing value for '$1' flag. Please provide a device."
+          ps_failAndExit SYNOPSIS_NONCOMPL "Missing value for '$1' flag. Please provide a device."
         fi
         _setUserVar 'device' "$2"
         shift 2
         ;;
       --part-type)
         if (($# < 2)); then
-          ps_failAndExit SYNOPSISNC "Missing value for '$1' flag. Please provide a partition type."
+          ps_failAndExit SYNOPSIS_NONCOMPL "Missing value for '$1' flag. Please provide a partition type."
         fi
         _setUserVar 'part-type' "${2}"
         shift 2
         ;;
       -t | --type | -F | --fs)
         if (($# < 2)); then
-          ps_failAndExit SYNOPSISNC "Missing value for '$1' flag. Please provide a filesystem type."
+          ps_failAndExit SYNOPSIS_NONCOMPL "Missing value for '$1' flag. Please provide a filesystem type."
         fi
         _setUserVar 'fs' "${2,,}" #lowercased
         shift 2
         ;;
       --data-part-fs)
         if (($# < 2)); then
-          ps_failAndExit SYNOPSISNC "Missing value for '$1' flag. Please provide a filesystem type."
+          ps_failAndExit SYNOPSIS_NONCOMPL "Missing value for '$1' flag. Please provide a filesystem type."
         fi
         _setUserVar 'data-part-fs' "${2,,}" #lowercased
         shift 2
         ;;
       -L | --label)
         if (($# < 2)); then
-          ps_failAndExit SYNOPSISNC "Missing value for '$1' flag. Please provide a label."
+          ps_failAndExit SYNOPSIS_NONCOMPL "Missing value for '$1' flag. Please provide a label."
         fi
         _setUserVar 'label' "$2"
         shift 2
         ;;
       --hash-file)
         if (($# < 2)); then
-          ps_failAndExit SYNOPSISNC "Missing value for '$1' flag. Please provide a hash file."
+          ps_failAndExit SYNOPSIS_NONCOMPL "Missing value for '$1' flag. Please provide a hash file."
         fi
         _setUserVar 'hash-file' "$2"
         shift 2
@@ -2154,7 +2154,7 @@ function step_parseArguments() {
       -*)
         if [[ "$_isEndOfOptions" == false ]]; then
           if [[ "$_key" =~ ^-- ]]; then
-            ps_failAndExit SYNOPSISNC "Unknown option: $(term_boldify "$_key")."
+            ps_failAndExit SYNOPSIS_NONCOMPL "Unknown option: $(term_boldify "$_key")."
           # Handle stacked options
           elif [[ "$_key" =~ ^-["$ct_shortOptions"]{2,}$ ]]; then
             shift
@@ -2172,7 +2172,7 @@ function step_parseArguments() {
                 term_echowarn "$(term_boldify "$_wrongOptions") flags were not recognized."
               fi
             fi
-            ps_failAndExit SYNOPSISNC
+            ps_failAndExit SYNOPSIS_NONCOMPL
           fi
         else
           _setUserVar 'iso-file' "$1"
@@ -2244,7 +2244,7 @@ function step_assignInternalVariables() {
     requiresRoot='true'
     ;;
   *)
-    ps_failAndExit INTERNALST "Unhandled action $(term_boldify "$targetAction")."
+    ps_failAndExit STATE_ERROR "Unhandled action $(term_boldify "$targetAction")."
     ;;
   esac
 }
@@ -2389,7 +2389,7 @@ function exec_inspect() {
     term_echogood "The selected image is hybrid and supports legacy BIOS boot along with UEFI boot." \
       "It should boot with $scriptName in $(term_boldify install) 'Automatic' and 'Image-Copy' modes with any PCs."
   else
-    ps_failAndExit INTERNALST "Unexpected state. isHybrid: $_isHybrid, biosCompatible: $_biosCompatible," \
+    ps_failAndExit STATE_ERROR "Unexpected state. isHybrid: $_isHybrid, biosCompatible: $_biosCompatible," \
       "uefiCompatible: $_uefiCompatible, syslinuxCompatible: $_syslinuxCompatible"
   fi
   if [[ "$_uefiCompatible" == false && ("$_syslinuxCompatible" == true || "$_biosCompatible" == true) ]]; then
@@ -2416,7 +2416,7 @@ function exec_probe() {
 
 function exec_installMountRsync() {
   if [ "${st_isoInspections[isHybrid]}" == true ]; then
-    ps_failAndExit ASSERTFAIL "You cannot set Mount-Rsync mode with a hybrid image file." \
+    ps_failAndExit ASSERTION_FAILED "You cannot set Mount-Rsync mode with a hybrid image file." \
       "Hybrid ISO or disk image files eventually contain multiple partitions and Mount-Rsync mode can only work with one." \
       "If you think this image file is not hybrid and this is a bug, please report at " \
       "${ct_ticketsURL}."
@@ -2437,7 +2437,7 @@ function exec_installMountRsync() {
 
 function exec_installImageCopy() {
   if [ "${st_isoInspections[isHybrid]}" == false ]; then
-    ps_failAndExit ASSERTFAIL "You cannot set Image-Copy mode with a non-hybrid, 'El-Torito' image file." \
+    ps_failAndExit ASSERTION_FAILED "You cannot set Image-Copy mode with a non-hybrid, 'El-Torito' image file." \
       "El-Torito image files don't have a partition table; and thus target device will not be recognized" \
       "by any boot system as a boot candidate. If you think this image file is hybrid and this is a bug, please report at " \
       "${ct_ticketsURL}."
@@ -2519,7 +2519,7 @@ function main() {
   'list-usb-drives') exec_listUSBDrives ;;
   'version') exec_version ;;
   'help') exec_help ;;
-  *) ps_failAndExit INTERNALST "(main) unexpected action $(term_boldify "$targetAction")." ;;
+  *) ps_failAndExit STATE_ERROR "(main) unexpected action $(term_boldify "$targetAction")." ;;
   esac
   step_finalize
 }
