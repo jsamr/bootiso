@@ -10,9 +10,9 @@ Because of its reliance on GNU and POSIX tools, **bootiso** primarly targets GNU
 
 ### Package managers
 
-| System family    | URL                                            |
-|:-----------------|------------------------------------------------|
-| Arch Linux (AUR) | https://aur.archlinux.org/packages/bootiso/    |
+| System family    | URL                                         |
+| :--------------- | ------------------------------------------- |
+| Arch Linux (AUR) | https://aur.archlinux.org/packages/bootiso/ |
 
 ### Manual install
 
@@ -24,15 +24,15 @@ The official manual is available at [jsamr.github.io/bootiso](https://jsamr.gith
 The reference should also be available as a man page via `man bootiso`.
 If you are in a hury, jump to the [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES) section.
 
-| Highlights                                                          |
-|:-------------------------------------------------------------------:|
-| [SYNOPSIS](https://jsamr.github.io/bootiso/#SYNOPSIS)               |
-| [DESCRIPTION](https://jsamr.github.io/bootiso/#DESCRIPTION)         |
-| [INSTALL MODES](https://jsamr.github.io/bootiso/#INSTALL_MODES)     |
-| [GUARDRAILS](https://jsamr.github.io/bootiso/#GUARDRAILS)           |
-| [EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)         |
-| [ENVIRONMENT](https://jsamr.github.io/bootiso/#ENVIRONMENT)         |
-| [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES)               |
+|                             Highlights                              |
+| :-----------------------------------------------------------------: |
+|        [SYNOPSIS](https://jsamr.github.io/bootiso/#SYNOPSIS)        |
+|     [DESCRIPTION](https://jsamr.github.io/bootiso/#DESCRIPTION)     |
+|   [INSTALL MODES](https://jsamr.github.io/bootiso/#INSTALL_MODES)   |
+|      [GUARDRAILS](https://jsamr.github.io/bootiso/#GUARDRAILS)      |
+|     [EXIT STATUS](https://jsamr.github.io/bootiso/#EXIT_STATUS)     |
+|     [ENVIRONMENT](https://jsamr.github.io/bootiso/#ENVIRONMENT)     |
+|        [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES)        |
 | [TROUBLESHOOTING](https://jsamr.github.io/bootiso/#TROUBLESHOOTING) |
 
 <a name="action"></a>
