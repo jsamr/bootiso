@@ -517,7 +517,7 @@ function fs_formatPartition() {
   local -Ar _mkfsOpts=(
     ['vfat']="-v -F 32 -n" # Fat32 mode
     ['exfat']="-n"
-    ['ntfs']="-Q -c 4096 -L" # Quick mode + cluster size = 4096 for Syslinux support
+    ['ntfs']="-Q -c 4096 -L" # Quick mode + cluster size = 4096 for syslinux support
     ['ext2']="-O ^64bit -L"  # Disabling pure 64 bits compression for syslinux compatibility
     ['ext3']="-O ^64bit -L"  # see https://www.syslinux.org/wiki/index.php?title=Filesystem#ext
     ['ext4']="-O ^64bit -L"
@@ -2398,7 +2398,7 @@ function exec_inspect() {
       "uefiCompatible: $_uefiCompatible, syslinuxCompatible: $_syslinuxCompatible"
   fi
   if [[ "$_uefiCompatible" == false && ("$_syslinuxCompatible" == true || "$_biosCompatible" == true) ]]; then
-    term_echowarn "You might have to enable CSM in your UEFI system for legacy BIOS-boot suport."
+    term_echowarn "You might have to enable CSM in your UEFI system for legacy BIOS-boot support."
   fi
   _localSyslinuxVersion=$(syslinux --version |& grep -oP '(\d+\.\d+)')
   if [ "$_syslinuxCompatible" == true ] && [ ! -z "${st_isoInspections[syslinuxVer]}" ] && [ "$_isHybrid" == false ]; then
