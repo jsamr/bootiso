@@ -605,44 +605,60 @@ On the other hand, exit status superior or equal to 64 depict an execution failu
 .
 .Bl -tag
 .It Sy 0
-Success.
+.Sy "Success".
 .It Sy 1
-Assertion failed: a safety check has not passed. See
+.Sy "Assertion failed":
+a safety check has not passed. See
 .Sx "GUARDRAILS".
 .It Sy 2
-Synopsis noncompliance: program invocation does not match any known combination of options and operands.
+.Sy "Synopsis noncompliance":
+program invocation does not match any known combination of options and operands.
 .It Sy 3
-Missing boot capabilities:
+.Sy "Missing boot capabilities":
 .Ar imagefile
 does not have boot capabilities
 .Nm
 knows of.
 .It Sy 4
-Missing file: a file provided as option argument or operand does not exist.
+.Sy "File doesn't exists":
+a file provided as option argument or operand does not exist.
 .It Sy 5
-Bad file: a file provided as option argument or operand exist, but is not of the expected format.
+.Sy "Bad file":
+a file provided as option argument or operand exist, but is not of the expected format.
 .It Sy 6
-Missing device: a device provided as option argument does not exist.
+.Sy "Device doesn't exists":
+a device provided as option argument does not exist.
 .It Sy 7
-Bad device: a device provided as option argument exists in filesystem, but is not a device node.
+.Sy "Bad device":
+a device provided as option argument exists in filesystem, but is not a device node.
 .It Sy 8
-No device: there are no drives matching criterion.
+.Sy "No devices":
+there are no drives in selection.
 .It Sy 9
-Missing dependency:
+.Sy "Missing dependency":
 .Nm
 is missing a program.
 .It Sy 10
-Host unreachable: an operation involving network access could not be performed with host.
+.Sy "Host unreachable":
+an operation involving network access could not be performed with host.
 .It Sy 11
-User aborted: the action was canceled by user.
+.Sy "User aborted":
+the action was canceled by user.
 .It Sy 12
-Missing privilege: you need to run this command as root.
+.Sy "Missing privilege":
+you need to run this command as root.
+.It Sy 13
+.Sy "Failed postulate":
+an assumption about system state turned out false.
 .It Sy 64
-Internal I/O error.
+.Sy "I/O error":
+a read/write command has unexpectedly failed.
 .It Sy 65
-Internal state error.
+.Sy "Program state error":
+the program reached an unexpected state. This is a bug.
 .It Sy 66
-Internal third party error.
+.Sy "Third party error":
+a command has unexpectedly failed.
 .El
 .
 .
@@ -680,7 +696,7 @@ will automatically select it:
 .Pp
 You can also explicitly set the target USB device:
 .Pp
-.D1 Nm Fl d No /dev/sde file.iso
+.D1 Nm Fl d No /dev/sdX file.iso
 .Pp
 Avoid being prompted before writing to USB drive and autoselect device when there is
 exactly one connected:

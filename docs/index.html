@@ -479,45 +479,54 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
   equal to 64 depict an execution failure.
 <dl class="Bl-tag">
   <dt><b class="Sy">0</b></dt>
-  <dd>Success.</dd>
+  <dd><b class="Sy">Success</b>.</dd>
   <dt><b class="Sy">1</b></dt>
-  <dd>Assertion failed: a safety check has not passed. See
+  <dd><b class="Sy">Assertion failed</b>: a safety check has not passed. See
       <a class="Sx" href="#GUARDRAILS">GUARDRAILS</a>.</dd>
   <dt><b class="Sy">2</b></dt>
-  <dd>Synopsis noncompliance: program invocation does not match any known
-      combination of options and operands.</dd>
+  <dd><b class="Sy">Synopsis noncompliance</b>: program invocation does not
+      match any known combination of options and operands.</dd>
   <dt><b class="Sy">3</b></dt>
-  <dd>Missing boot capabilities: <var class="Ar">imagefile</var> does not have
-      boot capabilities <code class="Nm">bootiso</code> knows of.</dd>
+  <dd><b class="Sy">Missing boot capabilities</b>:
+      <var class="Ar">imagefile</var> does not have boot capabilities
+      <code class="Nm">bootiso</code> knows of.</dd>
   <dt><b class="Sy">4</b></dt>
-  <dd>Missing file: a file provided as option argument or operand does not
-      exist.</dd>
+  <dd><b class="Sy">File doesn't exists</b>: a file provided as option argument
+      or operand does not exist.</dd>
   <dt><b class="Sy">5</b></dt>
-  <dd>Bad file: a file provided as option argument or operand exist, but is not
-      of the expected format.</dd>
+  <dd><b class="Sy">Bad file</b>: a file provided as option argument or operand
+      exist, but is not of the expected format.</dd>
   <dt><b class="Sy">6</b></dt>
-  <dd>Missing device: a device provided as option argument does not exist.</dd>
+  <dd><b class="Sy">Device doesn't exists</b>: a device provided as option
+      argument does not exist.</dd>
   <dt><b class="Sy">7</b></dt>
-  <dd>Bad device: a device provided as option argument exists in filesystem, but
-      is not a device node.</dd>
+  <dd><b class="Sy">Bad device</b>: a device provided as option argument exists
+      in filesystem, but is not a device node.</dd>
   <dt><b class="Sy">8</b></dt>
-  <dd>No device: there are no drives matching criterion.</dd>
+  <dd><b class="Sy">No devices</b>: there are no drives in selection.</dd>
   <dt><b class="Sy">9</b></dt>
-  <dd>Missing dependency: <code class="Nm">bootiso</code> is missing a
-    program.</dd>
+  <dd><b class="Sy">Missing dependency</b>: <code class="Nm">bootiso</code> is
+      missing a program.</dd>
   <dt><b class="Sy">10</b></dt>
-  <dd>Host unreachable: an operation involving network access could not be
-      performed with host.</dd>
+  <dd><b class="Sy">Host unreachable</b>: an operation involving network access
+      could not be performed with host.</dd>
   <dt><b class="Sy">11</b></dt>
-  <dd>User aborted: the action was canceled by user.</dd>
+  <dd><b class="Sy">User aborted</b>: the action was canceled by user.</dd>
   <dt><b class="Sy">12</b></dt>
-  <dd>Missing privilege: you need to run this command as root.</dd>
+  <dd><b class="Sy">Missing privilege</b>: you need to run this command as
+    root.</dd>
+  <dt><b class="Sy">13</b></dt>
+  <dd><b class="Sy">Failed postulate</b>: an assumption about system state
+      turned out false.</dd>
   <dt><b class="Sy">64</b></dt>
-  <dd>Internal I/O error.</dd>
+  <dd><b class="Sy">I/O error</b>: a read/write command has unexpectedly
+    failed.</dd>
   <dt><b class="Sy">65</b></dt>
-  <dd>Internal state error.</dd>
+  <dd><b class="Sy">Program state error</b>: the program reached an unexpected
+      state. This is a bug.</dd>
   <dt><b class="Sy">66</b></dt>
-  <dd>Internal third party error.</dd>
+  <dd><b class="Sy">Third party error</b>: a command has unexpectedly
+    failed.</dd>
 </dl>
 </section>
 <section class="Sh">
@@ -546,7 +555,7 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
     <p class="Pp">You can also explicitly set the target USB device:</p>
     <p class="Pp"></p>
     <div class="Bd Bd-indent"><code class="Nm">bootiso</code>
-      <code class="Fl">-d</code> <span class="No">/dev/sde file.iso</span></div>
+      <code class="Fl">-d</code> <span class="No">/dev/sdX file.iso</span></div>
     <p class="Pp">Avoid being prompted before writing to USB drive and
         autoselect device when there is exactly one connected:</p>
     <p class="Pp"></p>
