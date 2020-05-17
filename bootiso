@@ -560,7 +560,7 @@ function fs_inferFSType() {
   case "$_partScheme" in
   dos | mbr) echo "${_mbrTypeCodes[$_fsType]}" ;;
   gpt) echo "${_gptTypeCodes[$_fsType]}" ;;
-  *) ps_failAndExit INTERNALST "unhandled partition scheme: $_partScheme" ;;
+  *) ps_failAndExit INTERNALST "(fs_inferFSType) unhandled partition scheme: $_partScheme" ;;
   esac
 }
 
@@ -674,6 +674,7 @@ typeset -Ar ps_exitStatus=(
   [HOSTUNR]=10
   [USERABORT]=11
   [MISPRIVILEGE]=12
+  [FAILEDPOSTL]=13
   # Errors
   [INTERNALIO]=64
   [INTERNALST]=65
@@ -754,6 +755,9 @@ function ps_failAndExit() {
     else
       term_echoerr "$@" "Exiting..."
     fi
+  fi
+  if [ "$_statusCode"  == INTERNALST ]; then
+    term_echoerr "Provide a bug report at $ct_openBugReportMessage."
   fi
   exit "${ps_exitStatus[$_statusCode]}"
 }
@@ -1387,7 +1391,7 @@ function devi_createPartitionTable() {
         # Set typecode to EFI System Partition
         _partitionType="${fs_gptPartitionCodes[efi]}"
       else
-        ps_failAndExit INTERNALST "GPT partition tables are not compatible with legacy BIOS boot."
+        ps_failAndExit INTERNALST "(devi_createPartitionTable) GPT partition tables are not compatible with legacy BIOS boot."
       fi
     fi
     _partitionOptions+="type=${_partitionType}"
@@ -1401,7 +1405,7 @@ function devi_createPartitionTable() {
   case "$_partScheme" in
   GPT) _initGPT ;;
   MBR) _initMBR ;;
-  *) ps_failAndExit INTERNALST "Unexpected partition scheme '$1'" ;;
+  *) ps_failAndExit FAILEDPOSTL "(devi_createPartitionTable) Unexpected partition scheme '$1'" ;;
   esac
   if [[ "$_notBootable" == false && "$_partScheme" == MBR && "${st_isoInspections[supportsBIOSBoot]}" == true ]]; then
     _partitionOptions+=", bootable"
@@ -1719,7 +1723,7 @@ function step_configureFolders() {
   elif [ -d "$ct_tempRoot" ]; then
     chmod -R $_defaultMode "$ct_tempRoot"
   else
-    ps_failAndExit INTERNALST "(step_configureFolders) '$ct_tempRoot' is not a folder." \
+    ps_failAndExit FAILEDPOSTL "'$ct_tempRoot' is not a folder." \
       "Remove this file and try again."
   fi
   if [ ! -e "$ct_cacheRoot" ]; then
@@ -1727,13 +1731,13 @@ function step_configureFolders() {
   elif [ -d "$ct_cacheRoot" ]; then
     chmod -R $_defaultMode "$ct_cacheRoot"
   else
-    ps_failAndExit INTERNALST "(step_configureFolders) '$ct_cacheRoot' is not a folder." \
+    ps_failAndExit FAILEDPOSTL "'$ct_cacheRoot' is not a folder." \
       "Remove this file and try again."
   fi
   if [ ! -e "$ct_mountRoot" ]; then
     mkdir "$ct_mountRoot"
   elif [ ! -d "$ct_mountRoot" ]; then
-    ps_failAndExit INTERNALST "(step_configureFolders) '$ct_mountRoot' is not a folder." \
+    ps_failAndExit FAILEDPOSTL "'$ct_mountRoot' is not a folder." \
       "Remove this file and try again."
   fi
 }
