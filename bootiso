@@ -83,6 +83,7 @@ typeset st_foundSyslinuxMbrBinary
 typeset st_foundSyslinuxBiosFolder
 typeset st_shouldMakePartition
 typeset st_backgroundProcess=''
+typeset st_packageManager
 typeset -A st_syslinuxBinaries
 typeset -a st_temporaryAssets=()
 typeset -a st_devicesList=()
@@ -608,12 +609,12 @@ function sys_checkCommand() {
   local _answer
   if ! sys_hasCommand "$_command"; then
     term_echowarn "Command '$_command' not found! Should be in package '${ct_commandPackages["$_command"]}'."
-    if [ ! -z "$pkgmgr" ]; then
+    if [ -n "$st_packageManager" ]; then
       read -r -n1 -p "${term_logPrefixEmpty}Attempt installation? (y/n)> " _answer
       echo
       case $_answer in
       y | Y)
-        if ! $pkgmgr "${ct_commandPackages["$_command"]}"; then
+        if ! $st_packageManager "${ct_commandPackages["$_command"]}"; then
           ps_failAndExit MISSING_DEPENDENCY "Installation of dependency '$_command' failed." \
             "Perhaps this dependency has a slightly different name on your distribution." \
             "Find it and install manually."
@@ -1962,35 +1963,35 @@ function step_copyWithDD() {
 
 function step_initPckgManager() {
   if sys_hasCommand apt-get; then # Debian
-    pkgmgr="apt-get install"
+    st_packageManager="apt-get install"
     return 0
   fi
   if sys_hasCommand dnf; then # Fedora
-    pkgmgr="dnf install"
+    st_packageManager="dnf install"
     return 0
   fi
   if sys_hasCommand yum; then # Fedora
-    pkgmgr="yum install"
+    st_packageManager="yum install"
     return 0
   fi
   if sys_hasCommand pacman; then # Arch
-    pkgmgr="pacman -S"
+    st_packageManager="pacman -S"
     return 0
   fi
   if sys_hasCommand zypper; then # OpenSuse
-    pkgmgr="zypper install"
+    st_packageManager="zypper install"
     return 0
   fi
   if sys_hasCommand emerge; then # Gentoo
-    pkgmgr="emerge"
+    st_packageManager="emerge"
     return 0
   fi
   if sys_hasCommand xbps-install; then # Void
-    pkgmgr="xbps-install"
+    st_packageManager="xbps-install"
     return 0
   fi
   if sys_hasCommand eopkg; then # Solus
-    pkgmgr="eopkg install"
+    st_packageManager="eopkg install"
     return 0
   fi
   return 1
