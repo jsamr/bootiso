@@ -57,7 +57,7 @@ typeset -r ct_shortOptions='bydJahlMftLpD'
 typeset -r ct_ticketsURL="https://github.com/jsamr/bootiso/issues/new/choose."
 typeset -r ct_kernelOrgSyslinuxURL="https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing"
 typeset -r ct_openBugReportMessage="This is not expected: please open a 'Bug Report' ticket at $ct_ticketsURL."
-typeset -r ct_openImageSupportRequesMessage="You can open an 'Image Support' request here: $ct_ticketsURL"
+typeset -r ct_openImageSupportRequestMessage="You can open an 'Image Support' request here: $ct_ticketsURL"
 
 #              .
 #            .o8
@@ -901,7 +901,7 @@ function asrt_checkImageHash() {
     _hashStoreFile=$(fs_createTempFile "bootiso-file-_hash")
     term_echoinfo "Checking _hash for '$_imageName'..."
     printf "%s" \
-      "You can disable this check with $(term_boldify "-H, --no-_hash-check") flags." | term_indentAll
+      "You can disable this check with $(term_boldify "-H, --no-hash-check") flags." | term_indentAll
     st_temporaryAssets+=("$_hashStoreFile")
     (
       local _hash
@@ -934,7 +934,7 @@ function asrt_checkImageHash() {
     local _gHash
     _gHash=$(awk -v pattern="$_imageName$" '$0 ~ pattern { print $1; exit }' "$_hashPath")
     if [ -z "$_gHash" ]; then
-      term_echoerr "No matching filename found in _hash file '$_hashPath'"
+      term_echoerr "No matching filename found in hash file '$_hashPath'"
       return
     elif [ -z "$_hashName" ]; then
       case ${#_gHash} in
@@ -951,7 +951,7 @@ function asrt_checkImageHash() {
         _hashName="sha512sum"
         ;;
       *)
-        ps_failAndExit BADFILE "Matching line in '$_hashPath' has an unexpected _hash format."
+        ps_failAndExit BADFILE "Matching line in '$_hashPath' has an unexpected hash format."
         ;;
       esac
     fi
@@ -959,7 +959,7 @@ function asrt_checkImageHash() {
     _computeHashWithProgress $_hashName "$_imageName"
     _status=$?
     if ((_status != 0)); then
-      ps_failAndExit THIRD_PARTY_ERROR "$_hashName command failed with _status $_status"
+      ps_failAndExit THIRD_PARTY_ERROR "$_hashName command failed with status $_status"
     fi
     if [ "$_gHash" != "$_lHash" ]; then
       if [ "$enableForceHashCheck" == 'true' ]; then
@@ -979,7 +979,7 @@ function asrt_checkImageHash() {
         term_echoinfo "Ignoring mismatching _hash."
       fi
     else
-      term_echogood "Matching ${_hashName%sum} _hash found in '$_hashPath'"
+      term_echogood "Matching ${_hashName%sum} hash found in '$_hashPath'"
       _numValidHashes=$((_numValidHashes + 1))
     fi
   }
@@ -989,7 +989,7 @@ function asrt_checkImageHash() {
     if [ -f "$sourceHashFile" ]; then
       _checkHash "$sourceHashFile" "$_isoFileName"
     else
-      ps_failAndExit FILE_NOEXIST "Specified _hash file '$sourceHashFile' does not exist."
+      ps_failAndExit FILE_NOEXIST "Specified hash file '$sourceHashFile' does not exist."
     fi
   else
     shopt -s nullglob nocaseglob
@@ -1006,7 +1006,7 @@ function asrt_checkImageHash() {
   fi
 
   if [ "$enableForceHashCheck" == 'true' ] && [ $_numValidHashes == 0 ]; then
-    ps_failAndExit ASSERTION_FAILED "No matching _hashes found. Assert forced by $(term_boldify '--force-_hash-check')"
+    ps_failAndExit ASSERTION_FAILED "No matching hashes found. Assert forced by $(term_boldify '--force-_hash-check')"
   fi
 }
 
@@ -1039,7 +1039,7 @@ function asrt_checkDeviceIsOK() {
   if [ ! -d "/sys/block/$(basename "$_deviceBlock")" ] || ! sys_isDeviceDisk "$_deviceBlock"; then
     ps_failAndExit BAD_DEVICE \
       "The selected device '$_deviceBlock' is either unmounted or not a disk (might be a partition or loop)." \
-      "Select a disk instead or reconnect the USB _deviceBlock." \
+      "Select a disk instead or reconnect the USB deviceBlock." \
       "You can check the availability of USB drives with $(term_boldify "$scriptName -l")."
   fi
 }
@@ -1099,7 +1099,7 @@ function asrt_checkFSType() {
   local -r _fsType="$1"
   if ! sh_elementIsInList "$_fsType" "${asrt_supportedFS[@]}"; then
     ps_failAndExit SYNOPSIS_NONCOMPL "Filesystem type '$_fsType' not supported." \
-      "Supported FS types: $(sh_joinBy "," "${asrt_supportedFS[*]}")."
+      "Supported filesystem types: $(sh_joinBy "," "${asrt_supportedFS[*]}")."
   fi
   if ! command -v "mkfs.$_fsType" &>/dev/null; then
     ps_failAndExit MISSING_DEPENDENCY \
@@ -1160,7 +1160,7 @@ function asrt_checkUserFlags() {
       term_echowarn "$(term_boldify '-a, --autoselect') is enabled by default when $(term_boldify '-y, --asume-yes') is not set."
     fi
     if [[ -n "${st_userVars['data-part-fs']}" && -z "${st_userFlags['data-part']}" ]]; then
-      term_echowarn "You set $(term_boldify '--data-part-fs') option but forgot $(term_boldify -D). No data partition will be added."
+      term_echowarn "You set $(term_boldify '--data-part-fs') option but didn't set $(term_boldify -D). No data partition will be added."
     fi
   fi
 }
@@ -1223,7 +1223,7 @@ function asrt_inspectImageBootCapabilities() {
     ps_failAndExit MISSING_BOOT_CAP \
       "The selected image is not hybrid, doesn't support UEFI or legacy booting with SYSLINUX." \
       "Therefore, it cannot result in any successful booting with $scriptName." \
-      "$ct_openImageSupportRequesMessage" \
+      "$ct_openImageSupportRequestMessage" \
       "In the meantime, consider following the instructions provided with this image file."
   fi
 }
@@ -1353,10 +1353,9 @@ function devi_selectDevice() {
   st_targetPartition="${targetDevice}1"
 }
 
-# Return status is
-# 0: OK
-# 1: failed appending partition table
-# 2: failed formating partition
+# return 0 - OK
+# return 1 - failed appending partition table
+# return 2 - failed formatting partition
 function devi_addDataPartition() {
   local _dataPartition _diskReport _sectorSize _partSize _humanSize _partScheme _partType
   _diskReport=$(sfdisk -lJ "$targetDevice")
@@ -1382,7 +1381,7 @@ function devi_createPartitionTable() {
   local _sfdiskVersion
   _sfdiskVersion=$(sfdisk -v | grep -Po '\d+\.\d+')
   function _makeSfdiskCommand() {
-    # Retrocompatibility for 'old' sfdisk versions
+    # Retro compatibility for 'old' sfdisk versions
     if sh_compute "$_sfdiskVersion >= 2.28"; then
       _sfdiskCommand='sfdisk -W always'
     fi
@@ -1796,7 +1795,7 @@ function step_installBootloader() {
   function _checkSyslinuxVersion() {
     local -i _versionsMatch=0
     if [ "$enableForceLocalBootloader" == true ]; then
-      term_echogood "Enfoced local SYSLINUX bootloader at version '$_localSyslinuxVersion'."
+      term_echogood "Enforced local SYSLINUX bootloader at version '$_localSyslinuxVersion'."
       return 1
     fi
     if [ -z "$st_targetSyslinuxVersion" ]; then
@@ -1875,7 +1874,7 @@ function step_installBootloader() {
       term_indentAll ||
       ps_failAndExit IO_ERROR "Failed to install Master Boot Record program."
     fs_syncdev
-    term_echogood "Succesfully installed Master Boot Record program."
+    term_echogood "Successfully installed Master Boot Record program."
   }
   _inferSyslinuxVersion
   _setSyslinuxLocation
@@ -2296,6 +2295,7 @@ function exec_help() {
   local -r _modifierFlagsTable=$(printf "%s\n" \
     "-a, --autoselect|In combination with -y, autoselect USB drive when only one is connected." \
     "-d, --device <device>|Pick <device> block file as target USB drive." \
+    "-D, --data-part|Add a data partition." \
     "-F, --fstype <fstype>|Format to <fstype>." \
     "-H, --no-hash-check|Don't search for hash files and check <imagefile> integrity." \
     "-J, --no-eject|Don't eject drive after unmounting." \
@@ -2366,7 +2366,7 @@ function exec_inspect() {
   if [ "$_isHybrid" == false ] && [ "$_syslinuxCompatible" == false ] && [ "$_uefiCompatible" == false ]; then
     term_echoerr "The selected image is not hybrid, doesn't support UEFI or legacy BIOS booting nor SYSLINUX." \
       "It cannot result in any successful booting with $scriptName." \
-      "$ct_openImageSupportRequesMessage"
+      "$ct_openImageSupportRequestMessage"
   elif [ "$_isHybrid" == false ] && [ "$_syslinuxCompatible" == true ] && [ "$_uefiCompatible" == false ]; then
     term_echogood "The selected image is not hybrid, but supports legacy BIOS booting with $_syslinux." \
       "It should boot with $scriptName in $(term_boldify install) 'Automatic' and 'Mount-Rsync' modes with BIOS-boot capable PCs."
