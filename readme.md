@@ -46,6 +46,7 @@ If you are in a hury, jump to the [EXAMPLES](https://jsamr.github.io/bootiso/#EX
 <a href="https://asciinema.org/a/eWbZtAXVKIzVYEMMCt5kmT5cq?speed=2&autoplay=1&size=medium&rows=20">
 <img src="https://asciinema.org/a/eWbZtAXVKIzVYEMMCt5kmT5cq.svg" height="350">
 </a>
+
 ### Using `--assume-yes` + `--autoselect`
 
 `--assume-yes` (shorten `-y`) bypass prompting the user for overwritting USB device, and `--autoselect` (shorten `-a`) allow automatic selection of USB device when exactly one device is connected in combination with `--assume-yes`.
