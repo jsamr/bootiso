@@ -31,7 +31,7 @@ However, for the sake of user comfort, it is recommended that package maintainer
 - `mkfs.fat`
 - `mkfs.ntfs`
 
-The corresponding packages in Arch Linux are **mke2fs**, **dosfstools** and **ntfs-3g**. Mandated dependencies are listed bellow.
+The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and **ntfs-3g**. Mandated dependencies are listed bellow.
 
 <table>
   <thead>
@@ -110,10 +110,6 @@ The corresponding packages in Arch Linux are **mke2fs**, **dosfstools** and **nt
     <tr>
       <td style="text-align: left;">rsync</td>
       <td colspan="3" align="center">rsync</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">partprobe</td>
-      <td colspan="3" align="center">parted</td>
     </tr>
     <tr>
       <td style="text-align: left;">curl</td>
