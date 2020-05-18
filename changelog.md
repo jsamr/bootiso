@@ -1,6 +1,6 @@
 # v4.0.1
 
-**bugfix**
+**Bugfixes**
 
 - fix cleanup logic. After successful image installation, a message "user aborted" was displayed. To circumvent the issue, two functions are now registered with trap for cleanup logic. One on EXIT, and an other one on INT or TERM.
 
