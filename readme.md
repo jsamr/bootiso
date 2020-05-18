@@ -58,7 +58,7 @@ If you are in a hury, jump to the [EXAMPLES](https://jsamr.github.io/bootiso/#EX
 
 ### No-USB device failure
 
-In the bellow example, the selected device with `--device` (shorten `-d`) flag is not connected through USB and `bootiso` fails.
+In the below example, the selected device with `--device` (shorten `-d`) flag is not connected through USB and `bootiso` fails.
 
 <a href="https://asciinema.org/a/EUg7jUwdwM4KdABClIK1NjGlY?speed=3&autoplay=1&size=medium&rows=20" target="_blank"><img src="https://asciinema.org/a/EUg7jUwdwM4KdABClIK1NjGlY.svg" height="350"/></a>
 
