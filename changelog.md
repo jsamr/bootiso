@@ -6,7 +6,7 @@
 
 # v4.0.1
 
-In addition to bellow listed changes, please note that project license has migrated from MIT to GPLv3, see [LICENSE](https://github.com/jsamr/bootiso/blob/master/LICENSE).
+In addition to below listed changes, please note that project license has migrated from MIT to GPLv3, see [LICENSE](https://github.com/jsamr/bootiso/blob/master/LICENSE).
 
 **Features**
 
