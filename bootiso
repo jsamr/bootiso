@@ -2330,7 +2330,8 @@ function exec_help() {
 # return 0 - (USB) drives found
 # return 1 - No (USB) drives found
 function exec_listUSBDrives() {
-  # Run udevadm settle
+  # The user could run udevadm settle at this point, to make sure all
+  # udev events have been handled and the device is available.
   local _lsblkCmd='lsblk -d -l -o NAME,MODEL,VENDOR,SIZE,TRAN,HOTPLUG'
   step_initDevicesList
   if [ "$disableUSBCheck" == 'true' ]; then
