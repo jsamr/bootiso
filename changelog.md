@@ -1,10 +1,16 @@
+# next
+
+**Bugfixes**
+
+- fix wrong exit status. The exit status 11 (USER ABORTED) was systematically returned, because of previous refactor on process interruption graceful handling. This has now been fixed, and will only be returned when process receives signal INT or TERM.
+
 # v4.0.1
 
 **Bugfixes**
 
 - fix cleanup logic. After successful image installation, a message "user aborted" was displayed. To circumvent the issue, two functions are now registered with trap for cleanup logic. One on EXIT, and an other one on INT or TERM.
 
-# v4.0.1
+# v4.0.0
 
 In addition to below listed changes, please note that project license has migrated from MIT to GPLv3, see [LICENSE](https://github.com/jsamr/bootiso/blob/master/LICENSE).
 
