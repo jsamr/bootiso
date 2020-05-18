@@ -716,7 +716,6 @@ function ps_cleanupOnExit() {
       _removeTempAsset "$_asset"
     done
     _ejectDevice
-    exit "${ps_exitStatus[USER_ABORTED]}"
   fi
 }
 
@@ -734,6 +733,7 @@ function ps_cleanupOnInterrupt() {
     _waitBackgroundProcess
     fs_syncdev
     ps_cleanupOnExit
+    exit "${ps_exitStatus[USER_ABORTED]}"
   fi
 }
 
