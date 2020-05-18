@@ -479,7 +479,7 @@ code.Nm,
 .Va,
 .Vt,
 .Xr {
-  display: inline-block;
+  display: inline;
   position: relative;
 }
 
