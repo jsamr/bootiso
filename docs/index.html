@@ -128,6 +128,28 @@ Each line depicts an action, with the exception of the first three lines which
   </tr>
 </table>
 </section>
+<h1 class="Sh">TABLE OF CONTENTS</h1>
+<ul class="Bl-compact">
+  <li><a href="#DESCRIPTION">DESCRIPTION</a>
+    <ul class="Bl-compact">
+      <li><a href="#Features">Features</a></li>
+      <li><a href="#Actions">Actions</a></li>
+      <li><a href="#Generic_Modifiers">Generic Modifiers</a></li>
+      <li><a href="#Install_mode_modifiers">Install mode modifiers</a></li>
+    </ul>
+  </li>
+  <li><a href="#INSTALL_MODES">INSTALL MODES</a></li>
+  <li><a href="#GUARDRAILS">GUARDRAILS</a></li>
+  <li><a href="#ENVIRONMENT">ENVIRONMENT</a></li>
+  <li><a href="#EXIT_STATUS">EXIT STATUS</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#TROUBLESHOOTING">TROUBLESHOOTING</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+  <li><a href="#SEE_ALSO">SEE ALSO</a></li>
+  <li><a href="#COMPATIBILITY">COMPATIBILITY</a></li>
+  <li><a href="#STANDARDS">STANDARDS</a></li>
+  <li><a href="#AUTHORS">AUTHORS</a></li>
+</ul>
 <section class="Sh">
 <h1 class="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
 <code class="Nm">bootiso</code> is a command-line utility aimed at simplifying
@@ -137,16 +159,17 @@ Each line depicts an action, with the exception of the first three lines which
   typical invocations.
 <section class="Ss">
 <h2 class="Ss" id="Features"><a class="permalink" href="#Features">Features</a></h2>
-One can use <a class="Xr">dd(1)</a> utility for hybrid images, but not all
-  images are hybrid and the operation is error-prone, especially for amateur
-  Unix users, thus its &#x201C;disk destroyer&#x201D; nickname. In addition to
-  offering a safety layer (see <a class="Sx" href="#GUARDRAILS">GUARDRAILS</a>
-  section), <code class="Nm">bootiso</code> will handle hybrid and non-hybrid
-  SYSLINUX or UEFI compliant images such as any GNU-Linux, Windows or rescue
-  live-cds like UltimateBootCD images. This program also offers additional
-  features, such as quickly format a USB drive, inspecting an image file or
-  listing USB-connected drives. Supported images format are plain disk images
-  (img) and ISO 9660 files.
+One can use <a class="Xr" href="https://manned.org/dd.1">dd(1)</a> utility for
+  hybrid images, but not all images are hybrid and the operation is error-prone,
+  especially for amateur Unix users, thus its &#x201C;disk destroyer&#x201D;
+  nickname. In addition to offering a safety layer (see
+  <a class="Sx" href="#GUARDRAILS">GUARDRAILS</a> section),
+  <code class="Nm">bootiso</code> will handle hybrid and non-hybrid SYSLINUX or
+  UEFI compliant images such as any GNU-Linux, Windows or rescue live-cds like
+  UltimateBootCD images. This program also offers additional features, such as
+  quickly format a USB drive, inspecting an image file or listing USB-connected
+  drives. Supported images format are plain disk images (img) and ISO 9660
+  files.
 <p class="Pp"><code class="Nm">bootiso</code> can be invoked with two types of
     options: actions and modifiers. Actions determine the goal of the program
     execution, and modifiers define the specifics to reach that goal. At most
@@ -236,11 +259,12 @@ Use generic modifiers knowingly as some might override default safe behaviors.
       <code class="Cm">--dd</code> install modifier.</dd>
   <dt><a class="permalink" href="#--dd-bs"><code class="Cm" id="--dd-bs">--dd-bs</code></a>
     <var class="Ar">blocksize</var></dt>
-  <dd>Specify the maximum block-size used by <a class="Xr">dd(1)</a> utility in
+  <dd>Specify the maximum block-size used by
+      <a class="Xr" href="https://manned.org/dd.1">dd(1)</a> utility in
       &#x201C;Image-Copy&#x201D; mode. See <code class="Cm">bs</code> option of
-      <a class="Xr">dd(1)</a> utility. Default is 4M. Requires
-      <code class="Cm">--icopy</code> or <code class="Cm">--dd</code> install
-      modifier.
+      <a class="Xr" href="https://manned.org/dd.1">dd(1)</a> utility. Default is
+      4M. Requires <code class="Cm">--icopy</code> or
+      <code class="Cm">--dd</code> install modifier.
     <p class="Pp"><b class="Sy">Notice:</b> values bellow 50k can sensibly slow
         down the installation.</p>
   </dd>
@@ -329,11 +353,12 @@ Use generic modifiers knowingly as some might override default safe behaviors.
   </dd>
   <dt><a class="permalink" href="#--remote-bootloader"><code class="Cm" id="--remote-bootloader">--remote-bootloader</code></a>
     <var class="Ar">version</var></dt>
-  <dd>Force download of <a class="Xr">syslinux</a> remote bootloader at version
-      <var class="Ar">version</var>. Version must follow the pattern
-      MAJOR.MINOR. Examples: 4.10, 6.04. That will only work with x64 system
-      architecture. Requires <code class="Cm">--mrsync</code> install
-    modifier.</dd>
+  <dd>Force download of
+      <a class="Xr" href="https://manned.org/syslinux.1">syslinux</a> remote
+      bootloader at version <var class="Ar">version</var>. Version must follow
+      the pattern MAJOR.MINOR. Examples: 4.10, 6.04. That will only work with
+      x64 system architecture. Requires <code class="Cm">--mrsync</code> install
+      modifier.</dd>
   <dt><a class="permalink" href="#t"><code class="Fl" id="t">-t</code></a>
     <var class="Ar">fstype</var>, <code class="Cm">--type</code>
     <var class="Ar">fstype</var></dt>
@@ -393,14 +418,16 @@ These modifiers only apply to default <b class="Sy">install</b> action (see
   <dt><i class="Em">Image-Copy</i></dt>
   <dd>In &#x201C;Image-Copy&#x201D; mode enforceable with
       <code class="Cm">--icopy</code> install modifier,
-      <code class="Nm">bootiso</code> uses <a class="Xr">dd(1)</a> utility to
-      make a raw copy of <var class="Ar">imagefile</var>. This is perfectly
-      appropriate when the image file contains a builtin boot capability. It
-      requires to have a partition table, which can be directly copied to the
-      target device along with the data partitions. ISOs with this feature are
-      called &#x201C;hybrid&#x201D;, and a vast majority of GNU-Linux images are
-      shipped that way. See <a class="Xr">isohybrid(1)</a> for more information
-      on this topic.</dd>
+      <code class="Nm">bootiso</code> uses
+      <a class="Xr" href="https://manned.org/dd.1">dd(1)</a> utility to make a
+      raw copy of <var class="Ar">imagefile</var>. This is perfectly appropriate
+      when the image file contains a builtin boot capability. It requires to
+      have a partition table, which can be directly copied to the target device
+      along with the data partitions. ISOs with this feature are called
+      &#x201C;hybrid&#x201D;, and a vast majority of GNU-Linux images are
+      shipped that way. See
+      <a class="Xr" href="https://manned.org/isohybrid.1">isohybrid(1)</a> for
+      more information on this topic.</dd>
   <dt><i class="Em">Mount-Rsync</i></dt>
   <dd>In &#x201C;Mount-Rsync&#x201D; mode enforceable with
       <code class="Cm">--mrsync</code> install modifier,
@@ -414,16 +441,20 @@ These modifiers only apply to default <b class="Sy">install</b> action (see
       <li>If <span class="Pa">/efi/boot/*</span> boot files exist, choose UEFI
           boot and FAT32 filesystem mandated by the standard. In which case, if
           a Windows <span class="Pa">/sources/install.wim</span> file is found,
-          <a class="Xr">wimlib-imagex(1)</a> will be used to circumvent FAT32
-          filesystem size limitations. You can prevent this behavior with
-          <code class="Cm">--no-wimsplit</code> modifier flag.</li>
-      <li>If <a class="Xr">syslinux(1)</a> configuration files are found, it
-          will install the <a class="Xr">syslinux</a> bootloader to allow legacy
-          BIOS boot and select MBR partition table. When the local version of
-          <a class="Xr">syslinux</a> doesn't match ISO version, it will attempt
-          to download the closest version available in https://www.kernel.org
-          unless <code class="Cm">--local-bootloader</code> flag is set. When
-          invoked with <code class="Cm">--remote-bootloader</code>
+          <a class="Xr" href="https://manned.org/wimlib-imagex.1">wimlib-imagex(1)</a>
+          will be used to circumvent FAT32 filesystem size limitations. You can
+          prevent this behavior with <code class="Cm">--no-wimsplit</code>
+          modifier flag.</li>
+      <li>If <a class="Xr" href="https://manned.org/syslinux.1">syslinux(1)</a>
+          configuration files are found, it will install the
+          <a class="Xr" href="https://manned.org/syslinux.1">syslinux</a>
+          bootloader to allow legacy BIOS boot and select MBR partition table.
+          When the local version of
+          <a class="Xr" href="https://manned.org/syslinux.1">syslinux</a>
+          doesn't match ISO version, it will attempt to download the closest
+          version available in https://www.kernel.org unless
+          <code class="Cm">--local-bootloader</code> flag is set. When invoked
+          with <code class="Cm">--remote-bootloader</code>
           <var class="Ar">version</var> modifier,
           <code class="Nm">bootiso</code> will ignore local version check and
           forces download of the kernel.org version at
@@ -442,11 +473,13 @@ These modifiers only apply to default <b class="Sy">install</b> action (see
   <li>Checks <var class="Ar">imagefile</var> hash sum against a hash file if one
       found. Supported hash algorithms are md5, sha1, sha256 and sha512.</li>
   <li>Checks <var class="Ar">imagefile</var> mime-type with
-      <a class="Xr">file(1)</a> utility.</li>
+      <a class="Xr" href="https://manned.org/file.1">file(1)</a> utility.</li>
   <li>Asserts selected device is connected through USB preventing system damages
-      and exit if it doesn't, with <a class="Xr">udevadm(8)</a> utility.</li>
+      and exit if it doesn't, with
+      <a class="Xr" href="https://manned.org/udevadm.8">udevadm(8)</a>
+    utility.</li>
   <li>Asserts that selected item is not a partition and exit if it doesn't, with
-      <a class="Xr">lsblk(8)</a>.</li>
+      <a class="Xr" href="https://manned.org/lsblk.8">lsblk(8)</a>.</li>
   <li>Asserts that selected image is not larger than selected device.</li>
   <li>Prompts for confirmation before erasing and partitioning USB device.</li>
 </ul>
@@ -460,7 +493,7 @@ These modifiers only apply to default <b class="Sy">install</b> action (see
       those files when no files are matched in current working directory. When
       not set, either <code class="Ev">XDG_DOWNLOAD_DIR</code> if defined or
       <span class="Pa">~/Downloads</span> otherwise are used instead. See
-      <a class="Xr">xdg-user-dir(1)</a>.</dd>
+      <a class="Xr" href="https://manned.org/xdg-user-dir.1">xdg-user-dir(1)</a>.</dd>
   <dt><a class="permalink" href="#BOOTISO_SYSLINUX_LIB_ROOT"><code class="Ev" id="BOOTISO_SYSLINUX_LIB_ROOT">BOOTISO_SYSLINUX_LIB_ROOT</code></a></dt>
   <dd>Used in &#x201C;Mount-Rsync&#x201D; mode when
       <var class="Ar">imagefile</var> has syslinux boot capability. In which
@@ -608,8 +641,10 @@ Copyright Jules Sam. Randolph.
 <section class="Sh">
 <h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
   ALSO</a></h1>
-<a class="Xr">dd(1)</a>, <a class="Xr">isohybrid(1)</a>,
-  <a class="Xr">syslinux(1)</a>, <a class="Xr">wimlib-imagex(1)</a>
+<a class="Xr" href="https://manned.org/dd.1">dd(1)</a>,
+  <a class="Xr" href="https://manned.org/isohybrid.1">isohybrid(1)</a>,
+  <a class="Xr" href="https://manned.org/syslinux.1">syslinux(1)</a>,
+  <a class="Xr" href="https://manned.org/wimlib-imagex.1">wimlib-imagex(1)</a>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="COMPATIBILITY"><a class="permalink" href="#COMPATIBILITY">COMPATIBILITY</a></h1>
@@ -619,7 +654,8 @@ Copyright Jules Sam. Randolph.
 <ul class="Bl-bullet">
   <li>ASCII character set.</li>
   <li>ECMA-48 SGR sequences to feature color, bold and underline text attributes
-      as documented in <a class="Xr">console_codes(4)</a>.</li>
+      as documented in
+      <a class="Xr" href="https://manned.org/console_codes.4">console_codes(4)</a>.</li>
 </ul>
 </section>
 <section class="Sh">
