@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-#
 # bootiso - create a bootable USB drive from an image file
 # Copyright (C) 2018-2020 jules randolph <jules.sam.randolph@gmail.com>
 # 
