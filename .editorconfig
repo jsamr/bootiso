@@ -9,6 +9,10 @@ end_of_line = lf
 insert_final_newline = true
 charset = utf-8
 
+# Man pages
+[*.1]
+insert_final_newline = false
+
 [{bootiso,*.bash,*.fish,*.zsh}]
 
 indent_style = space
