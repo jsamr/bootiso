@@ -1,7 +1,13 @@
 # next
 
+**Enhancements**
+
+- better compliance with Debian Policy Manual
+- Makefile integration with dh_make
+
 **Bugfixes**
 
+- add compatibility layer for legacy "column" utility shipped with Debian-based distributions, [#59](https://github.com/jsamr/bootiso/issues/59)
 - fix wrong exit status. The exit status 11 (USER ABORTED) was systematically returned, because of previous refactor on process interruption graceful handling. This has now been fixed, and will only be returned when process receives signal INT or TERM.
 
 # v4.0.1
