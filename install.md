@@ -2,7 +2,7 @@
 
 ## Manual install from git
 
-Assuming you have git and root privileges:
+Assuming you have git, make and root privileges:
 
 ```bash
 git clone --branch latest https://github.com/jsamr/bootiso.git
