@@ -1,11 +1,15 @@
+SHELL    = /bin/sh
 NAME     = bootiso
 COMMAND  = bootiso
 
 PREFIX   ?= /usr/local
 
-.PHONY: install, uninstall
+.PHONY: build, install, uninstall
 
-default: install
+default: build
+
+build:
+	@echo "[OK] No-op build."
 
 install:
 	@install -D bootiso "$(DESTDIR)$(PREFIX)/bin/bootiso" &&\
