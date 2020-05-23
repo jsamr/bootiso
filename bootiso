@@ -84,6 +84,7 @@ typeset st_foundSyslinuxBiosFolder
 typeset st_shouldMakePartition
 typeset st_backgroundProcess=''
 typeset st_packageManager
+typeset st_hasLegacyColumn
 typeset -A st_syslinuxBinaries
 typeset -a st_temporaryAssets=()
 typeset -a st_devicesList=()
@@ -1019,6 +1020,12 @@ function asrt_checkPackages() {
   if ! echo 1 | grep -P '1' &>/dev/null; then
     ps_failAndExit MISSING_DEPENDENCY \
       "You're using an old version of grep which does not support perl regular expression (-P option)."
+  fi
+  if echo "" | column -t -N t -W t &> /dev/null; then
+    st_hasLegacyColumn=false
+  else
+    # Old BSD command, see https://git.io/JfauE
+    st_hasLegacyColumn=true
   fi
 }
 
@@ -2284,6 +2291,17 @@ function step_finalize() {
 #
 # ACTION EXEC MODULE (4)
 
+# Print stdin properly
+# $1 : terminal width
+function term_formatFlagDescription() {
+  local -r _termWidth=$1
+  if [[ "$st_hasLegacyColumn" == false  ]]; then
+    column -c "$_termWidth" --table -d -N flag,desc -W desc -s \|
+  else
+    column -c "$_termWidth" -t -s \|
+  fi
+}
+
 function exec_help() {
   local _termWidth
   local -r _actionFlagsTable=$(printf "%s\n" \
@@ -2312,19 +2330,19 @@ function exec_help() {
     "       $(term_boldify "$scriptName") $(term_underline action)")
   local -r _helpHint=$(printf "%s" \
     "\nInvoked with no action flag, $scriptName will default to install action in automatic mode: inspect <imagefile>" \
-    "boot capabilities and find the best way to make a bootable USB drive.")
+    " boot capabilities and find the best way to make a bootable USB drive.")
 
   _termWidth=$(tput cols)
   echo -e "$_helpIntro" | fmt -g "$_termWidth" -w "$_termWidth"
-  echo -e "$_helpSynopsis"
+  echo -e "\n$_helpSynopsis"
   echo -e "$_helpHint" | fmt -g "$_termWidth" -w "$_termWidth"
   echo -e "\n$(term_boldify 'ACTIONS')"
-  echo -e "$_actionFlagsTable" | column -c "$_termWidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "$_actionFlagsTable" | term_formatFlagDescription "$_termWidth"
   echo -e "\n$(term_boldify 'GENERIC MODIFIERS')"
-  echo -e "$_modifierFlagsTable" | column -c "$_termWidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "$_modifierFlagsTable" | term_formatFlagDescription "$_termWidth"
   echo -e "\nAdvanced modifiers are described in $scriptName man page." | fmt -g "$_termWidth" -w "$_termWidth"
   echo -e "\n$(term_boldify 'INSTALL MODE MODIFIERS')"
-  echo -e "$_installModeModifiersTable" | column -c "$_termWidth" --table -d -N flag,desc -W desc -s \|
+  echo -e "$_installModeModifiersTable" | term_formatFlagDescription "$_termWidth"
 }
 
 # return 0 - (USB) drives found
