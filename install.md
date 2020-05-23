@@ -75,9 +75,17 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
     <tr>
     <tr>
       <td style="text-align: left;">
-        lsblk, sfdisk, mkfs, blkid, wipefs, blockdev, column, mount, umount, blockdev
+        lsblk, mkfs, blkid, wipefs, blockdev, column, mount, umount, blockdev
       </td>
       <td colspan="3" align="center">util-linux &ge; 2.26</td>
+    </tr>
+    <tr>
+      <td style="text-align: left;">
+        sfdisk
+      </td>
+      <td align="center">util-linux &ge; 2.26</td>
+      <td align="center">fdisk <small>or util-linux &ge; 2.26<sup>1</sup></small></td>
+      <td align="center">util-linux &ge; 2.26</td>
     </tr>
     <tr>
       <td style="text-align: left;">find, xargs</td>
@@ -125,3 +133,5 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
     </tr>
   </tbody>
 </table>
+
+<sup>1</sup> **fdisk** has been shipped as a separate package for Debian since version 2.30
