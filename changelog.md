@@ -4,6 +4,7 @@
 
 - better compliance with Debian Policy Manual
 - Makefile integration with dh_make
+- full compliance with HFS
 
 **Bugfixes**
 
