@@ -50,9 +50,9 @@ fi
 # the module name + '_'.
 
 typeset -r ct_syslinuxLibRoot=${BOOTISO_SYSLINUX_LIB_ROOT:-'/usr/lib/syslinux'}
-typeset -r ct_mountRoot=/mnt
 typeset -r ct_tempRoot=/var/tmp/bootiso
 typeset -r ct_cacheRoot=/var/cache/bootiso
+typeset -r ct_mountRoot=/var/tmp/bootiso/mnt
 typeset -r ct_shortOptions='bydJahlMftLpD'
 typeset -r ct_ticketsURL="https://github.com/jsamr/bootiso/issues/new/choose."
 typeset -r ct_kernelOrgSyslinuxURL="https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing"
@@ -1729,7 +1729,7 @@ function devi_inspectElToritoImage() {
 # STEPS MODULE (3)
 
 function step_configureFolders() {
-  local _defaultMode=777
+  local _defaultMode=775
   if [ ! -e "$ct_tempRoot" ]; then
     mkdir -m $_defaultMode "$ct_tempRoot"
   elif [ -d "$ct_tempRoot" ]; then
@@ -1747,7 +1747,8 @@ function step_configureFolders() {
       "Remove this file and try again."
   fi
   if [ ! -e "$ct_mountRoot" ]; then
-    mkdir "$ct_mountRoot"
+    # shellcheck disable=SC2174
+    mkdir -pm $_defaultMode "$ct_mountRoot"
   elif [ ! -d "$ct_mountRoot" ]; then
     ps_failAndExit FAILED_POSTULATE "'$ct_mountRoot' is not a folder." \
       "Remove this file and try again."
