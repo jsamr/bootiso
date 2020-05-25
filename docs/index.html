@@ -182,15 +182,14 @@ One can use <a class="Xr" href="https://manned.org/dd.1">dd(1)</a> utility for
 <dl class="Bl-tag">
   <dt><a class="permalink" href="#f,"><code class="Fl" id="f,">-f,</code></a>
     <code class="Cm">--format</code></dt>
-  <dd>Wipe and format the selected USB device.
-    <p class="Pp"><b class="Sy">Default Behavior:</b> If no device were
-        explicitly selected with <code class="Cm">--device</code> modifier,
-        <code class="Nm">bootiso</code> will prompt for selection. With no
-        further notice, <code class="Nm">bootiso</code> will write a MBR
-        partition table and format a FAT32 partition. These defaults can be
-        overridden with <code class="Cm">--gpt</code> and
-        <code class="Cm">--fs</code> modifiers.</p>
-  </dd>
+  <dd>Wipe and format the selected USB device. <b class="Sy">Default
+      Behavior:</b> If no device were explicitly selected with
+      <code class="Cm">--device</code> modifier, <code class="Nm">bootiso</code>
+      will prompt for selection. With no further notice,
+      <code class="Nm">bootiso</code> will write a MBR partition table and
+      format a FAT32 partition. These defaults can be overridden with
+      <code class="Cm">--gpt</code> and <code class="Cm">--fs</code>
+    modifiers.</dd>
   <dt><a class="permalink" href="#h,"><code class="Fl" id="h,">-h,</code></a>
     <code class="Cm">--help</code></dt>
   <dd>Display a concise list of options then exits.</dd>
@@ -632,7 +631,7 @@ The <code class="Nm">bootiso</code> utility exits 0 on success, &gt;0 on error.
 <h1 class="Sh" id="COPYRIGHT"><a class="permalink" href="#COPYRIGHT">COPYRIGHT</a></h1>
 Copyright Jules Sam. Randolph.
 <p class="Pp">GPLv3 License:
-    <a class="Lk" href="https://www.gnu.org/licenses/gpl-3.0">https://www.gnu.org/licenses/gpl-3.0</a>.
+    <a class="Lk" href="https://www.gnu.org/licenses/gpl-3.0">https://www.gnu.org/licenses/gpl-3.0</a>
     This is free software: you are free to change and redistribute it. There is
     NO WARRANTY, to the extent permitted by law.</p>
 </section>
@@ -650,7 +649,7 @@ Copyright Jules Sam. Randolph.
   Linux console. More specifically, the output device should support the
   following features:
 <ul class="Bl-bullet">
-  <li>ASCII character set.</li>
+  <li>ASCII character set;</li>
   <li>ECMA-48 SGR sequences to feature color, bold and underline text attributes
       as documented in
       <a class="Xr" href="https://manned.org/console_codes.4">console_codes(4)</a>.</li>
@@ -658,9 +657,12 @@ Copyright Jules Sam. Randolph.
 </section>
 <section class="Sh">
 <h1 class="Sh" id="STANDARDS"><a class="permalink" href="#STANDARDS">STANDARDS</a></h1>
-<code class="Nm">bootiso</code> is compliant with <span class="St">IEEE Std
-  1003.1-2008 (&#x201C;POSIX.1&#x201D;)</span>, Ch. 12, &#x201C;Utility
-  Conventions&#x201D;.
+<code class="Nm">bootiso</code> is compliant with:
+<ul class="Bl-bullet">
+  <li><span class="St">IEEE Std 1003.1-2008 (&#x201C;POSIX.1&#x201D;)</span>,
+      Ch. 12, &#x201C;Utility Conventions&#x201D;;</li>
+  <li>Filesystem Hierarchy Standard, version 3.0.</li>
+</ul>
 </section>
 <section class="Sh">
 <h1 class="Sh" id="AUTHORS"><a class="permalink" href="#AUTHORS">AUTHORS</a></h1>
@@ -670,8 +672,8 @@ Copyright Jules Sam. Randolph.
 </div>
 <table class="foot">
   <tr>
-    <td class="foot-date">April 19, 2020</td>
-    <td class="foot-os">bootiso 4.0.2-beta.1</td>
+    <td class="foot-date">May 22, 2020</td>
+    <td class="foot-os">bootiso 4.0.2-beta.2</td>
   </tr>
 </table>
 </body>
