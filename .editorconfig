@@ -4,7 +4,7 @@
 root = true
 
 # Unix-style newlines with a newline ending every file
-[*]
+[*.*]
 end_of_line = lf
 insert_final_newline = true
 charset = utf-8
@@ -18,7 +18,7 @@ insert_final_newline = false
 indent_style = space
 indent_size = 2
 
-[{bootiso,*.bash}]
+[{bootiso,*.bash, *.sh}]
 
 shell_variant = bash
 binary_next_line   = false
