@@ -315,7 +315,7 @@ function term_printLog() {
 function term_indentAll() {
   while read -r line; do
     term_printColumn " " "$term_logPrefixLength" "$line"
-  done <"${1:-/dev/stdin}"
+  done < "${1:-/dev/stdin}"
 }
 
 # $*: The message to print.
@@ -500,7 +500,7 @@ function fs_mountUSB() {
   st_usbMountPoint=$(fs_createMountFolder usb) || exit "$?"
   st_temporaryAssets+=("$st_usbMountPoint")
   term_echoinfo "Created USB device mount point at '$st_usbMountPoint'"
-  if ! mount -t "$_type" "$st_targetPartition" "$st_usbMountPoint" >/dev/null; then
+  if ! mount -t "$_type" "$st_targetPartition" "$st_usbMountPoint" > /dev/null; then
     ps_failAndExit IO_ERROR "Could not mount USB device."
   fi
 }
@@ -508,7 +508,7 @@ function fs_mountUSB() {
 # $1 - mountPoint
 function fs_mountElToritoFile() {
   local -r _mountPoint="$1"
-  if ! mount -r -o loop -- "$sourceImageFile" "$_mountPoint" >/dev/null; then
+  if ! mount -r -o loop -- "$sourceImageFile" "$_mountPoint" > /dev/null; then
     ps_failAndExit IO_ERROR "Could not mount image file."
   else
     st_temporaryAssets+=("$_mountPoint")
@@ -607,7 +607,7 @@ function fs_syncWithProgress() {
 
 # $1 - The name of the command to check in $PATH.
 function sys_hasCommand() {
-  command -v "$1" &>/dev/null
+  command -v "$1" &> /dev/null
   return $?
 }
 
@@ -931,7 +931,7 @@ function asrt_checkSudo() {
     if [[ -t 1 ]] && sys_hasCommand sudo; then
       sudo --preserve-env "$0" "$@"
     elif sys_hasCommand gksu; then
-      exec 1>output_file
+      exec 1> output_file
       gksu --preserve-env "$0" "$@"
     else
       ps_failAndExit MISSING_PRIVILEGE "You must run $scriptName as root."
@@ -978,15 +978,15 @@ function asrt_checkImageHash() {
     printf "%s" \
       "You can disable this check with $(term_boldify "-H, --no-hash-check") flags." | term_indentAll
     st_temporaryAssets+=("$_hashStoreFile")
-    (
+    ( 
       local _hash
       local -i _status=0
       _hash=$($_hashName "$_imageName" | awk "{print \$1; exit }")
       _status=$?
       if ((_status == 0)); then
-        printf "%s" "$_hash" >"$_hashStoreFile"
+        printf "%s" "$_hash" > "$_hashStoreFile"
       else
-        printf "%s" 1 >"$_hashStoreFile"
+        printf "%s" 1 > "$_hashStoreFile"
       fi
     ) &
     st_backgroundProcess=$!
@@ -1091,11 +1091,11 @@ function asrt_checkPackages() {
     sys_checkCommand "$_pkg"
   done
   # test grep supports -P option
-  if ! echo 1 | grep -P '1' &>/dev/null; then
+  if ! echo 1 | grep -P '1' &> /dev/null; then
     ps_failAndExit MISSING_DEPENDENCY \
       "You're using an old version of grep which does not support perl regular expression (-P option)."
   fi
-  if echo "" | column -t -N t -W t &>/dev/null; then
+  if echo "" | column -t -N t -W t &> /dev/null; then
     st_hasLegacyColumn=false
   else
     # Old BSD command, see https://git.io/JfauE
@@ -1182,7 +1182,7 @@ function asrt_checkFSType() {
     ps_failAndExit SYNOPSIS_NONCOMPL "Filesystem type '$_fsType' not supported." \
       "Supported filesystem types: $(sh_joinBy "," "${asrt_supportedFS[*]}")."
   fi
-  if ! command -v "mkfs.$_fsType" &>/dev/null; then
+  if ! command -v "mkfs.$_fsType" &> /dev/null; then
     ps_failAndExit MISSING_DEPENDENCY \
       "Program 'mkfs.$_fsType' could not be found on your system." \
       "Please install it and retry."
@@ -1385,7 +1385,7 @@ function devi_configureLabel() {
   # Fallback to "USER_VENDOR" if format
   if [[ "$targetAction" == format ]]; then
     _user=${SUDO_USER:-$USER}
-    _vendor=$(lsblk -ldno VENDOR "$targetDevice" 2>/dev/null)
+    _vendor=$(lsblk -ldno VENDOR "$targetDevice" 2> /dev/null)
     _vendor=${_vendor:-FLASH}
     targetPartitionLabel=${targetPartitionLabel:-"${_user^^}_${_vendor^^}"}
   else
@@ -1538,7 +1538,7 @@ function devi_partitionUSB() {
     # unmount any partition on selected device
     mapfile -t devicePartitions < <(grep -oP "^\\K$targetDevice\\S*" /proc/mounts)
     for _partition in "${devicePartitions[@]}"; do
-      if ! umount "$_partition" >/dev/null; then
+      if ! umount "$_partition" > /dev/null; then
         ps_failAndExit IO_ERROR \
           "Failed to unmount $_partition. It's likely that the partition is busy."
       fi
@@ -1547,7 +1547,7 @@ function devi_partitionUSB() {
   function _eraseDevice() {
     term_echoinfo "Erasing contents of '$targetDevice'..."
     # clean signature from selected device
-    wipefs --all --force "$targetDevice" &>/dev/null
+    wipefs --all --force "$targetDevice" &> /dev/null
     # erase drive
     dd if=/dev/zero of="$targetDevice" bs=512 count=1 conv=notrunc status=none |&
       term_indentAll ||
@@ -1781,7 +1781,7 @@ function devi_inspectHybridImage() {
       _supportsEFIBoot=false
     fi
   }
-  _diskReport=$(sfdisk -lJ -- "$sourceImageFile" 2>/dev/null)
+  _diskReport=$(sfdisk -lJ -- "$sourceImageFile" 2> /dev/null)
   if (($? != 0)); then
     ps_failAndExit IO_ERROR "sfdisk couldn't read the partition table on the image file, which is likely corrupted."
   fi
@@ -1911,7 +1911,7 @@ function step_installBootloader() {
       fi
     fi
     term_echoinfo "Found local SYSLINUX version '$_localSyslinuxVersion'"
-    sh_compute "$_localSyslinuxVersion == ${st_isoInspections[syslinuxVer]}" >/dev/null
+    sh_compute "$_localSyslinuxVersion == ${st_isoInspections[syslinuxVer]}" > /dev/null
     _versionsMatch=$?
     if ((_versionsMatch == 0)); then
       term_echogood "image SYSLINUX version matches local version."
@@ -1957,7 +1957,7 @@ function step_installBootloader() {
   function _installWtKernelOrgExtlinux() {
     local _isExt32 _isHost32 _fallbackToLocal=false
     term_echoinfo "Installing SYSLINUX bootloader in '$_syslinuxFolder' with kernel.org version '$st_targetSyslinuxVersion'..."
-    file -b -- "${st_syslinuxBinaries['extBin']}" | awk '{print $2}' | grep -e '^32' &>/dev/null
+    file -b -- "${st_syslinuxBinaries['extBin']}" | awk '{print $2}' | grep -e '^32' &> /dev/null
     _isExt32=$?
     echo "$ct_architecture" | grep -e '32|i386'
     _isHost32=$?
@@ -1981,7 +1981,7 @@ function step_installBootloader() {
       fi
     fi
     if [[ "$_fallbackToLocal" == true ]]; then
-      _installWtLocalExtlinux >/dev/null
+      _installWtLocalExtlinux > /dev/null
     fi
     fs_syncdev
   }
@@ -2021,7 +2021,7 @@ function step_copyWithRsync() {
         term_echowarn "Detected a Windows install.wim file but wimsplit has been disabled with $(term_boldify '--no-wim-split') option."
       fi
     fi
-    (
+    ( 
       # shellcheck disable=SC2086
       rsync -r -q -I --no-links --no-perms --no-owner --no-group $_rsyncOptions "$st_elToritoMountPoint"/. "$st_usbMountPoint"
       _status=$?
@@ -2030,7 +2030,7 @@ function step_copyWithRsync() {
         echo
         wimlib-imagex split "$_wimFile" "$st_usbMountPoint/sources/install.swm" 1024 |& term_indentAll
       fi
-      echo "$_status" >"$_statusFile"
+      echo "$_status" > "$_statusFile"
     ) &
     st_backgroundProcess=$!
     echo -n "$scriptName: Copying files from image to USB device with 'rsync'    "
@@ -2056,9 +2056,9 @@ function step_copyWithDD() {
     local _status
     _statusFile=$(fs_createTempFile "bootiso-status")
     st_temporaryAssets+=("$_statusFile")
-    (
+    ( 
       dd if="$sourceImageFile" of="$targetDevice" bs="$targetDDBusSize" status=none
-      echo "$?" >"$_statusFile"
+      echo "$?" > "$_statusFile"
     ) &
     st_backgroundProcess=$!
     echo -n "$scriptName: Copying files from image to USB device with 'dd'    "
