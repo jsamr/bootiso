@@ -35,6 +35,12 @@ if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
   exit 1
 fi
 
+# Normalize PATH on some distro which don't export system binary paths
+# by default, such as Debian. The normalization follows FHS 3.0 defined paths
+# for system binaries.
+[[ ! "$PATH" =~ "/usr/sbin" ]] && export PATH="$PATH:/usr/sbin"
+[[ ! "$PATH" =~ "/sbin" ]] && export PATH="$PATH:/sbin"
+
 #               .
 #             .o8
 #  .ooooo.  .o888oo
