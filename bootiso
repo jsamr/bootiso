@@ -60,7 +60,8 @@ typeset -r ct_tempRoot=/var/tmp/bootiso
 typeset -r ct_cacheRoot=/var/cache/bootiso
 typeset -r ct_mountRoot=/var/tmp/bootiso/mnt
 typeset -r ct_shortOptions='bydJahlMftLpD'
-typeset -r ct_ticketsURL="https://github.com/jsamr/bootiso/issues/new/choose."
+typeset -r ct_ticketsURL="https://github.com/jsamr/bootiso/issues/new/choose"
+typeset -r ct_dependenciesURL="https://github.com/jsamr/bootiso/blob/master/install.md#dependencies"
 typeset -r ct_kernelOrgSyslinuxURL="https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing"
 typeset -r ct_openBugReportMessage="This is not expected: please open a 'Bug Report' ticket at $ct_ticketsURL."
 typeset -r ct_openImageSupportRequestMessage="You can open an 'Image Support' request here: $ct_ticketsURL"
@@ -615,7 +616,12 @@ function sys_checkCommand() {
   local -r _command=$1
   local _answer
   if ! sys_hasCommand "$_command"; then
-    term_echowarn "Command '$_command' not found! Should be in package '${ct_commandPackages["$_command"]}'."
+    term_echowarn "Command '$_command' not found!"
+    if ((EUID != 0)) || [[ -z ${ct_commandPackages["$_command"]} ]]; then
+      ps_failAndExit MISSING_DEPENDENCY \
+              "Please install the missing package providing this command manually."
+    fi
+    term_echowarn "Should be in package '${ct_commandPackages["$_command"]}'."
     if [ -n "$st_packageManager" ]; then
       read -r -n1 -p "${term_logPrefixEmpty}Attempt installation? (y/n)> " _answer
       echo
@@ -772,6 +778,9 @@ function ps_failAndExit() {
   if [ "$_statusCode" == STATE_ERROR ]; then
     term_echoerr "Provide a bug report at $ct_openBugReportMessage."
   fi
+  if [ "$_statusCode" == MISSING_DEPENDENCY ]; then
+    term_echoerr "See $ct_dependenciesURL"
+  fi
   exit "${ps_exitStatus[$_statusCode]}"
 }
 
@@ -813,49 +822,108 @@ typeset -Ar ct_userFlagsCompatibilityMatrix=(
   ['no-wimsplit']='install-mount-rsync'
 )
 typeset -ar asrt_commandDependencies=(
-  'lsblk' 'column' 'sfdisk' 'blkid' 'wipefs'
-  'blockdev' 'grep' 'file' 'awk' 'mlabel'
-  'syslinux' 'rsync' 'partx' 'curl' 'cat'
-  'tar' 'bc' 'wimlib-imagex' 'md5sum' 'sha1sum'
-  'sha256sum' 'sha512sum' 'cut' 'jq'
+  awk
+  basename
+  bc
+  blkid
+  blockdev
+  cat
+  chmod
+  column
+  curl
+  cut
+  date
+  dd
+  dirname
+  du
+  eject
+  file
+  find
+  fmt
+  getconf
+  grep
+  jq
+  lsblk
+  md5sum
+  mkdir
+  mktemp
+  mount
+  mv
+  numfmt
+  partx
+  rm
+  rsync
+  sed
+  sfdisk
+  sha1sum
+  sha256sum
+  sha512sum
+  sleep
+  sort
+  strings
+  sync
+  syslinux
+  tail
+  tar
+  tput
+  tr
+  tty
+  umount
+  wimlib-imagex
+  wipefs
+  xargs
 )
 typeset -Ar ct_commandPackages=(
-  [lsblk]='util-linux'
-  [mount]='util-linux'
-  [umount]='util-linux'
-  [sfdisk]='util-linux'
-  [blkid]='util-linux'
-  [wipefs]='util-linux'
-  [blockdev]='util-linux'
-  [column]='util-linux'
-  [blockdev]='util-linux'
-  [partx]='util-linux'
-  [grep]='grep'
-  [sed]='sed'
-  [file]='file'
   [awk]='gawk'
-  [mlabel]='mtools'
-  [syslinux]='syslinux'
-  [rsync]='rsync'
-  [curl]='curl'
-  [tar]='tar'
+  [basename]='coreutils'
   [bc]='bc'
-  ['wimlib-imagex']='wimlib'
-  [jq]='jq'
+  [blkid]='util-linux'
+  [blockdev]='util-linux'
+  [cat]='coreutils'
+  [chmod]='coreutils'
+  [column]='util-linux'
+  [curl]='curl'
+  [cut]='coreutils'
+  [date]='coreutils'
+  [dd]='coreutils'
+  [dirname]='coreutils'
+  [du]='coreutils'
+  [eject]='util-linux'
+  [file]='file'
   [find]='findutils'
-  [xargs]='findutils'
+  [fmt]='coreutils'
+  [getconf]='glibc'
+  [grep]='grep'
+  [jq]='jq'
+  [lsblk]='util-linux'
   [md5sum]='coreutils'
+  [mkdir]='coreutils'
+  [mktemp]='coreutils'
+  [mount]='util-linux'
+  [mv]='coreutils'
+  [numfmt]='coreutils'
+  [partx]='util-linux'
+  [rsync]='rsync'
+  [rm]='coreutils'
+  [sed]='sed'
+  [sfdisk]='' # Distro-dependent
   [sha1sum]='coreutils'
   [sha256sum]='coreutils'
   [sha512sum]='coreutils'
-  [cut]='coreutils'
-  [cat]='coreutils'
-  [mkdir]='coreutils'
-  [chmod]='coreutils'
-  [dirname]='coreutils'
-  [basename]='coreutils'
-  [date]='coreutils'
+  [sleep]='coreutils'
+  [sort]='coreutils'
+  [strings]='binutils'
+  [sync]='coreutils'
+  [syslinux]='syslinux'
+  [tail]='coreutils'
+  [tar]='tar'
+  [tput]='ncurses'
   [tr]='coreutils'
+  [tty]='coreutils'
+  [umount]='util-linux'
+  ['wimlib-imagex']='' # Distro-dependent
+  [wipefs]='util-linux'
+  [xargs]='findutils'
 )
 
 function asrt_checkSudo() {
@@ -1885,12 +1953,12 @@ function step_installBootloader() {
       _fallbackToLocal=false
     elif ((_isExt32 == 0 && _isHost32 > 0)); then
       term_echowarn "The SYSLINUX binary from kernel.org is for 32 bits architectures," \
-           " but your system is 64 bits." \
-           "If the install fails, you might need to install 32 bits support on your system."
+        " but your system is 64 bits." \
+        "If the install fails, you might need to install 32 bits support on your system."
       _fallbackToLocal=false
     else # _isExt32 > 0 && _isHost32 == 0
       term_echowarn "The SYSLINUX binary from kernel.org is for 64 bits architectures." \
-           "Your system is 32 bits. Falling back to local syslinux installation."
+        "Your system is 32 bits. Falling back to local syslinux installation."
       _fallbackToLocal=true
     fi
     if [[ "$_fallbackToLocal" == false ]]; then
@@ -2549,11 +2617,11 @@ function main() {
   step_checkArguments
   step_assignInternalVariables
   asrt_checkFlagMatrix
-  asrt_checkPackages
   if [ "$requiresRoot" == 'true' ]; then
     asrt_checkSudo "$@"
     step_configureFolders
   fi
+  asrt_checkPackages
   if [ "$st_expectingISOFile" == 'true' ]; then
     asrt_checkFileIsImage
     if [ "$disableHashCheck" == false ]; then
