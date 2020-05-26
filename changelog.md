@@ -2,6 +2,7 @@
 
 **Enhancements**
 
+- implement static analysis to test for missing dependencies, see [tests/testdeps.sh](https://github.com/jsamr/bootiso/blob/master/tests/testdeps.sh)
 - better compliance with Debian Policy Manual
 - Makefile integration with dh_make
 - full compliance with [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/fhs.shtml)
@@ -12,6 +13,13 @@
 
 - add compatibility layer for legacy "column" utility shipped with Debian-based distributions, [#59](https://github.com/jsamr/bootiso/issues/59)
 - fix wrong exit status. The exit status 11 (USER ABORTED) was systematically returned, because of previous refactor on process interruption graceful handling. This has now been fixed, and will only be returned when process receives signal INT or TERM.
+
+**Dependencies**
+
+*for package maintainers, please rely on [install.md#Dependencies](https://github.com/jsamr/bootiso/blob/master/install.md#deps)*
+
+- remove unnecessary **mtools**
+- add missing **binutils** and **ncurses**
 
 # v4.0.1
 
