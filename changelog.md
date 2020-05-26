@@ -5,6 +5,7 @@
 - better compliance with Debian Policy Manual
 - Makefile integration with dh_make
 - full compliance with HFS
+- compare system and binary architectures when executing syslinux program from kernel.org, and provide user feedback [#22](https://github.com/jsamr/bootiso/issues/22)
 
 **Bugfixes**
 
