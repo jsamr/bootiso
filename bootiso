@@ -619,7 +619,7 @@ function sys_checkCommand() {
     term_echowarn "Command '$_command' not found!"
     if ((EUID != 0)) || [[ -z ${ct_commandPackages["$_command"]} ]]; then
       ps_failAndExit MISSING_DEPENDENCY \
-              "Please install the missing package providing this command manually."
+        "Please install the missing package providing this command manually."
     fi
     term_echowarn "Should be in package '${ct_commandPackages["$_command"]}'."
     if [ -n "$st_packageManager" ]; then
@@ -1246,28 +1246,40 @@ function asrt_checkUserFlags() {
   fi
 }
 
+#shellcheck disable=SC1087
+#shellcheck disable=SC2086
 function asrt_checkFlagMatrix() {
   local _key
+  function _failAndHintUser() {
+    local _matrixName=$1
+    local _allowedActionsRef="$_matrixName[$_key]"
+    if [[ "$targetAction" == 'install-auto' ]] && sh_elementIsInList install-mount-rsync ${!_allowedActionsRef}; then
+      ps_failAndExit SYNOPSIS_NONCOMPL \
+        "$(term_boldify "--$_key") modifier requires $(term_boldify '--mrsync') to assert Mount-Rsync mode."
+    elif [[ "$targetAction" == 'install-auto' ]] && sh_elementIsInList install-image-copy ${!_allowedActionsRef}; then
+      ps_failAndExit SYNOPSIS_NONCOMPL \
+        "$(term_boldify "--$_key") modifier requires $(term_boldify '--icopy') to assert Image-Copy mode."
+    else
+      ps_failAndExit SYNOPSIS_NONCOMPL \
+        "$(term_boldify "$targetAction") action doesn't support $(term_boldify "--$_key") modifier."
+    fi
+  }
   for _key in "${!asrt_userVarsCompatibilityMatrix[@]}"; do
     if [ ! -z "${st_userVars[$_key]}" ]; then
-      #shellcheck disable=SC2086
       if ! sh_elementIsInList "$targetAction" ${asrt_userVarsCompatibilityMatrix[$_key]}; then
         if [ "$_key" == "iso-file" ]; then
           ps_failAndExit SYNOPSIS_NONCOMPL \
             "$(term_boldify $targetAction) doesn't require any positional arguments."
         else
-          ps_failAndExit SYNOPSIS_NONCOMPL \
-            "$(term_boldify "$targetAction") action doesn't support $(term_boldify --$_key) modifier."
+          _failAndHintUser asrt_userVarsCompatibilityMatrix
         fi
       fi
     fi
   done
   for _key in "${!ct_userFlagsCompatibilityMatrix[@]}"; do
     if [ ! -z "${st_userFlags[$_key]}" ]; then
-      #shellcheck disable=SC2086
       if ! sh_elementIsInList "$targetAction" ${ct_userFlagsCompatibilityMatrix[$_key]}; then
-        ps_failAndExit SYNOPSIS_NONCOMPL \
-          "$(term_boldify $targetAction) action doesn't support $(term_boldify --$_key) modifier."
+        _failAndHintUser ct_userFlagsCompatibilityMatrix
       fi
     fi
   done
