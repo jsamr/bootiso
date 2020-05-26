@@ -19,7 +19,7 @@ checkDependencies() {
     local _dep
     for _dep in "${dependencies[@]}"; do
         if ! command -v "$_dep" &> /dev/null; then
-            echo "Missing dependency $_dep. Exiting..."
+            echo "Missing dependency $_dep. Exiting..." >&2
             exit 1
         fi
     done
@@ -27,11 +27,11 @@ checkDependencies() {
 
 checkArgs() {
     if [[ -z "$1" ]]; then
-        echo "Missing file argument"
+        echo "Missing file argument" >&2
         exit 2
     fi
     if [[ ! -f "$1" ]]; then
-        echo "$1 is not a file"
+        echo "$1 is not a file" >&2
         exit 2
     fi
 }
