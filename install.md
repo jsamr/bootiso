@@ -63,23 +63,6 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
       <td>syslinux</td>
     </tr>
     <tr>
-      <tr>
-        <td style="text-align: left;">bash</td>
-        <td colspan="3" align="center">bash &ge; 4.0</td>
-      </tr>
-      <td style="text-align: left;">
-        md5sum, sha1sum, sha256sum, sha512sum, cut, cat, mkdir, chmod, dirname, basename, date, tr, tty, sleep
-      </td>
-      <td colspan="3" align="center">coreutils</td>
-    </tr>
-    <tr>
-    <tr>
-      <td style="text-align: left;">
-        lsblk, mkfs, blkid, wipefs, blockdev, column, mount, umount, blockdev
-      </td>
-      <td colspan="3" align="center">util-linux &ge; 2.26</td>
-    </tr>
-    <tr>
       <td style="text-align: left;">
         sfdisk
       </td>
@@ -87,6 +70,37 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
       <td align="center">fdisk <small>or util-linux &ge; 2.26<sup>1</sup></small></td>
       <td align="center">util-linux &ge; 2.26</td>
     </tr>
+    <tr>
+      <td style="text-align: left;">getconf</td>
+      <td align="center">glibc</td>
+      <td align="center">libc-bin</td>
+      <td align="center">glibc</td>
+    </tr>
+    <tr>
+      <tr>
+        <td style="text-align: left;">bash</td>
+        <td colspan="3" align="center">bash &ge; 4.0</td>
+      </tr>
+      <td style="text-align: left;">
+        basename, cat, chmod, cut, date, dirname, md5sum, mkdir, sha1sum, sha256sum, sha512sum, sleep, tr, tty, <em>…etc</em>
+      </td>
+      <td colspan="3" align="center">coreutils</td>
+    </tr>
+    <tr>
+    <tr>
+      <td style="text-align: left;">
+        blkid, blockdev, blockdev, column, eject, lsblk, mkfs, mount, partx, umount, wipefs
+      </td>
+      <td colspan="3" align="center">util-linux &ge; 2.26</td>
+    </tr>
+    <tr>
+      <td style="text-align: left;">strings</td>
+      <td colspan="3" align="center">binutils</td>
+    </tr>    
+    <tr>
+      <td style="text-align: left;">tput</td>
+      <td colspan="3" align="center">ncurses</td>
+    </tr>    
     <tr>
       <td style="text-align: left;">find, xargs</td>
       <td colspan="3" align="center">findutils</td>
@@ -110,10 +124,6 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
     <tr>
       <td style="text-align: left;">awk</td>
       <td colspan="3" align="center">gawk</td>
-    </tr>
-    <tr>
-      <td style="text-align: left;">mlabel</td>
-      <td colspan="3" align="center">mtools</td>
     </tr>
     <tr>
       <td style="text-align: left;">rsync</td>
