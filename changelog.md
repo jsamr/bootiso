@@ -3,6 +3,7 @@
 **Enhancements**
 
 - implement static analysis to test for missing dependencies, see [tests/testdeps.sh](https://github.com/jsamr/bootiso/blob/master/tests/testdeps.sh)
+- enhanced feedback when using install mode-specific flags while in automatic mode
 - better compliance with Debian Policy Manual
 - Makefile integration with dh_make
 - full compliance with [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/fhs.shtml)
