@@ -1593,7 +1593,7 @@ function devi_installSyslinuxVersion() {
     st_syslinuxBinaries['extBin']="$_extlinuxBin"
     return 0
   }
-  prog_checkPkg 'curl'
+  sys_checkCommand 'curl'
   _inferSyslinuxVersion
   _checkConnexion || return "$?"
   _findMinorVersions || return "$?"
