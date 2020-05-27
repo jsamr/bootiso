@@ -147,4 +147,4 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
   </tbody>
 </table>
 
-<sup>1</sup> **fdisk** has been shipped as a separate package for Debian since version 2.30
+<sup>1</sup> **fdisk** has been shipped as a separate package for Debian since “Buster” (10.4)
