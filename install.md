@@ -27,6 +27,7 @@ make uninstall
 **bootiso** should also have a soft dependency on `mkfs.xxx` creation commands for
 each supported filesystem. User will be invited to install the appropriate utility when the requested filesystem has no matching creation command.
 However, for the sake of user comfort, it is recommended that package maintainers define a hard dependency on the following commands:
+
 - `mkfs.ext{2,3,4}`
 - `mkfs.fat`
 - `mkfs.ntfs`
@@ -63,24 +64,36 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
       <td>syslinux</td>
     </tr>
     <tr>
-      <td style="text-align: left;">
-        sfdisk
-      </td>
-      <td align="center">util-linux &ge; 2.26</td>
-      <td align="center">fdisk <small>or util-linux &ge; 2.26<sup>1</sup></small></td>
-      <td align="center">util-linux &ge; 2.26</td>
-    </tr>
-    <tr>
       <td style="text-align: left;">getconf</td>
       <td align="center">glibc</td>
       <td align="center">libc-bin</td>
       <td align="center">glibc</td>
     </tr>
     <tr>
-      <tr>
-        <td style="text-align: left;">bash</td>
-        <td colspan="3" align="center">bash &ge; 4.0</td>
-      </tr>
+      <td style="text-align: left;">tput</td>
+      <td align="center">ncurses</td>
+      <td align="center">ncurses-bin</td>
+      <td align="center">ncurses</td>
+    </tr>
+    <tr>
+      <td style="text-align: left;">
+        sfdisk
+      </td>
+      <td rowspan="2" align="center">util-linux &ge; 2.26</td>
+      <td align="center">fdisk <small>or util-linux &ge; 2.26<sup>1</sup></small></td>
+      <td rowspan="2" align="center">util-linux &ge; 2.26</td>
+    </tr>
+    <tr>
+      <td style="text-align: left;">
+        blkid, blockdev, blockdev, column, eject, lsblk, mkfs, mount, partx, umount, wipefs
+      </td>
+      <td align="center">util-linux &ge; 2.26</td>
+    </tr>
+    <tr>
+      <td style="text-align: left;">bash</td>
+      <td colspan="3" align="center">bash &ge; 4.0</td>
+    </tr>
+    <tr>
       <td style="text-align: left;">
         basename, cat, chmod, cut, date, dirname, md5sum, mkdir, sha1sum, sha256sum, sha512sum, sleep, tr, tty, <em>…etc</em>
       </td>
@@ -88,19 +101,9 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
     </tr>
     <tr>
     <tr>
-      <td style="text-align: left;">
-        blkid, blockdev, blockdev, column, eject, lsblk, mkfs, mount, partx, umount, wipefs
-      </td>
-      <td colspan="3" align="center">util-linux &ge; 2.26</td>
-    </tr>
-    <tr>
       <td style="text-align: left;">strings</td>
       <td colspan="3" align="center">binutils</td>
-    </tr>    
-    <tr>
-      <td style="text-align: left;">tput</td>
-      <td colspan="3" align="center">ncurses</td>
-    </tr>    
+    </tr> 
     <tr>
       <td style="text-align: left;">find, xargs</td>
       <td colspan="3" align="center">findutils</td>
