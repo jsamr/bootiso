@@ -19,7 +19,7 @@ This list might be out of date (please report). Check [repology.org](https://rep
 
 ### Manual install
 
-Check [Install Instructions](install.md) document.
+Check [Install Instructions](install.md) document. Please also read the [distro tweaks](#distro-tweaks) section.
 
 ## Reference Manual
 
@@ -66,9 +66,8 @@ In the below example, the selected device with `--device` (shorten `-d`) flag is
 
 ## Distros tweaks
 
-- On Fedora, set `BOOTISO_SYSLINUX_LIB_ROOT` env to `/usr/share/syslinux`
-- On Fedora, wimlib is packaged under wimlib-utils
-- On Debian-based systems, wimlib is packaged under wimtools
+- On Fedora, set `BOOTISO_SYSLINUX_LIB_ROOT` environment to `/usr/share/syslinux`.
+- Take a look at the [by-distribution dependency table](install.md#deps) to make sure you have all required dependencies installed.
 
 ## Contributing
 
