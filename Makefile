@@ -1,23 +1,29 @@
 SHELL    = /bin/sh
-NAME     = bootiso
-COMMAND  = bootiso
 
-PREFIX   ?= /usr/local
+prefix                                  = /usr/local
+exec_prefix                             = $(prefix)
+bindir                                  = $(exec_prefix)/bin
+datarootdir                             = $(prefix)/share
+datadir                                 = $(datarootdir)
+docdir                                  = $(datarootdir)/doc/bootiso
+htmldir                                 = $(docdir)
+mandir                                  = $(datarootdir)/man
 
-.PHONY: build, install, uninstall
+zsh_completions_dir                     = $(datadir)/zsh/site-functions
+bash_completions_dir                    = $(datadir)/bash-completion/completions
 
-default: build
+.PHONY: build install uninstall
 
 build:
-	@echo "[OK] No-op build."
 
 install:
-	@install -D bootiso "$(DESTDIR)$(PREFIX)/bin/bootiso" &&\
-	 install -Dm644 extra/man/bootiso.1 "$(DESTDIR)$(PREFIX)/share/man/man1/bootiso.1" &&\
-	 install -Dm644 extra/completions/completions.zsh "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_bootiso" &&\
-	 install -Dm644 extra/completions/completions.bash "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/bootiso" &&\
-	 echo "[OK] $(NAME) installed."
+	install -D     bootiso                            '$(DESTDIR)$(bindir)/bootiso'
+	install -Dm644 extra/man/bootiso.1                '$(DESTDIR)$(mandir)/man1/bootiso.1'
+	install -Dm644 extra/completions/completions.zsh  '$(DESTDIR)$(zsh_completions_dir)/_bootiso'
+	install -Dm644 extra/completions/completions.bash '$(DESTDIR)$(bash_completions_dir)/bootiso'
 
 uninstall:
-	@rm "$(DESTDIR)$(PREFIX)/bin/bootiso" "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_bootiso" "$(DESTDIR)$(PREFIX)/share/man/man1/bootiso.1" "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/bootiso" &&\
-	echo "[OK] $(NAME) uninstalled."
+	$(RM) '$(DESTDIR)$(bindir)/bootiso'
+	$(RM) '$(DESTDIR)$(mandir)/man1/bootiso.1'
+	$(RM) '$(DESTDIR)$(zsh_completions_dir)/_bootiso'
+	$(RM) '$(DESTDIR)$(bash_completions_dir)/bootiso'
