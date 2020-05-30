@@ -1,10 +1,13 @@
-# Next
+# v4.1.1
 
 **Enhancements**
 
-- Mark “tput” corresponding packages to distro-dependent (no auto install)
 - Makefile: comply with [GNU Make conventions](https://www.gnu.org/software/make/manual/make.html#Directory-Variables), thanks to Nicolas Boulenguez <nicolas@debian.org>
 - Doc: more accurate dependency table
+
+**Bugfixes**
+
+- Mark “tput” corresponding packages to be distro-dependent (no auto install)
 
 # v4.1.0
 
