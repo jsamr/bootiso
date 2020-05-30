@@ -65,29 +65,29 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
     </tr>
     <tr>
       <td style="text-align: left;">getconf</td>
-      <td align="center">glibc</td>
-      <td align="center">libc-bin</td>
-      <td align="center">glibc</td>
+      <td>glibc</td>
+      <td>libc-bin</td>
+      <td>glibc</td>
     </tr>
     <tr>
       <td style="text-align: left;">tput</td>
-      <td align="center">ncurses</td>
-      <td align="center">ncurses-bin</td>
-      <td align="center">ncurses</td>
+      <td>ncurses</td>
+      <td>ncurses-bin</td>
+      <td>ncurses</td>
     </tr>
     <tr>
       <td style="text-align: left;">
         sfdisk
       </td>
-      <td rowspan="2" align="center">util-linux &ge; 2.26</td>
-      <td align="center">fdisk <small>or util-linux &ge; 2.26<sup>1</sup></small></td>
-      <td rowspan="2" align="center">util-linux &ge; 2.26</td>
+      <td rowspan="2">util-linux &ge; 2.26</td>
+      <td>fdisk <small>or util-linux &ge; 2.26<sup>1</sup></small></td>
+      <td rowspan="2">util-linux &ge; 2.26</td>
     </tr>
     <tr>
       <td style="text-align: left;">
         blkid, blockdev, blockdev, column, eject, lsblk, mkfs, mount, partx, umount, wipefs
       </td>
-      <td align="center">util-linux &ge; 2.26</td>
+      <td>util-linux &ge; 2.26</td>
     </tr>
     <tr>
       <td style="text-align: left;">bash</td>
