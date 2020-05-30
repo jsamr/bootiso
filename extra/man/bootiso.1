@@ -727,6 +727,10 @@ target filesystem:
 .Sh TROUBLESHOOTING
 .Bl -bullet
 .It
+Some live-CD systems are not shipped with USB-3 drivers or are known to work poorly with USB-3 ports.
+Always try a USB-2 port, or if you don't have one, use a USB-2 stick, before considering
+the boot a failure. As of 2020, Windows 10 (UEFI) is among those systems.
+.It
 If legacy BIOS boot doesn't work, be advised that
 UEFI-compliant boot systems have a Compatibility Support Module (CSM) option to enable legacy BIOS boot.
 .It
