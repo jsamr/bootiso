@@ -4,9 +4,20 @@ about: Create a report to help us improve
 title: ''
 labels: bug
 assignees: jsamr
-
 ---
 
+<!--
+IMPORTANT!
+Before reporting, make sure :
+- There is no similar bug report.
+  See: https://git.io/Jf0ZH
+- You are using the latest version of bootiso.
+-->
+
+**bootiso**: v
+ 
+<!-- Report bootiso version running "bootiso -v" -->
+ 
 **Category**
 
 <!-- choose at least one

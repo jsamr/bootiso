@@ -8,13 +8,26 @@ assignees: jsamr
 
 <!--
 IMPORTANT!
-Make sure there is no request for this image file already, or for a similar file.
-See: https://git.io/Jf0ZH
+Before reporting, make sure :
+- There is no request for this image file already, or for a similar file.
+  See: https://git.io/Jf0ZH
+- You are using the latest version of bootiso.
 -->
+
+**bootiso**: v
+
+<!-- Report bootiso version running "bootiso -v" -->
 
 **Upstream URL:**
 
-<!-- Provide a link where the image can be downloaded -->
+<!--
+Provide a direct link to the image file.
+If you cannot easily find a direct link, provide a link to the download page.
+-->
+
+**Image file:**
+
+<!-- The full name of the image file. -->
 
 **Inspection:**
 
