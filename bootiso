@@ -120,6 +120,7 @@ typeset -A st_userFlags=(
   ['no-size-check']=''
   ['no-hash-check']=''
   ['force-hash-check']=''
+  ['force-install-image-copy']=''
   ['no-wimsplit']=''
   ['data-part']=''
 )
@@ -813,6 +814,7 @@ typeset -Ar ct_userFlagsCompatibilityMatrix=(
   ['force-hash-check']='install-auto install-mount-rsync install-image-copy probe inspect'
   ['no-usb-check']='install-auto install-mount-rsync install-image-copy list-usb-drives probe format'
   ['no-size-check']='install-auto install-mount-rsync install-image-copy'
+  ['force-install-image-copy']='install-image-copy'
   [gpt]='format install-mount-rsync'
   ['data-part']='install-image-copy'
   ['local-bootloader']='install-mount-rsync'
@@ -2258,6 +2260,10 @@ function step_parseArguments() {
         _enableUserFlag 'force-hash-check'
         shift
         ;;
+      --force-dd)
+        _enableUserFlag 'force-install-image-copy'
+        shift
+        ;;
       --no-wimsplit)
         _enableUserFlag 'no-wimsplit'
         shift
@@ -2422,6 +2428,7 @@ function exec_help() {
     "-J, --no-eject|Don't eject drive after unmounting." \
     "-L, --label <label>|Set partition label to <label>." \
     "-M, --no-mime-check|Don't check <imagefile> mime-type." \
+    "--force-dd| Force Image-Copy mode." \
     "-y, --assume-yes|Don't prompt for confirmation before erasing drive.")
   local -r _installModeModifiersTable=$(printf "%s\n" \
     "--icopy, --dd|Assert \"Image-Copy\" install mode." \
@@ -2564,12 +2571,17 @@ function exec_installMountRsync() {
 }
 
 function exec_installImageCopy() {
-  if [ "${st_isoInspections[isHybrid]}" == false ]; then
+  if [ "${st_isoInspections[isHybrid]}" == false ] && [ "${st_userFlags['force-install-image-copy']}" == false ]; then
     ps_failAndExit ASSERTION_FAILED "You cannot set Image-Copy mode with a non-hybrid, 'El-Torito' image file." \
       "El-Torito image files don't have a partition table; and thus target device will not be recognized" \
-      "by any boot system as a boot candidate. If you think this image file is hybrid and this is a bug, please report at " \
+      "by any boot system as a boot candidate. You can force Image-Copy mode with flag --force-dd .If you think this image file is hybrid and this is a bug, please report at " \
       "${ct_ticketsURL}."
   fi
+
+  if [ "${st_userFlags['force-install-image-copy']}" == true ]; then
+  	term_echoinfo "Forced Image-Copy mode."
+  fi
+
   st_shouldMakePartition=false
   step_runSecurityAssessments
   devi_partitionUSB false
