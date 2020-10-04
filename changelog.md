@@ -2,6 +2,22 @@
 
 **Enhancements**
 
+- new `--assume-image-is` flag to override **bootiso** assessment of image file hybridness. Possible values are "hybrid" and "non-hybrid".
+
+**Bugfixes**
+
+- **CRITICAL** New check implementation for assessing image file "hybridness" based on `sfdisk` which should fix false non-hybrid positives caused by new `file` utility behavior. Kudos to [anoop142](https://github.com/anoop142) for pointing that out.
+
+**Dependencies**
+
+*for package maintainers, please rely on [install.md#Dependencies](https://github.com/jsamr/bootiso/blob/master/install.md#deps)*
+
+- requires util-linux ≥ 2.27
+
+# v4.1.1
+
+**Enhancements**
+
 - Makefile: comply with [GNU Make conventions](https://www.gnu.org/software/make/manual/make.html#Directory-Variables), thanks to Nicolas Boulenguez <nicolas@debian.org>
 - Doc: more accurate dependency table
 
