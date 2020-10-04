@@ -206,6 +206,7 @@ typeset _bootiso_inspect_opts=(
 typeset _bootiso_install_opts=(
   '(--mrsync --dd --icopy)'{--dd,--icopy}"[assert 'Image-Copy' install mode]"
   "(--dd --icopy)--mrsync[assert 'Mount-Rsync' install mode]"
+  "--assume-image-is[override bootiso assessment of image hybridness]:imagetype:(hybrid non-hybrid)"
   '(-J --no-eject)'{-J,--no-eject}"[don't eject device after unmounting]"
   "--no-size-check[don't assert that selected device size is larger than <imagefile>]"
 )

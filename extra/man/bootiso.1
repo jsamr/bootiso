@@ -48,6 +48,7 @@ one is printed.
 .Oc
 .Op Cm --no-size-check
 .Op Cm --no-usb-check
+.Op Cm --assume-image-is Ar image-type
 .Op Cm --
 .Ar imagefile
 .\" Install Image-Copy mode
@@ -215,6 +216,24 @@ version then exits.
 .Ss Generic Modifiers
 Use generic modifiers knowingly as some might override default safe behaviors.
 .Bl -tag
+.It Cm --assume-image-is Ar image-type
+Override
+.Nm
+assessment of
+.Ar imagefile
+hybridness. Use
+.Dq hybrid
+to force
+.Nm
+regard
+.Ar imagefile
+as hybrid, and
+.Dq non-hybrid
+to force
+.Nm
+regard
+.Ar imagefile
+as non hybrid.
 .It Fl a, Cm --autoselect
 Enable
 .Dq autoselect

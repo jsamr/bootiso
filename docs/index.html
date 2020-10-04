@@ -39,7 +39,9 @@ Each line depicts an action, with the exception of the first three lines which
       [<code class="Cm">--hash-file</code> <var class="Ar">hashfile</var>]
       [<code class="Cm">--force-hash-check</code>]]
       [<code class="Cm">--no-size-check</code>]
-      [<code class="Cm">--no-usb-check</code>] [<code class="Cm">--</code>]
+      [<code class="Cm">--no-usb-check</code>]
+      [<code class="Cm">--assume-image-is</code>
+      <var class="Ar">image-type</var>] [<code class="Cm">--</code>]
       <var class="Ar">imagefile</var></td>
   </tr>
 </table>
@@ -218,6 +220,14 @@ One can use <a class="Xr" href="https://manned.org/dd.1">dd(1)</a> utility for
   Modifiers</a></h2>
 Use generic modifiers knowingly as some might override default safe behaviors.
 <dl class="Bl-tag">
+  <dt><a class="permalink" href="#--assume-image-is"><code class="Cm" id="--assume-image-is">--assume-image-is</code></a>
+    <var class="Ar">image-type</var></dt>
+  <dd>Override <code class="Nm">bootiso</code> assessment of
+      <var class="Ar">imagefile</var> hybridness. Use &#x201C;hybrid&#x201D; to
+      force <code class="Nm">bootiso</code> regard
+      <var class="Ar">imagefile</var> as hybrid, and &#x201C;non-hybrid&#x201D;
+      to force <code class="Nm">bootiso</code> regard
+      <var class="Ar">imagefile</var> as non hybrid.</dd>
   <dt><a class="permalink" href="#a,"><code class="Fl" id="a,">-a,</code></a>
     <code class="Cm">--autoselect</code></dt>
   <dd>Enable &#x201C;autoselect&#x201D; behavior in combination with

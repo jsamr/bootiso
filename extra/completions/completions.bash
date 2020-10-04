@@ -1,6 +1,6 @@
 # bootiso - create a bootable USB drive from an image file
 # Copyright (C) 2018-2020 jules randolph <jules.sam.randolph@gmail.com>
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -136,6 +136,9 @@ __bootiso_handle_files() {
 __bootiso_handle_opt_arg() {
   if [[ -n "$last_opt_arg" ]]; then
     case "$last_opt_arg" in
+    --assume-image-is)
+      mapfile -t COMPREPLY < <(compgen -W "hybrid non-hybrid" -- "${cur}")
+      ;;
     --dd-bs)
       mapfile -t COMPREPLY < <(compgen -W "32k 64k 512k 1M 2M 4M 8M" -- "${cur}")
       ;;
@@ -199,6 +202,7 @@ __bootiso_start() {
   local -a action_flags=("-f,--format" "-h,--help" "-l,--list-usb-drives" "-v,--version" "-p,--probe" "-i,--inspect")
   local -a one_word_format_opts=("-a,--autoselect" "-y,--asume-yes")
   local -a two_word_format_opts=("-d,--device")
+  local -a two_word_install_opts=("--assume-image-is")
   local -a one_word_advanced_format_opts=("--gpt")
   local -a two_word_advanced_format_opts=("-L,--label" "-F,--fs" "--part-type")
   local -a one_word_inspect_opts=("--no-hash-check" "--force-hash-check" "-M,--no-mime-check")
@@ -264,6 +268,7 @@ __bootiso_start() {
     two_word_flags=(
       "${two_word_inspect_opts[@]}"
       "${two_word_format_opts[@]}"
+      "${two_word_install_opts[@]}"
     )
     if [[ "${user_vars[installmode]}" == mrsync ]]; then
       one_word_flags+=(
@@ -280,7 +285,7 @@ __bootiso_start() {
       two_word_flags+=(
         "${one_word_icopy_install_opts[@]}"
         "${two_word_icopy_install_opts[@]}"
-        )
+      )
     fi
     ;;
   format)

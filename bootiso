@@ -132,6 +132,7 @@ typeset -A st_userVars=(
   ['remote-bootloader']=''
   ['part-type']=''
   ['data-part-fs']=''
+  ['assume-image-is']=''
 )
 
 # oo.ooooo.   .oooo.   oooo d8b
@@ -169,6 +170,7 @@ typeset disableConfirmation
 typeset disableHashCheck
 typeset disableWimsplit
 typeset disableDeviceEjection
+typeset assumeImageIs
 
 #          oooo
 #          `888
@@ -803,6 +805,7 @@ typeset -Ar asrt_userVarsCompatibilityMatrix=(
   ['part-type']='format install-mount-rsync'
   ['dd-bs']='install-image-copy'
   ['data-part-fs']='install-image-copy'
+  ['assume-image-is']='install-auto install-mount-rsync install-image-copy'
 )
 typeset -Ar ct_userFlagsCompatibilityMatrix=(
   ['assume-yes']='install-auto install-mount-rsync install-image-copy format'
@@ -2209,6 +2212,13 @@ function step_parseArguments() {
         _setUserVar 'fs' "${2,,}" #lowercased
         shift 2
         ;;
+      --assume-image-is)
+        if (($# < 2)); then
+          ps_failAndExit SYNOPSIS_NONCOMPL "Missing value for '$1' flag. Please provide an image type (one of: hybrid, non-hybrid)."
+        fi
+        _setUserVar 'assume-image-is' "${2,,}" #lowercased
+        shift 2
+        ;;
       --data-part-fs)
         if (($# < 2)); then
           ps_failAndExit SYNOPSIS_NONCOMPL "Missing value for '$1' flag. Please provide a filesystem type."
@@ -2330,6 +2340,7 @@ function step_assignInternalVariables() {
   targetBootloaderVersion=${st_userVars['remote-bootloader']:-'auto'}
   targetDDBusSize=${st_userVars['dd-bs']:-'4M'}
   targetDataPartFstype=${st_userVars['data-part-fs']:-'vfat'}
+  assumeImageIs=${st_userVars['assume-image-is']:-''}
   # Action-dependent flags
   case $targetAction in
   install-*)
@@ -2543,11 +2554,11 @@ function exec_probe() {
 }
 
 function exec_installMountRsync() {
-  if [ "${st_isoInspections[isHybrid]}" == true ]; then
+  if [[ "${st_isoInspections[isHybrid]}" == true  && "${assumeImageIs}" != "non-hybrid" ]]; then
     ps_failAndExit ASSERTION_FAILED "You cannot set Mount-Rsync mode with a hybrid image file." \
       "Hybrid ISO or disk image files eventually contain multiple partitions and Mount-Rsync mode can only work with one." \
       "If you think this image file is not hybrid and this is a bug, please report at " \
-      "${ct_ticketsURL}."
+      "${ct_ticketsURL}. You can also use $(term_boldify "--assume-image-is non-hybrid") flag to bypass this check."
   fi
   st_shouldMakePartition=true
   asrt_checkSyslinuxInstall
@@ -2564,11 +2575,11 @@ function exec_installMountRsync() {
 }
 
 function exec_installImageCopy() {
-  if [ "${st_isoInspections[isHybrid]}" == false ]; then
+  if [[ "${st_isoInspections[isHybrid]}" == false && "${assumeImageIs}" != "hybrid" ]]; then
     ps_failAndExit ASSERTION_FAILED "You cannot set Image-Copy mode with a non-hybrid, 'El-Torito' image file." \
       "El-Torito image files don't have a partition table; and thus target device will not be recognized" \
       "by any boot system as a boot candidate. If you think this image file is hybrid and this is a bug, please report at " \
-      "${ct_ticketsURL}."
+      "${ct_ticketsURL}. You can also use $(term_boldify "--assume-image-is hybrid") flag to bypass this check."
   fi
   st_shouldMakePartition=false
   step_runSecurityAssessments
@@ -2585,12 +2596,20 @@ function exec_installImageCopy() {
 }
 
 function exec_installAuto() {
-  if [ "${st_isoInspections[isHybrid]}" == true ]; then
-    term_echogood "Found hybrid image; choosing Image-Copy mode."
+  if [ "${assumeImageIs}" == "hybrid" ]; then
+    term_echogood "Assumed image is hybrid; choosing Image-Copy mode."
     exec_installImageCopy
-  else
-    term_echoinfo "Found non-hybrid image; inspecting image for boot capabilities..."
+  elif [ "${assumeImageIs}" == "non-hybrid" ]; then
+    term_echoinfo "Assumed image is non-hybrid; inspecting image for boot capabilities"
     exec_installMountRsync
+  else
+    if [ "${st_isoInspections[isHybrid]}" == true ]; then
+      term_echogood "Found hybrid image; choosing Image-Copy mode."
+      exec_installImageCopy
+    else
+      term_echoinfo "Found non-hybrid image; inspecting image for boot capabilities..."
+      exec_installMountRsync
+    fi
   fi
 }
 
