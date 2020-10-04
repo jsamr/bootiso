@@ -1852,11 +1852,11 @@ function step_initDevicesList() {
 function step_inspectImageFile() {
   local _isHybrid
   function _inspectImageFilesystem() {
-    file -b -- "$sourceImageFile" | grep -q '^ISO 9660 CD-ROM filesystem'
+    fdisk -l -- "$sourceImageFile" | grep -q 'iso1 *'
     if (($? == 0)); then
-      _isHybrid=false
-    else
       _isHybrid=true
+    else
+      _isHybrid=false
     fi
   }
   _inspectImageFilesystem
