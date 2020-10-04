@@ -79,9 +79,9 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
       <td style="text-align: left;">
         sfdisk
       </td>
-      <td rowspan="2">util-linux &ge; 2.26</td>
-      <td>fdisk <small>or util-linux &ge; 2.26<sup>1</sup></small></td>
-      <td rowspan="2">util-linux &ge; 2.26</td>
+      <td rowspan="2">util-linux &ge; 2.27</td>
+      <td>fdisk <small>or util-linux &ge; 2.27<sup>1</sup></small></td>
+      <td rowspan="2">util-linux &ge; 2.27</td>
     </tr>
     <tr>
       <td style="text-align: left;">
