@@ -87,7 +87,7 @@ The corresponding packages in Arch Linux are **e2fsprogs**, **dosfstools** and *
       <td style="text-align: left;">
         blkid, blockdev, blockdev, column, eject, lsblk, mkfs, mount, partx, umount, wipefs
       </td>
-      <td>util-linux &ge; 2.26</td>
+      <td>util-linux &ge; 2.27</td>
     </tr>
     <tr>
       <td style="text-align: left;">bash</td>
