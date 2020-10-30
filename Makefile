@@ -14,6 +14,8 @@ bash_completions_dir                    = $(datadir)/bash-completion/completions
 
 .PHONY: build install uninstall
 
+all: install
+
 build:
 
 install:
