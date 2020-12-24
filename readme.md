@@ -16,6 +16,7 @@ This list might be out of date (please report). Check [repology.org](https://rep
 | :--------------- | ----------------------------------------------------------------------- |
 | Arch Linux (AUR) | https://aur.archlinux.org/packages/bootiso/                             |
 | Void Linux       | https://github.com/void-linux/void-packages/tree/master/srcpkgs/bootiso |
+| openSUSE (OBS)   | https://build.opensuse.org/package/show/home:musfay/bootiso             |
 
 ### Manual install
 
