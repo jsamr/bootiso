@@ -928,7 +928,9 @@ typeset -Ar ct_commandPackages=(
 
 function asrt_checkSudo() {
   if ((EUID != 0)); then
-    if [[ -t 1 ]] && sys_hasCommand sudo; then
+    if [[ -t 1 ]] && sys_hasCommand doas; then
+      doas "$0" "$@"
+    elif sys_hasCommand sudo; then
       sudo --preserve-env "$0" "$@"
     elif sys_hasCommand gksu; then
       exec 1>output_file
