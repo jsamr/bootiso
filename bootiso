@@ -1357,6 +1357,8 @@ function devi_configureLabel() {
     targetPartitionLabel=${targetPartitionLabel^^}
     # FAT32 labels have maximum 11 chars
     targetPartitionLabel=${targetPartitionLabel:0:11}
+    # substitute invalid label characters with underscore
+    targetPartitionLabel=${targetPartitionLabel//[][*?.,;:\\\/|+=<>\"]/_}
     ;;
   exfat)
     # EXFAT labels have maximum 15 chars
