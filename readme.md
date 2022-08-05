@@ -26,7 +26,7 @@ Check [Install Instructions](install.md) document. Please also read the [distro 
 
 The official manual is available at [jsamr.github.io/bootiso](https://jsamr.github.io/bootiso/).
 The reference should also be available as a man page via `man bootiso`.
-If you are in a hury, jump to the [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES) section.
+If you are in a hurry, jump to the [EXAMPLES](https://jsamr.github.io/bootiso/#EXAMPLES) section.
 
 |                             Highlights                              |
 | :-----------------------------------------------------------------: |
