@@ -504,10 +504,14 @@ function fs_formatPartition() {
   local -r _fstype=$1
   local -r _targetPart=$2
   local -r _partLabel=$3
+  local _mkfsexfatopts=-n
+  if [[ "$(mkfs.exfat --version)" =~ "exfatprogs "* ]]; then
+    _mkfsexfatopts=-L
+  fi
   # These options always end up with the label flag setter
   local -Ar _mkfsOpts=(
     ['vfat']="-v -F 32 -n" # Fat32 mode
-    ['exfat']="-n"
+    ['exfat']="$_mkfsexfatopts"
     ['ntfs']="-Q -c 4096 -L" # Quick mode + cluster size = 4096 for syslinux support
     ['ext2']="-O ^64bit -L"  # Disabling pure 64 bits compression for syslinux compatibility
     ['ext3']="-O ^64bit -L"  # see https://www.syslinux.org/wiki/index.php?title=Filesystem#ext
