@@ -29,6 +29,8 @@ set -E
 version="4.2.0"
 scriptName=$(basename "$0")
 bashVersion=$(echo "$BASH_VERSION" | cut -d. -f1)
+# Requres for any other distribution, like blackPanther OS
+DISTRO=$(lsb_release -si | awk '{print $1}'| tr [:upper:] [:lower:])
 
 if [ -z "$BASH_VERSION" ] || [ "$bashVersion" -lt 4 ]; then
   echo >&2 "You need bash v4+ to run this script. Aborting..."
@@ -1329,7 +1331,11 @@ function asrt_checkSyslinuxInstall() {
       "Your distribution doesn't ship 'extlinux' with the 'syslinux' package." \
       "Please install 'extlinux' and try again."
   fi
-  st_foundSyslinuxBiosFolder=$(find "$ct_syslinuxLibRoot" -type d -path '*/bios' -print -quit)
+  if [ "$DISTRO" = "blackpanther" ];then
+    st_foundSyslinuxBiosFolder=$(find "$ct_syslinuxLibRoot" -print -quit)
+  else
+    st_foundSyslinuxBiosFolder=$(find "$ct_syslinuxLibRoot" -type d -path '*/bios' -print -quit)
+  fi
   st_foundSyslinuxMbrBinary=$(fs_findFileFromPatterns "$ct_syslinuxLibRoot" 'bios/mbr.bin' 'mbr.bin')
   if [ -z "$st_foundSyslinuxBiosFolder" ]; then
     ps_failAndExit MISSING_DEPENDENCY \
